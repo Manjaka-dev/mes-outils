@@ -12,13 +12,16 @@ import sys
 import tempfile
 import threading
 import unittest
+import urllib.parse
 import uuid
 from http.server import ThreadingHTTPServer
 from unittest import mock
 import http.client
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "outil"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # aide.py
 import coffre_windows  # noqa: E402
+from aide import ConfigTemporaire, ServeurTest  # noqa: E402
 import github  # noqa: E402
 
 PROFIL_API = {"login": "testeur", "name": "Testeur", "avatar_url": "https://exemple/a.png", "id": 42}
@@ -262,55 +265,301 @@ class TestCoffreWindows(unittest.TestCase):
         self.assertIsNone(coffre_windows.lire(cible))
 
 
-class TestRoutes(unittest.TestCase):
+class TestRoutes(ServeurTest):
     """Les routes /api/github/* du serveur local."""
 
-    @classmethod
-    def setUpClass(cls):
-        import hub
-        cls.hub = hub
-        cls.serveur = ThreadingHTTPServer(("127.0.0.1", 0), hub.Gestionnaire)
-        threading.Thread(target=cls.serveur.serve_forever, daemon=True).start()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.serveur.shutdown()
-        cls.serveur.server_close()
-
-    def post(self, chemin, donnees, entete=True):
-        c = http.client.HTTPConnection("127.0.0.1", self.serveur.server_address[1], timeout=10)
-        entetes = {"Host": f"127.0.0.1:{self.hub.PORT}", "Content-Type": "application/json"}
-        if entete:
-            entetes["X-Mes-Outils"] = "1"
-        c.request("POST", chemin, body=json.dumps(donnees), headers=entetes)
-        try:
-            r = c.getresponse()
-            return r.status, json.loads(r.read() or b"{}")
-        finally:
-            c.close()
-
     def test_etat_deconnecte(self):
-        with FauxCoffre(), mock.patch.object(self.hub, "lire_outils", return_value={"github": {"dossiers": ["X"]}}):
+        with FauxCoffre(), ConfigTemporaire({"dossiers_projets": ["X"]}):
             statut, r = self.post("/api/github/etat", {})
         self.assertEqual((statut, r), (200, {"connecte": False, "dossiers": ["X"]}))
+
+    def test_ancien_emplacement_des_dossiers(self):
+        with FauxCoffre(), ConfigTemporaire({"github": {"dossiers": ["Y"]}}):
+            statut, r = self.post("/api/github/etat", {})
+        self.assertEqual(r["dossiers"], ["Y"], "github > dossiers doit encore être lu")
 
     def test_ordre_sans_entete_refuse(self):
         statut, _ = self.post("/api/github/deconnexion", {}, entete=False)
         self.assertEqual(statut, 403, "une page d'un autre site ne doit pas pouvoir donner d'ordre")
 
     def test_erreur_github_renvoyee_en_400(self):
-        with mock.patch.object(self.hub, "lire_outils", return_value={"github": {}}), \
-                mock.patch.object(github, "CLIENT_ID", ""):
+        with ConfigTemporaire({"github": {}}), mock.patch.object(github, "CLIENT_ID", ""):
             statut, r = self.post("/api/github/connexion/debut", {})
         self.assertEqual(statut, 400)
         self.assertIn("client_id", r["erreur"])
 
     def test_dossier_inexistant_refuse(self):
-        with mock.patch.object(self.hub, "lire_outils", return_value={"github": {}}), \
-                mock.patch.object(self.hub, "ecrire_outils") as ecrire:
+        with ConfigTemporaire({"github": {}}) as cfg:
             statut, r = self.post("/api/github/dossiers", {"dossiers": [r"Z:\n-existe-pas"]})
-        self.assertEqual(statut, 400)
-        ecrire.assert_not_called()
+            self.assertEqual(statut, 400)
+            self.assertNotIn("dossiers_projets", cfg.lire(), "rien ne doit être enregistré")
+
+    def test_dossiers_enregistres(self):
+        with ConfigTemporaire({"github": {"dossiers": ["ancien"]}}) as cfg:
+            statut, r = self.post("/api/github/dossiers", {"dossiers": [cfg.dossier, cfg.dossier]})
+            self.assertEqual((statut, r["dossiers"]), (200, [cfg.dossier]), "doublon retiré")
+            contenu = cfg.lire()
+        self.assertEqual(contenu["dossiers_projets"], [cfg.dossier])
+        self.assertNotIn("dossiers", contenu["github"], "l'ancien emplacement est nettoyé")
+
+
+# ---------------------------------------------------------------------------
+# Pull requests, issues et GitHub Actions (API simulée)
+# ---------------------------------------------------------------------------
+def element_recherche(depot, numero, titre, brouillon=False, auteur="testeur"):
+    return {"repository_url": f"https://api.github.com/repos/{depot}", "number": numero, "title": titre,
+            "user": {"login": auteur, "avatar_url": ""}, "draft": brouillon,
+            "updated_at": "2026-11-02T10:00:00Z", "created_at": "2026-11-01T10:00:00Z",
+            "html_url": f"https://github.com/{depot}/pull/{numero}", "comments": 2,
+            "labels": [{"name": "bug", "color": "d73a4a"}], "pull_request": {}}
+
+
+def run(nom, statut, conclusion, date, workflow_id=None):
+    return {"name": nom, "workflow_id": workflow_id or nom, "status": statut, "conclusion": conclusion,
+            "updated_at": date, "display_title": "Un commit", "run_number": 7, "event": "push",
+            "html_url": f"https://github.com/x/runs/{nom}"}
+
+
+class FausseAPI:
+    """Répond aux chemins de l'API comme GitHub ; compte les appels."""
+
+    def __init__(self, reponses):
+        self.reponses = reponses  # liste de (début du chemin, réponse ou exception)
+        self.appels = []
+        self.verrou = threading.Lock()
+
+    def __call__(self, methode, chemin, donnees=None):
+        with self.verrou:
+            self.appels.append(chemin)
+        for debut, reponse in self.reponses:
+            if chemin.startswith(debut):
+                if isinstance(reponse, Exception):
+                    raise reponse
+                return reponse
+        raise github.ErreurGitHub("GitHub a refusé la demande (404) : Not Found.")
+
+
+def api_pr_issues():
+    return FausseAPI([
+        ("/search/issues?q=" + urllib.parse.quote("is:pr is:open archived:false author:@me"),
+         {"total_count": 2, "items": [element_recherche("moi/caisse", 12, "Ajout du ticket"),
+                                      element_recherche("moi/site", 3, "Brouillon", brouillon=True)]}),
+        ("/search/issues?q=" + urllib.parse.quote("is:pr is:open archived:false review-requested:@me"),
+         {"total_count": 1, "items": [element_recherche("equipe/api", 40, "Revue SVP", auteur="collegue")]}),
+        ("/issues?filter=assigned", [
+            {**element_recherche("moi/caisse", 5, "Bug du total"), "pull_request": None,
+             "repository": {"full_name": "moi/caisse"}},
+            {**element_recherche("moi/caisse", 6, "Une PR assignée"), "pull_request": {"url": "x"}}]),
+    ])
+
+
+class BaseAPI(unittest.TestCase):
+    def setUp(self):
+        github._memoire.clear()
+        self.coffre = FauxCoffre("gho_test")
+        self.coffre.__enter__()
+
+    def tearDown(self):
+        self.coffre.__exit__()
+        github._memoire.clear()
+
+
+class TestPullRequestsEtIssues(BaseAPI):
+    def test_pull_requests(self):
+        with mock.patch.object(github, "_appel", side_effect=api_pr_issues()):
+            r = github.pull_requests()
+        self.assertEqual(r["nombre"], 3, "2 miennes + 1 revue demandée")
+        self.assertEqual([p["numero"] for p in r["miennes"]], [12, 3])
+        self.assertEqual(r["miennes"][0]["depot"], "moi/caisse", "dépôt tiré de repository_url")
+        self.assertTrue(r["miennes"][1]["brouillon"], "le brouillon doit être signalé")
+        self.assertEqual(r["revues"][0]["auteur"], "collegue")
+        self.assertEqual(r["revues"][0]["url"], "https://github.com/equipe/api/pull/40")
+        self.assertEqual(r["miennes"][0]["etiquettes"], [{"nom": "bug", "couleur": "d73a4a"}])
+
+    def test_pull_requests_en_memoire(self):
+        api = api_pr_issues()
+        with mock.patch.object(github, "_appel", side_effect=api):
+            github.pull_requests()
+            github.pull_requests()
+            self.assertEqual(len(api.appels), 2, "le second appel doit venir de la mémoire")
+            github.pull_requests(forcer=True)
+            self.assertEqual(len(api.appels), 4, "« forcer » doit relire GitHub")
+
+    def test_issues_sans_les_pull_requests(self):
+        with mock.patch.object(github, "_appel", side_effect=api_pr_issues()):
+            r = github.issues_assignees()
+        self.assertEqual(r["nombre"], 1, "la PR assignée doit être écartée")
+        self.assertEqual(r["issues"][0]["titre"], "Bug du total")
+        self.assertEqual(r["issues"][0]["depot"], "moi/caisse")
+        self.assertEqual(r["issues"][0]["etiquettes"][0]["nom"], "bug")
+
+
+class TestActions(BaseAPI):
+    def api(self, en_plus=()):
+        recents = [{"full_name": n, "html_url": f"https://github.com/{n}", "default_branch": b, "archived": a}
+                   for n, b, a in (("moi/vert", "main", False), ("moi/rouge", "master", False),
+                                   ("moi/encours", "main", False), ("moi/sans-ci", "main", False),
+                                   ("moi/ferme", "main", False), ("moi/vieux", "main", True))]
+        return FausseAPI([
+            *en_plus,
+            ("/user/repos", recents),
+            ("/repos/moi/vert/actions/runs?per_page=10&branch=main",
+             {"workflow_runs": [run("CI", "completed", "success", "2026-11-05T10:00:00Z")]}),
+            # Le déploiement, plus récent, réussit ; mais le dernier « CI » a échoué.
+            ("/repos/moi/rouge/actions/runs?per_page=10&branch=master",
+             {"workflow_runs": [run("Deploy", "completed", "success", "2026-11-06T10:00:00Z"),
+                                run("CI", "completed", "failure", "2026-11-05T09:00:00Z"),
+                                run("CI", "completed", "success", "2026-11-01T09:00:00Z")]}),
+            ("/repos/moi/encours/actions/runs",
+             {"workflow_runs": [run("CI", "in_progress", None, "2026-11-07T10:00:00Z")]}),
+            ("/repos/moi/sans-ci/actions/runs", {"total_count": 0, "workflow_runs": []}),
+            ("/repos/moi/ferme/actions/runs", github.ErreurGitHub("GitHub a refusé la demande (404) : Not Found.")),
+            ("/repos/autre/local/actions/runs?per_page=10&branch=dev",
+             {"workflow_runs": [run("Tests", "completed", "timed_out", "2026-11-04T10:00:00Z")]}),
+            ("/repos/Autre/Local/actions/runs?per_page=10&branch=dev",
+             {"workflow_runs": [run("Tests", "completed", "timed_out", "2026-11-04T10:00:00Z")]}),
+            ("/repos/autre/local", {"full_name": "Autre/Local", "default_branch": "dev",
+                                    "html_url": "https://github.com/Autre/Local", "archived": False}),
+        ])
+
+    def lancer(self, api):
+        locaux = {"moi/vert": r"X:\vert", "autre/local": r"X:\local"}
+        with mock.patch.object(github, "_appel", side_effect=api), \
+                mock.patch.object(github, "depots_locaux", return_value=locaux), \
+                mock.patch.object(github.config, "dossiers_projets", return_value=["X:\\"]):
+            return github.actions()
+
+    def test_etat_des_runs(self):
+        self.assertEqual(github.etat_run({"status": "completed", "conclusion": "success"}), "succes")
+        self.assertEqual(github.etat_run({"status": "completed", "conclusion": "failure"}), "echec")
+        self.assertEqual(github.etat_run({"status": "completed", "conclusion": "timed_out"}), "echec")
+        self.assertEqual(github.etat_run({"status": "queued", "conclusion": None}), "en_cours")
+        self.assertEqual(github.etat_run({"status": "completed", "conclusion": "cancelled"}), "annule")
+
+    def test_dernier_run_par_depot(self):
+        r = self.lancer(self.api())
+        par_nom = {d["complet"].lower(): d for d in r["depots"]}
+        self.assertNotIn("moi/vieux", par_nom, "un dépôt archivé n'est pas surveillé")
+        self.assertEqual(par_nom["moi/vert"]["etat"], "succes")
+        self.assertEqual(par_nom["moi/vert"]["local"], r"X:\vert")
+        self.assertEqual(par_nom["moi/rouge"]["etat"], "echec", "un succès d'un autre workflow ne cache pas l'échec")
+        self.assertEqual(par_nom["moi/rouge"]["workflow"], "CI")
+        self.assertEqual(len(par_nom["moi/rouge"]["workflows"]), 2, "un résumé par workflow")
+        self.assertEqual(par_nom["moi/encours"]["etat"], "en_cours")
+        self.assertEqual(par_nom["moi/sans-ci"]["etat"], "aucun")
+        self.assertEqual(par_nom["moi/ferme"]["etat"], "inconnu", "une erreur sur un dépôt ne bloque pas les autres")
+        self.assertEqual(par_nom["autre/local"]["complet"], "Autre/Local", "dépôt du PC : nom exact lu chez GitHub")
+        self.assertEqual(par_nom["autre/local"]["etat"], "echec", "branche par défaut « dev » utilisée")
+        self.assertEqual(r["depots"][0]["etat"], "echec", "les échecs d'abord")
+        self.assertEqual(sorted(r["echecs"]), ["Autre/Local", "moi/rouge"])
+
+    def test_quota_sur_un_depot_remonte(self):
+        api = self.api(en_plus=[("/repos/moi/vert/actions", github.ErreurQuotaGitHub(github.MESSAGE_QUOTA))])
+        with self.assertRaises(github.ErreurQuotaGitHub, msg="le quota ne doit pas être pris pour « inconnu »"):
+            self.lancer(api)
+
+    def test_acces_retire_remonte(self):
+        def faux_appel(methode, chemin, donnees=None):
+            if chemin.startswith("/user/repos"):
+                return [{"full_name": "moi/a", "html_url": "https://github.com/moi/a", "default_branch": "main"}]
+            github.deconnecter()  # ce que fait _appel sur une réponse 401
+            raise github.ErreurGitHub("L'accès à GitHub a été retiré : reconnectez GitHub.")
+        with mock.patch.object(github, "_appel", side_effect=faux_appel), \
+                mock.patch.object(github, "depots_locaux", return_value={}), \
+                self.assertRaisesRegex(github.ErreurGitHub, "reconnectez"):
+            github.actions()
+
+    def test_quota_detecte(self):
+        reponse = (403, {"message": "API rate limit exceeded for user ID 1."})
+        with mock.patch.object(github, "_requete", return_value=reponse):
+            with self.assertRaisesRegex(github.ErreurQuotaGitHub, "Limite"):
+                github.pull_requests()
+        with mock.patch.object(github, "_requete", return_value=(429, None)):
+            with self.assertRaises(github.ErreurQuotaGitHub):
+                github.issues_assignees()
+        with mock.patch.object(github, "_requete", return_value=(403, {"message": "Resource not accessible"})):
+            with self.assertRaises(github.ErreurGitHub) as e:
+                github.issues_assignees()
+        self.assertNotIsInstance(e.exception, github.ErreurQuotaGitHub, "un simple 403 n'est pas le quota")
+
+
+class TestEchecsCI(BaseAPI):
+    def faux_calcul(self):
+        self.calculs += 1
+        return {"depots": [], "echecs": ["moi/rouge"], "nombre_echecs": 1, "heure": ""}
+
+    def test_memoire_de_5_minutes(self):
+        self.calculs = 0
+        with mock.patch.object(github, "_calcul_actions", side_effect=self.faux_calcul), \
+                mock.patch.object(github.time, "time") as horloge:
+            horloge.return_value = 10000.0
+            self.assertEqual(github.echecs_ci(), {"nombre": 1, "depots": ["moi/rouge"]})
+            horloge.return_value = 10000.0 + 290
+            github.echecs_ci()
+            self.assertEqual(self.calculs, 1, "pas de nouvel appel à GitHub avant 5 min")
+            horloge.return_value = 10000.0 + 301
+            github.echecs_ci()
+            self.assertEqual(self.calculs, 2, "après 5 min, GitHub est relu")
+
+    def test_partage_la_memoire_de_la_page(self):
+        self.calculs = 0
+        with mock.patch.object(github, "_calcul_actions", side_effect=self.faux_calcul):
+            github.actions()
+            github.echecs_ci()
+        self.assertEqual(self.calculs, 1, "la bulle réutilise ce que la page vient de lire")
+
+    def test_hors_connexion(self):
+        self.coffre.valeurs.clear()
+        with mock.patch.object(github, "_appel") as appel:
+            self.assertEqual(github.echecs_ci(), {"nombre": 0, "depots": []})
+        appel.assert_not_called()
+
+    def test_hors_ligne(self):
+        erreur = github.ErreurGitHub("GitHub ne répond pas : vérifiez la connexion internet.")
+        with mock.patch.object(github, "_requete", side_effect=erreur):
+            r = github.echecs_ci()
+        self.assertEqual(r["nombre"], 0, "hors ligne : 0, sans exception")
+        self.assertIn("ne répond pas", r["erreur"])
+
+    def test_quota_atteint(self):
+        with mock.patch.object(github, "_requete", return_value=(403, {"message": "API rate limit exceeded"})):
+            r = github.echecs_ci()
+        self.assertEqual((r["nombre"], r["depots"]), (0, []))
+        self.assertEqual(r["erreur"], github.MESSAGE_QUOTA)
+
+    def test_deconnexion_vide_la_memoire(self):
+        self.calculs = 0
+        with mock.patch.object(github, "_calcul_actions", side_effect=self.faux_calcul):
+            github.actions()
+            github.deconnecter()
+            self.coffre.valeurs[github.CIBLE_COFFRE] = "gho_autre"
+            github.actions()
+        self.assertEqual(self.calculs, 2, "un autre compte ne doit pas voir la mémoire du précédent")
+
+
+class TestRoutesNouvelles(ServeurTest):
+    def setUp(self):
+        github._memoire.clear()
+
+    def test_routes_declarees(self):
+        self.assertEqual(sorted(github.ROUTES), ["actions", "echecs_ci", "issues", "prs"])
+
+    def test_prs_par_le_serveur(self):
+        with FauxCoffre("gho_test"), ConfigTemporaire({"github": {}}), \
+                mock.patch.object(github, "_appel", side_effect=api_pr_issues()):
+            statut, r = self.post("/api/github/prs", {"forcer": True})
+        self.assertEqual((statut, r["nombre"]), (200, 3))
+
+    def test_quota_en_400(self):
+        with FauxCoffre("gho_test"), ConfigTemporaire({"github": {}}), \
+                mock.patch.object(github, "_requete", return_value=(429, None)):
+            statut, r = self.post("/api/github/issues", {})
+        self.assertEqual((statut, r["erreur"]), (400, github.MESSAGE_QUOTA))
+
+    def test_echecs_ci_non_connecte(self):
+        with FauxCoffre(), ConfigTemporaire({"github": {}}):
+            statut, r = self.post("/api/github/echecs_ci", {})
+        self.assertEqual((statut, r), (200, {"nombre": 0, "depots": []}))
 
 
 if __name__ == "__main__":

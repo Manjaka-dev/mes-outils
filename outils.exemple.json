@@ -1,5 +1,7 @@
 {
   "prenom": "",
+  "langue": "fr",
+  "dossiers_projets": [],
   "serveurs_odoo": {
     "gadget": ""
   },
@@ -17,8 +19,5 @@
       "cible": "https://web.whatsapp.com/",
       "fenetre_appli": true
     }
-  ],
-  "github": {
-    "dossiers": []
-  }
+  ]
 }

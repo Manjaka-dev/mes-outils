@@ -2,6 +2,41 @@
 /* Onglet « Notes » : notes en cartes, listes à cocher, épingles, rappels.
    Enregistrement automatique pendant la frappe (donnees/notes.json). */
 (() => {
+  I18N.ajouter({
+    "Notes": "Notes",
+    "Mes notes": "My notes",
+    "Toutes": "All",
+    "Listes": "Lists",
+    "Avec rappel": "With reminder",
+    "Chercher dans les notes…": "Search notes…",
+    "＋ Note": "＋ Note",
+    "☑️ Liste": "☑️ List",
+    "Aucune note ne correspond.": "No matching note.",
+    "Pas encore de note. Une idée ? Notez-la ! ✍️": "No notes yet. Got an idea? Write it down! ✍️",
+    "+ {n} autres": "+ {n} more",
+    "Épinglée": "Pinned",
+    "Enregistré": "Saved",
+    "✓ Enregistré": "✓ Saved",
+    "Écrivez ici…": "Write here…",
+    "Élément…": "Item…",
+    "Retirer": "Remove",
+    "＋ Ajouter un élément": "＋ Add an item",
+    "Couleur": "Colour",
+    "Épingler en haut et sur l'accueil": "Pin to the top and to the home page",
+    "Rappel par la bulle": "Reminder from the bubble",
+    "Rappel": "Reminder",
+    "Passer en liste à cocher / en texte": "Switch to checklist / text",
+    "📄 En texte": "📄 As text",
+    "☑️ En liste": "☑️ As list",
+    "Titre": "Title",
+    "Supprimer cette note ?": "Delete this note?",
+    "Elle disparaît définitivement.": "It will be deleted permanently.",
+    "Supprimer": "Delete",
+    "🗑 Supprimer": "🗑 Delete",
+    "🗑️ Note supprimée": "🗑️ Note deleted",
+    "Terminé": "Done",
+  });
+
   const COULEURS_NOTE = ["#ffffff", "#fff4c2", "#ffe1d6", "#dcf7f0", "#e6f0ff", "#efeaff", "#fde2ef", "#e9ecef"];
   const ACCENTS = { "#ffffff": "#a7a3bd", "#fff4c2": "#ffb020", "#ffe1d6": "#ff7a59", "#dcf7f0": "#18b597", "#e6f0ff": "#2f8cff", "#efeaff": "#6c4cf5", "#fde2ef": "#e5488d", "#e9ecef": "#475569" };
   const N = { notes: [], recherche: "", filtre: "toutes", timer: null };
@@ -10,46 +45,56 @@
   style.textContent = `
     .notes-grille { columns: 4 240px; column-gap: 16px; }
     .note { break-inside: avoid; margin: 0 0 16px; border-radius: 18px; padding: 14px 16px 12px; box-shadow: var(--ombre);
-            cursor: pointer; position: relative; transition: transform .2s, box-shadow .2s; animation: apparait .35s both; border: 1.5px solid rgba(0,0,0,.04); }
+            cursor: pointer; position: relative; transition: transform .2s, box-shadow .2s; animation: apparait .35s both; border: 1.5px solid rgba(0,0,0,.04); color: #1f1a3a; color-scheme: light; }
     .note:hover { transform: translateY(-3px) rotate(-.4deg); }
     .note .titre { font-weight: 800; font-size: 15.5px; margin: 0 22px 6px 0; word-break: break-word; }
     .note .texte { white-space: pre-wrap; font-size: 14px; color: #3b3657; line-height: 1.45; max-height: 230px; overflow: hidden; word-break: break-word; }
     .note .epingle { position: absolute; top: 10px; right: 10px; font-size: 15px; }
     .note .bas { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
-    .chip { font-size: 11.5px; font-weight: 700; border-radius: 99px; padding: 2px 9px; background: rgba(255,255,255,.75); color: var(--doux); }
-    .chip.passe { color: var(--gris); text-decoration: line-through; }
+    .chip { font-size: 11.5px; font-weight: 700; border-radius: 99px; padding: 2px 9px; background: rgba(255,255,255,.75); color: #6b6790; }
+    .chip.passe { color: #a7a3bd; text-decoration: line-through; }
     .coche { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; padding: 2px 0; }
     .coche input { margin-top: 3px; accent-color: var(--menthe); width: 16px; height: 16px; flex: none; cursor: pointer; }
-    .coche.fait span { text-decoration: line-through; color: var(--gris); }
+    .coche.fait span { text-decoration: line-through; color: #a7a3bd; }
     .notes-vide { text-align: center; padding: 50px 20px; color: var(--doux); }
     .notes-vide div { font-size: 60px; animation: flotte 3s ease-in-out infinite; }
     @keyframes flotte { 50% { transform: translateY(-8px) rotate(5deg); } }
-    .editeur-note { border-radius: 20px; padding: 6px 4px; }
+    .editeur-note { border-radius: 20px; padding: 6px 4px; color: #1f1a3a; color-scheme: light; }
+    /* Posés sur la couleur de la note (claire, choisie par l'utilisateur) : texte
+       sombre et fond transparent, même en thème sombre (!important : le style
+       commun des champs de hub.html est plus précis). */
+    .editeur-note input.titre-note, .editeur-note textarea.texte-note, .liste-edition .element input[type=text] {
+      background: transparent !important; border-color: transparent !important; box-shadow: none !important; color: #1f1a3a !important; padding-left: 2px !important; }
+    .editeur-note .liste-edition .element input[type=text]:focus { border-bottom-color: #6c4cf5 !important; }
+    .editeur-note input::placeholder, .editeur-note textarea::placeholder { color: #8d89a8 !important; }
     .editeur-note input.titre-note { width: 100%; border: 0; background: transparent; font-size: 20px; font-weight: 800; outline: none; margin-bottom: 8px; }
     .editeur-note textarea.texte-note { width: 100%; border: 0; background: transparent; outline: none; resize: vertical; min-height: 170px; font-size: 15px; line-height: 1.5; }
     .liste-edition .element { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
     .liste-edition .element input[type=text] { flex: 1; border: 0; border-bottom: 1.5px dashed transparent; background: transparent; outline: none; font-size: 15px; padding: 4px 0; }
     .liste-edition .element input[type=text]:focus { border-bottom-color: var(--violet); }
-    .liste-edition .element.fait input[type=text] { text-decoration: line-through; color: var(--gris); }
+    .liste-edition .element.fait input[type=text] { text-decoration: line-through; color: #a7a3bd; }
     .liste-edition .element button { border: 0; background: transparent; cursor: pointer; opacity: .45; font-size: 14px; }
     .liste-edition .element button:hover { opacity: 1; }
     .outils-note { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-top: 1px solid rgba(0,0,0,.06); padding-top: 12px; margin-top: 10px; }
     .outils-note .pastilles-c { display: flex; gap: 6px; }
     .outils-note .pastilles-c button { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1.5px #d9d5ea; cursor: pointer; }
     .outils-note .pastilles-c button.choisi { box-shadow: 0 0 0 2.5px var(--encre); }
-    .outils-note input[type=datetime-local] { border: 1.5px solid var(--ligne); border-radius: 10px; padding: 5px 8px; background: #fff; }
-    .sauve { font-size: 12px; color: var(--doux); margin-left: auto; }
+    .outils-note input[type=datetime-local] { border: 1.5px solid #e7e3fb !important; border-radius: 10px !important; padding: 5px 8px !important; background: #fff !important; color: #1f1a3a !important; color-scheme: light; }
+    .editeur-note .outils-note .btn.discret { color: #6b6790; }
+    .sauve { font-size: 12px; color: #6b6790; margin-left: auto; }
   `;
   document.head.append(style);
 
   const racine = () => $("#vue-notes");
+  // Données de l'utilisateur (titres, textes) : jamais traduites.
+  const brut = s => document.createTextNode(s ?? "");
 
   function rappelTexte(n) {
     if (!n.rappel) return null;
     const d = new Date(n.rappel);
     const passe = d < new Date();
     return el("span", { class: "chip" + (passe && n.rappel_fait ? " passe" : "") },
-      "⏰ " + d.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }));
+      "⏰ " + d.toLocaleString(I18N.locale(), { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }));
   }
 
   async function charger() {
@@ -71,13 +116,13 @@
       ? el("div", {}, (n.elements || []).slice(0, 8).map((e, j) => el("label", { class: "coche" + (e.fait ? " fait" : ""), onclick: ev => ev.stopPropagation() },
           el("input", { type: "checkbox", checked: e.fait ? "" : null, onchange: async ev => {
             n.elements[j].fait = ev.target.checked; await sauver(n); dessiner();
-          } }), el("span", {}, e.texte))),
-          (n.elements || []).length > 8 ? el("div", { class: "chip" }, `+ ${(n.elements.length - 8)} autres`) : null)
-      : el("div", { class: "texte" }, n.texte || "");
+          } }), el("span", {}, brut(e.texte)))),
+          (n.elements || []).length > 8 ? el("div", { class: "chip" }, t("+ {n} autres", { n: n.elements.length - 8 })) : null)
+      : el("div", { class: "texte" }, brut(n.texte));
     const faits = (n.elements || []).filter(e => e.fait).length;
     return el("div", { class: "note", style: `background:${fond};animation-delay:${i * 30}ms`, onclick: () => editer(n) },
       n.epinglee ? el("span", { class: "epingle", title: "Épinglée" }, "📌") : null,
-      n.titre ? el("div", { class: "titre" }, n.titre) : null,
+      n.titre ? el("div", { class: "titre" }, brut(n.titre)) : null,
       corps,
       el("div", { class: "bas" },
         n.genre === "liste" && n.elements?.length ? el("span", { class: "chip" }, `✅ ${faits}/${n.elements.length}`) : null,
@@ -91,9 +136,9 @@
       oninput: e => { N.recherche = e.target.value; dessinerGrille(); } });
     r.replaceChildren(
       el("div", { class: "barre-vue" },
-        el("h2", {}, "📝 Mes notes ", el("span", { class: "compte" }, String(N.notes.length))),
-        el("div", { class: "puces" }, [["toutes", "Toutes"], ["listes", "Listes"], ["rappels", "Avec rappel"]].map(([v, t]) =>
-          el("button", { class: "puce" + (N.filtre === v ? " actif" : ""), onclick: () => { N.filtre = v; dessiner(); } }, t))),
+        el("h2", {}, "📝 " + t("Mes notes") + " ", el("span", { class: "compte" }, String(N.notes.length))),
+        el("div", { class: "puces" }, [["toutes", "Toutes"], ["listes", "Listes"], ["rappels", "Avec rappel"]].map(([v, libelle]) =>
+          el("button", { class: "puce" + (N.filtre === v ? " actif" : ""), onclick: () => { N.filtre = v; dessiner(); } }, libelle))),
         el("div", { class: "espace" }),
         el("div", { class: "champ-recherche" }, el("span", {}, "🔎"), recherche),
         el("button", { class: "btn principal", onclick: () => nouvelle("texte") }, "＋ Note"),
@@ -134,7 +179,7 @@
       clearTimeout(timer);
       timer = setTimeout(async () => {
         if (!n.titre && !n.texte && !(n.elements || []).some(e => e.texte)) { etat.textContent = ""; return; }
-        try { await sauver(n); etat.textContent = "✓ Enregistré"; } catch (e) { etat.textContent = "⚠️ " + e.message; }
+        try { await sauver(n); etat.textContent = t("✓ Enregistré"); } catch (e) { etat.textContent = "⚠️ " + e.message; }
       }, 500);
     };
     const boite = el("div", { class: "editeur-note" });
@@ -143,8 +188,8 @@
     const zoneCorps = el("div");
     const dessinerCorps = () => {
       if (n.genre !== "liste") {
-        const t = el("textarea", { class: "texte-note", placeholder: "Écrivez ici…", value: n.texte || "", oninput: e => { n.texte = e.target.value; planifier(); } });
-        zoneCorps.replaceChildren(t);
+        const zone = el("textarea", { class: "texte-note", placeholder: "Écrivez ici…", value: n.texte || "", oninput: e => { n.texte = e.target.value; planifier(); } });
+        zoneCorps.replaceChildren(zone);
         return;
       }
       const liste = el("div", { class: "liste-edition" });
@@ -211,5 +256,6 @@
     observateur.observe($("#voile"), { attributes: true, attributeFilter: ["class"] });
   }
 
-  VUES.notes = { afficher: () => charger().catch(e => toast("😕 " + e.message, "erreur")), nouvelle };
+  VUES.notes = { afficher: () => charger().catch(e => toast("😕 " + e.message, "erreur")), nouvelle,
+    titre: "Notes", icone: "📝", groupe: "quotidien", ordre: 20 };
 })();

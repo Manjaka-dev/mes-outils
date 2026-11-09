@@ -8,10 +8,11 @@ serveurs Odoo sont ceux d'un gadget « Serveurs Odoo » externe, facultatif
 (chemin dans outils.json, clé serveurs_odoo.gadget), dont on réutilise le
 code tel quel.
 """
+import importlib
 import importlib.util
 import json
 import os
-import shutil
+import re
 import socket
 import subprocess
 import sys
@@ -23,14 +24,13 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import config  # noqa: E402  (outils.json et dossier donnees)
 import donnees  # noqa: E402  (notes et agenda)
 
 HOTE, PORT = "127.0.0.1", 8760
-ICI = os.path.dirname(os.path.abspath(__file__))
-RACINE = os.path.dirname(ICI)
+ICI = config.ICI
+RACINE = config.RACINE
 PAGE = os.path.join(ICI, "hub.html")
-FICHIER_OUTILS = os.path.join(RACINE, "outils.json")
-FICHIER_EXEMPLE = os.path.join(RACINE, "outils.exemple.json")
 JOURNAL = os.path.join(ICI, "hub.log")
 
 NAVIGATEURS_APPLI = [
@@ -54,20 +54,32 @@ def journal(message):
 # Configuration
 # ---------------------------------------------------------------------------
 def lire_outils():
-    # Premier lancement : la configuration personnelle (non versionnée) part
-    # de l'exemple fourni avec le code.
-    if not os.path.exists(FICHIER_OUTILS) and os.path.exists(FICHIER_EXEMPLE):
-        shutil.copyfile(FICHIER_EXEMPLE, FICHIER_OUTILS)
-    with open(FICHIER_OUTILS, encoding="utf-8-sig") as f:
-        return json.load(f)
+    """outils.json (voir config.py)."""
+    return config.lire()
 
 
 def ecrire_outils(contenu):
-    tmp = FICHIER_OUTILS + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(contenu, f, ensure_ascii=False, indent=2)
-        f.write("\n")
-    os.replace(tmp, FICHIER_OUTILS)
+    config.ecrire(contenu)
+
+
+# ---------------------------------------------------------------------------
+# Modules : chaque fichier outil/<nom>.py qui définit ROUTES = {"action":
+# fonction(donnees)} répond tout seul sur POST /api/<nom>/<action>.
+# ---------------------------------------------------------------------------
+MODULE_VALIDE = re.compile(r"^[a-z][a-z0-9_]{1,30}$")
+
+
+def routes_module(nom):
+    if not MODULE_VALIDE.match(nom) or not os.path.isfile(os.path.join(ICI, nom + ".py")):
+        return None
+    routes = getattr(importlib.import_module(nom), "ROUTES", None)
+    return routes if isinstance(routes, dict) else None
+
+
+def onglets_web():
+    """Les fichiers des onglets (outil/web/*.js), chargés par la page."""
+    dossier = os.path.join(ICI, "web")
+    return sorted(n for n in os.listdir(dossier) if n.endswith(".js") and n != "i18n.js")
 
 
 # ---------------------------------------------------------------------------
@@ -245,15 +257,10 @@ def memoriser_adresse_mail(adresse):
     ecrire_outils(actuel)
 
 
-_coffre = None
-
-
 def le_coffre():
-    global _coffre
-    if _coffre is None:
-        import coffre
-        _coffre = coffre.Coffre()
-    return _coffre
+    """Le coffre à mots de passe, partagé par tous les onglets."""
+    import coffre
+    return coffre.partage()
 
 
 _onglet = {"nom": None, "heure": 0}
@@ -322,6 +329,9 @@ class Gestionnaire(BaseHTTPRequestHandler):
                     return self.repondre(200, f.read(), "text/html; charset=utf-8")
             if chemin == "/api/outils":
                 return self.repondre(200, etat_outils())
+            if chemin == "/api/onglets":
+                return self.repondre(200, {"fichiers": onglets_web(), "langue": config.langue(), "theme": config.theme(),
+                                           "masques": lire_outils().get("onglets_masques") or []})
             if chemin == "/api/serveurs":
                 return self.repondre(200, etats_serveurs())
             if chemin == "/api/notes":
@@ -329,8 +339,7 @@ class Gestionnaire(BaseHTTPRequestHandler):
             if chemin == "/api/agenda":
                 return self.repondre(200, donnees.lister("agenda"))
             if chemin == "/api/mail/etat":
-                b = boite()
-                return self.repondre(200, {"configuree": b.configuree(), "adresse": b.adresse})
+                return self.repondre(200, boite().etat())
             if chemin == "/api/mail/non_lus":
                 b = boite()
                 return self.repondre(200, {"non_lus": b.non_lus() if b.configuree() else None})
@@ -389,16 +398,26 @@ class Gestionnaire(BaseHTTPRequestHandler):
                 bat = os.path.join(os.path.dirname(g.__file__), "Gestion serveurs Odoo.bat")
                 os.startfile(bat)
                 return self.repondre(200, {"ok": True})
+            morceaux = chemin[len("/api/"):].split("/", 1) if chemin.startswith("/api/") else []
+            if len(morceaux) == 2:
+                routes = routes_module(morceaux[0])
+                if routes is not None:
+                    fonction = routes.get(morceaux[1])
+                    if fonction is None:
+                        return self.repondre(404, {"erreur": "Introuvable."})
+                    return self.repondre(200, fonction(donnees_requete))
             if chemin == "/api/quitter":
                 self.repondre(200, {"ok": True})
                 if not BULLE_ACTIVE:  # avec la bulle, on ferme seulement la fenêtre
                     threading.Thread(target=self.server.shutdown, daemon=True).start()
                 return None
             self.repondre(404, {"erreur": "Introuvable."})
-        except (ValueError, RuntimeError, FileNotFoundError) as e:
+        except (ValueError, RuntimeError, FileNotFoundError, PermissionError) as e:
             self.repondre(400, {"erreur": str(e)})
         except Exception as e:  # noqa: BLE001
-            if type(e).__name__ in ("ErreurMail", "ErreurCoffre", "ErreurSSH", "ErreurGitHub"):
+            # Les erreurs « prévues » des modules (ErreurMail, ErreurGitHub…)
+            # sont des messages pour l'utilisateur.
+            if type(e).__name__.startswith("Erreur"):
                 return self.repondre(400, {"erreur": str(e)})
             journal(traceback.format_exc())
             self.repondre(500, {"erreur": f"Erreur inattendue : {e}"})
@@ -461,7 +480,7 @@ class Gestionnaire(BaseHTTPRequestHandler):
         il ne passe jamais par la page."""
         import github
         reglages = lire_outils().get("github") or {}
-        dossiers = reglages.get("dossiers") or []
+        dossiers = config.dossiers_projets()
         if action == "etat":
             return self.repondre(200, {**github.etat(), "dossiers": dossiers})
         if action == "connexion/debut":
@@ -474,18 +493,7 @@ class Gestionnaire(BaseHTTPRequestHandler):
         if action == "depots":
             return self.repondre(200, github.lister_depots(dossiers))
         if action == "dossiers":
-            nouveaux = []
-            for chemin in d.get("dossiers") or []:
-                chemin = os.path.normpath(str(chemin).strip().strip('"'))
-                if not os.path.isdir(chemin):
-                    raise ValueError(f"Dossier introuvable : {chemin}")
-                if chemin not in nouveaux:
-                    nouveaux.append(chemin)
-            actuel = lire_outils()
-            actuel.pop("bulle", None)
-            actuel.setdefault("github", {})["dossiers"] = nouveaux
-            ecrire_outils(actuel)
-            return self.repondre(200, {"dossiers": nouveaux})
+            return self.repondre(200, {"dossiers": config.enregistrer_dossiers_projets(d.get("dossiers"))})
         if action == "cloner":
             return self.repondre(200, github.cloner(d.get("complet"), d.get("dossier"), dossiers))
         if action == "ouvrir_page":
@@ -502,6 +510,10 @@ class Gestionnaire(BaseHTTPRequestHandler):
         if action == "creer":
             return self.repondre(200, github.creer_et_envoyer(d.get("dossier"), d.get("nom"),
                                                               d.get("description", ""), d.get("prive", True)))
+        # Actions plus récentes (pull requests, issues, Actions…) : github.ROUTES.
+        fonction = (getattr(github, "ROUTES", None) or {}).get(action)
+        if fonction:
+            return self.repondre(200, fonction(d))
         return self.repondre(404, {"erreur": "Introuvable."})
 
     def mail(self, action, d):
@@ -510,7 +522,7 @@ class Gestionnaire(BaseHTTPRequestHandler):
             # Le mot de passe d'application, saisi par l'utilisateur, part
             # directement dans le coffre Windows ; il n'est ni journalisé ni
             # renvoyé.
-            b.tester_et_enregistrer(d.get("adresse", "").strip(), d.get("secret", ""))
+            b.tester_et_enregistrer(d.get("adresse", "").strip(), d.get("secret", ""), d.get("reglages"))
             memoriser_adresse_mail(b.adresse)
             return self.repondre(200, {"configuree": True, "adresse": b.adresse})
         if action == "deconnexion":

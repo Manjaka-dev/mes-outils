@@ -286,3 +286,19 @@ def copier_presse_papiers(texte, effacer_apres=None):
                     _u32.CloseClipboard()
 
         threading.Thread(target=effacer, daemon=True).start()
+
+
+# ---------------------------------------------------------------------------
+# Le coffre du tableau de bord, partagé par tous les onglets (Mots de passe,
+# Projets…) : une fois ouvert dans l'un, il l'est pour les autres.
+# ---------------------------------------------------------------------------
+_partage = None
+_verrou_partage = threading.Lock()
+
+
+def partage():
+    global _partage
+    with _verrou_partage:
+        if _partage is None:
+            _partage = Coffre()
+        return _partage

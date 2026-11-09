@@ -20,8 +20,15 @@ dossier Démarrage : touche Windows + R, taper shell:startup ; supprimer
 Si la bulle a été quittée : raccourci « Mes outils » du Bureau, ou
 « Mes outils.bat » dans ce dossier.
 
+Pastille rouge (en bas)  tests GitHub (Actions) en échec
+
 Le tableau de bord s'ouvre dans une fenêtre Edge sans barre d'adresse. La
 fermer (🚪 ou la croix) ne coupe rien : la bulle reste là.
+
+Menu à gauche : les onglets, rangés en « Au quotidien », « Développement »,
+« Petits outils ». Ctrl + K (ou « Rechercher… » en haut) : aller à un onglet,
+lancer un outil ou une action au clavier. 🌗 : thème clair, sombre ou
+automatique (comme Windows).
 
 
 LES OUTILS
@@ -42,14 +49,18 @@ LES ONGLETS
 🏠 Accueil   « Aujourd'hui » (rendez-vous du jour et du lendemain, notes
              épinglées, mails non lus), vos outils, les serveurs Odoo.
 
-✉️ Mails     Votre Gmail : reçus, envoyés, recherche, lecture, répondre,
-             transférer, nouveau mail. Première fois : créer un « mot de passe
-             d'application » Google (le guide est affiché dans l'onglet) ; il
-             est rangé dans le coffre de Windows (Gestionnaire d'identification >
+✉️ Mails     Votre boîte mail : Gmail, Yahoo, iCloud, Zoho, Fastmail, GMX,
+             OVH, Orange, Free, La Poste, ou « Autre » (serveurs IMAP/SMTP
+             saisis à la main). Outlook/Hotmail : pas encore (Microsoft exige
+             une autre méthode de connexion). Reçus, envoyés, recherche,
+             lecture, répondre, transférer, nouveau mail. Première fois : le
+             guide du fournisseur est affiché dans l'onglet (mot de passe
+             d'application ou mot de passe habituel) ; il est rangé dans le
+             coffre de Windows (Gestionnaire d'identification >
              Informations d'identification Windows > « MesOutils:mail:… »).
              Les images distantes des mails sont bloquées (elles servent à
              savoir si vous avez ouvert le mail) : bouton « Afficher les images ».
-             Les pièces jointes sont listées ; on les ouvre depuis Gmail.
+             Les pièces jointes sont listées ; on les ouvre depuis le webmail.
              Bouton 🔌 : déconnecter (le mot de passe est retiré du coffre).
 
 📝 Notes     Notes en cartes colorées ou listes à cocher, épingle 📌, recherche,
@@ -104,6 +115,54 @@ LES ONGLETS
              comme .env ou clés signalés, fichiers de plus de 100 Mo
              refusés), puis « Créer et envoyer » (privé par défaut).
 
+📦 Projets   Les projets trouvés dans vos dossiers de projets (Réglages), avec
+             leur type (Node, Python, Django, Docker, Odoo…). Pour chacun :
+             📂 dossier, 💻 VS Code, terminal, site local.
+             Commandes (serveurs de dev) : proposées d'après le projet
+             (npm run dev, manage.py runserver, docker compose up…),
+             modifiables ; ▶ démarrer, ■ arrêter (seulement ce que Mes outils a
+             lancé), ☰ journal (donnees\journaux).
+             Git : ⬆️ à envoyer, ⬇️ à récupérer, ✏️ modifié ; « Tout vérifier »
+             fait un git fetch de tous les projets.
+             .env : sauvegardé dans le coffre chiffré (catégorie « env »),
+             restauré en un clic (le coffre doit être ouvert).
+
+🐙 GitHub    (suite) Pull requests (les vôtres, celles où votre relecture est
+             demandée), issues qui vous sont assignées, état des GitHub
+             Actions des dépôts récents et de ceux de ce PC.
+
+🔌 Ports     Les ports en écoute et le programme qui les occupe ; recherche
+             d'un port ; « Arrêter » après confirmation (les processus système
+             et Mes outils lui-même sont protégés).
+
+🐳 Docker    Conteneurs groupés par projet compose : démarrer, arrêter,
+             redémarrer, supprimer, journal, ports cliquables.
+
+📡 Testeur d'API
+             Méthode, adresse, en-têtes, corps, authentification ; réponse
+             mise en forme ; historique (les secrets n'y sont jamais
+             enregistrés), requêtes enregistrées, copie en cURL.
+
+🧪 Boîte à outils
+             JWT, Base64, JSON, horodatage, UUID, expressions régulières,
+             encodage URL, empreintes SHA, couleurs. Rien ne quitte la page.
+
+✂️ Extraits  Vos commandes et bouts de code favoris : un clic = copié (aussi
+             depuis le clic droit sur la bulle).
+
+📋 Presse-papiers
+             Les 50 derniers textes copiés, gardés EN MÉMOIRE seulement
+             (effacés à la fermeture). Les mots de passe copiés depuis le
+             coffre n'y entrent pas. Pause possible.
+
+⏱️ Temps     Chrono par projet (un seul à la fois), Pomodoro (la bulle
+             prévient à la fin de chaque période), sessions par jour, semaine
+             ou mois, totaux par projet, export CSV pour Excel.
+
+⚙️ Réglages  Prénom, langue (français / anglais), thème, onglets affichés,
+             dossiers de projets, démarrage avec Windows, raccourci sur le
+             Bureau, mise à jour (si installé avec git clone).
+
 💬 WhatsApp  La tuile ouvre WhatsApp Web dans sa propre fenêtre (votre
              WhatsApp habituel : scannez le QR code une fois avec le téléphone).
 
@@ -141,7 +200,12 @@ LES FICHIERS
   outil\donnees.py     enregistrement des notes, de l'agenda et des rappels
   outil\mail.py        la connexion Gmail (IMAP pour lire, SMTP pour envoyer)
   outil\coffre.py      le coffre à mots de passe
-  outil\github.py      l'onglet GitHub (connexion, dépôts, clonage, envoi)
+  outil\github.py      l'onglet GitHub (connexion, dépôts, clonage, envoi, PR, Actions)
+  outil\<nom>.py et outil\web\<nom>.js
+                       un onglet chacun (projets, ports, conteneurs, requetes,
+                       extraits, presse_papiers, temps, reglages…) ; pour en
+                       ajouter un : docs\MODULES.md
+  outil\config.py      lecture et écriture d'outils.json et du dossier donnees
   outil\coffre_windows.py  lecture et écriture dans le coffre de Windows
   tests\               tests automatiques : python -m unittest discover -s tests
 
@@ -154,6 +218,8 @@ peut pas lui parler).
   outil\hub.log        les erreurs éventuelles
   outil\mes_outils.ico l'icône des raccourcis
 
+Installation sur un autre PC : installer.bat (vérifie Python, installe les
+bibliothèques, crée les raccourcis, lance la bulle).
 « Mes outils.bat » utilise pythonw du PATH, ou le Python indiqué dans la
 variable d'environnement MES_OUTILS_PYTHON. Bibliothèques nécessaires :
 pip install -r requirements.txt

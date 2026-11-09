@@ -4,8 +4,10 @@ tâches.
 
 - clic : ouvre le tableau de bord (ou le ramène devant s'il est déjà ouvert) ;
 - glisser : la déplace, la position est retenue ;
-- clic droit : accès direct aux outils et aux serveurs Odoo, Masquer, Quitter ;
-- pastille verte : nombre de serveurs Odoo en marche ;
+- clic droit : accès direct aux onglets, outils, serveurs (projets et Odoo),
+  extraits, presse-papiers, chrono, Masquer, Quitter ;
+- pastille verte : nombre de serveurs en marche (projets et Odoo) ;
+- pastille corail : mails non lus ; pastille rouge : tests GitHub en échec ;
 - un peu transparente au repos, pleine au survol.
 
 Elle fait aussi tourner le petit serveur du tableau de bord (hub.py) : un seul
@@ -30,6 +32,46 @@ CLE = "#010203"                       # couleur rendue transparente autour de la
 TAILLE = 64                           # diamètre à 100 % d'affichage
 OPACITE_REPOS, OPACITE_SURVOL = 0.62, 1.0
 user32 = ctypes.windll.user32
+
+# Textes de la bulle en anglais (langue choisie dans les Réglages).
+ANGLAIS = {
+    "Ouvrir le tableau de bord": "Open the dashboard", "Note rapide": "Quick note", "Mails": "Mail",
+    "non lus": "unread", "Agenda": "Calendar", "Notes": "Notes", "Mots de passe": "Passwords",
+    "Projets": "Projects", "GitHub": "GitHub", "en échec": "failing", "Serveurs locaux": "Local servers",
+    "Serveurs Odoo": "Odoo servers", "Ouvrir": "Open", "Arrêter": "Stop", "Démarrer": "Start",
+    "Extraits": "Snippets", "Presse-papiers": "Clipboard", "(vide)": "(empty)",
+    "Arrêter le chrono": "Stop the timer", "Démarrer un chrono…": "Start a timer…",
+    "Masquer 15 minutes": "Hide for 15 minutes", "Quitter la bulle": "Quit the bubble",
+    "Rappel": "Reminder", "Plus tard": "Later", "OK": "OK", "Pomodoro": "Pomodoro",
+    "Quitter la bulle ?\n\nLes serveurs et les outils déjà lancés continuent de tourner.":
+        "Quit the bubble?\n\nServers and tools already launched keep running.",
+    "Arrêter {nom} ?": "Stop {nom}?", "Base de référence": "Reference database",
+    "« {base} » ne doit pas être modifiée.\n\nDémarrer quand même son serveur ?":
+        "“{base}” must not be modified.\n\nStart its server anyway?",
+    "Arrêter le serveur {base} (port {port}) ?": "Stop the {base} server (port {port})?",
+    "Note rapide · 1re ligne = titre · Ctrl + Entrée pour enregistrer": "Quick note · 1st line = title · Ctrl + Enter to save",
+    "1re ligne = titre · Ctrl + Entrée pour enregistrer": "1st line = title · Ctrl + Enter to save",
+    "Annuler": "Cancel", "Enregistrer": "Save", "Copié : {texte}": "Copied: {texte}",
+}
+
+
+def tr(texte, **valeurs):
+    """Le texte dans la langue des Réglages."""
+    try:
+        anglais = hub.config.langue() == "en"
+    except Exception:
+        anglais = False
+    texte = ANGLAIS.get(texte, texte) if anglais else texte
+    return texte.format(**valeurs) if valeurs else texte
+
+
+def module(nom):
+    """Un module facultatif (projets, temps…), ou None s'il manque."""
+    try:
+        return __import__(nom)
+    except Exception as erreur:  # noqa: BLE001
+        hub.journal(f"Bulle : module {nom} indisponible ({erreur})")
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -148,6 +190,9 @@ class Bulle:
         self.nb_marche = None
         self.pastille_mail = None
         self.nb_mails = None
+        self.pastille_ci = None
+        self.nb_ci = None
+        self.serveurs_projets = []
         self.rappels_affiches = {}
 
         self.toile.bind("<ButtonPress-1>", self.appui)
@@ -163,6 +208,8 @@ class Bulle:
         self.suivre_serveurs()
         r.after(3000, self.suivre_mails)
         r.after(5000, self.suivre_rappels)
+        r.after(10000, self.suivre_ci)
+        r.after(1500, self.demarrer_presse_papiers)
 
     def hors_barre_des_taches(self):
         """Style « fenêtre d'outil » : jamais de bouton dans la barre des
@@ -240,6 +287,12 @@ class Bulle:
                 nb = sum(1 for s in etats["serveurs"] if s["etat"] == "En marche") if etats["disponible"] else 0
             except Exception:
                 nb = 0
+            projets = module("projets")
+            try:
+                self.serveurs_projets = projets.serveurs() if projets else []
+            except Exception:
+                self.serveurs_projets = []
+            nb += sum(1 for s in self.serveurs_projets if s.get("etat") == "marche")
             self.racine.after(0, lambda: self.dessiner_pastille(nb))
         threading.Thread(target=lire, daemon=True).start()
         self.racine.after(6000, self.suivre_serveurs)
@@ -293,6 +346,45 @@ class Bulle:
                                    font=("Segoe UI", max(8, int(9 * self.echelle)), "bold")),
         )
 
+    # -- pastille rouge : tests GitHub (Actions) en échec ---------------------
+    def suivre_ci(self):
+        def lire():
+            github = module("github")
+            try:
+                nb = github.echecs_ci()["nombre"] if github and hasattr(github, "echecs_ci") else 0
+            except Exception:
+                nb = 0  # pas connecté, hors ligne… : pas de pastille
+            self.racine.after(0, lambda: self.dessiner_pastille_ci(nb))
+        threading.Thread(target=lire, daemon=True).start()
+        self.racine.after(5 * 60 * 1000, self.suivre_ci)
+
+    def dessiner_pastille_ci(self, nb):
+        if nb == self.nb_ci:
+            return
+        self.nb_ci = nb
+        if self.pastille_ci:
+            for element in self.pastille_ci:
+                self.toile.delete(element)
+            self.pastille_ci = None
+        if not nb:
+            return
+        p = int(20 * self.echelle)
+        y1 = self.d + self.marge - p - 1
+        self.pastille_ci = (
+            self.toile.create_oval(1, y1, 1 + p, y1 + p, fill="#e5484d", outline="#ffffff", width=max(2, int(2 * self.echelle))),
+            self.toile.create_text(1 + p / 2, y1 + p / 2, text=str(nb) if nb < 10 else "9+", fill="#ffffff",
+                                   font=("Segoe UI", max(7, int(8 * self.echelle)), "bold")),
+        )
+
+    # -- historique du presse-papiers (en mémoire seulement) -----------------
+    def demarrer_presse_papiers(self):
+        presse_papiers = module("presse_papiers")
+        if presse_papiers:
+            try:
+                presse_papiers.demarrer_surveillance()
+            except Exception as erreur:  # noqa: BLE001
+                hub.journal(f"Presse-papiers : {erreur}")
+
     # -- rappels des notes et de l'agenda ---------------------------------
     def suivre_rappels(self):
         try:
@@ -302,6 +394,15 @@ class Bulle:
                     self.afficher_rappel(rappel)
         except Exception as erreur:  # noqa: BLE001
             hub.journal(f"Rappels : {erreur}")
+        # Fin d'une période Pomodoro (onglet Temps).
+        temps = module("temps")
+        try:
+            for alerte in temps.alertes_dues() if temps else []:
+                if ("temps", alerte["id"]) not in self.rappels_affiches:
+                    self.afficher_rappel({"genre": "temps", "id": alerte["id"], "titre": alerte.get("titre", ""),
+                                          "detail": alerte.get("detail")})
+        except Exception as erreur:  # noqa: BLE001
+            hub.journal(f"Alertes du chrono : {erreur}")
         self.racine.after(30000, self.suivre_rappels)
 
     def afficher_rappel(self, rappel):
@@ -315,8 +416,9 @@ class Bulle:
         self.rappels_affiches[cle] = f
         cadre = tk.Frame(f, bg="#ffffff", padx=16, pady=12)
         cadre.pack(padx=2, pady=2)
-        icone = "📝" if rappel["genre"] == "notes" else "📅"
-        tk.Label(cadre, text=f"⏰  Rappel {icone}", bg="#ffffff", fg="#6b6790",
+        icone = {"notes": "📝", "agenda": "📅", "temps": "⏱️"}.get(rappel["genre"], "⏰")
+        entete = tr("Pomodoro") if rappel["genre"] == "temps" else tr("Rappel")
+        tk.Label(cadre, text=f"⏰  {entete} {icone}", bg="#ffffff", fg="#6b6790",
                  font=("Segoe UI", 9, "bold")).pack(anchor="w")
         tk.Label(cadre, text=rappel["titre"], bg="#ffffff", fg="#1f1a3a", font=("Segoe UI", 12, "bold"),
                  wraplength=int(300 * self.echelle), justify="left").pack(anchor="w", pady=(2, 0))
@@ -328,7 +430,11 @@ class Bulle:
 
         def fin(action):
             try:
-                if action == "plus_tard":
+                if rappel["genre"] == "temps":
+                    temps = module("temps")
+                    if temps:
+                        temps.marquer_alerte(rappel["id"])
+                elif action == "plus_tard":
                     hub.donnees.marquer_rappel(rappel["genre"], rappel["id"], reporter_minutes=10)
                 else:
                     hub.donnees.marquer_rappel(rappel["genre"], rappel["id"])
@@ -338,10 +444,13 @@ class Bulle:
             if action == "ouvrir":
                 ouvrir_tableau(rappel["genre"])
 
-        for texte, action, fond, encre in (("Plus tard", "plus_tard", "#f1eefc", "#6b6790"),
-                                           ("OK", "ok", "#f1eefc", "#1f1a3a"),
-                                           ("Ouvrir", "ouvrir", "#6c4cf5", "#ffffff")):
-            tk.Button(boutons, text=texte, command=lambda a=action: fin(a), bg=fond, fg=encre, activebackground=fond,
+        choix = (("Plus tard", "plus_tard", "#f1eefc", "#6b6790"),
+                 ("OK", "ok", "#f1eefc", "#1f1a3a"),
+                 ("Ouvrir", "ouvrir", "#6c4cf5", "#ffffff"))
+        if rappel["genre"] == "temps":
+            choix = choix[1:]  # une fin de période ne se reporte pas
+        for texte, action, fond, encre in choix:
+            tk.Button(boutons, text=tr(texte), command=lambda a=action: fin(a), bg=fond, fg=encre, activebackground=fond,
                       relief="flat", bd=0, padx=12, pady=4, font=("Segoe UI", 10, "bold"), cursor="hand2").pack(side="left", padx=(6, 0))
 
         # À gauche de la bulle (ou à droite si elle est collée au bord gauche),
@@ -375,11 +484,11 @@ class Bulle:
         f.attributes("-toolwindow", True)   # pas de bouton dans la barre des tâches
         f.configure(bg="#fff4c2", padx=12, pady=10)
         f.resizable(False, False)
-        tk.Label(f, text="📝  Note rapide", bg="#fff4c2", fg="#6b6790", font=("Segoe UI", 9, "bold")).pack(anchor="w")
+        tk.Label(f, text="📝  " + tr("Note rapide"), bg="#fff4c2", fg="#6b6790", font=("Segoe UI", 9, "bold")).pack(anchor="w")
         zone = tk.Text(f, width=40, height=7, wrap="word", relief="flat", bg="#fffbe6", fg="#1f1a3a",
                        font=("Segoe UI", 11), padx=8, pady=6, insertbackground="#6c4cf5")
         zone.pack(pady=(4, 8))
-        aide = tk.Label(f, text="1re ligne = titre · Ctrl + Entrée pour enregistrer", bg="#fff4c2", fg="#a7a3bd", font=("Segoe UI", 8))
+        aide = tk.Label(f, text=tr("1re ligne = titre · Ctrl + Entrée pour enregistrer"), bg="#fff4c2", fg="#a7a3bd", font=("Segoe UI", 8))
         aide.pack(anchor="w")
 
         def enregistrer(_e=None):
@@ -397,9 +506,9 @@ class Bulle:
 
         boutons = tk.Frame(f, bg="#fff4c2")
         boutons.pack(anchor="e", pady=(6, 0))
-        tk.Button(boutons, text="Annuler", command=f.destroy, relief="flat", bg="#fff4c2", fg="#6b6790",
+        tk.Button(boutons, text=tr("Annuler"), command=f.destroy, relief="flat", bg="#fff4c2", fg="#6b6790",
                   font=("Segoe UI", 10), cursor="hand2").pack(side="left", padx=4)
-        tk.Button(boutons, text="Enregistrer", command=enregistrer, relief="flat", bg="#6c4cf5", fg="#ffffff",
+        tk.Button(boutons, text=tr("Enregistrer"), command=enregistrer, relief="flat", bg="#6c4cf5", fg="#ffffff",
                   activebackground="#5a3be0", activeforeground="#ffffff", padx=12, pady=3,
                   font=("Segoe UI", 10, "bold"), cursor="hand2").pack(side="left")
         zone.bind("<Control-Return>", enregistrer)
@@ -412,46 +521,121 @@ class Bulle:
         zone.focus_set()
 
     # -- menu clic droit ---------------------------------------------------
+    # -- menu clic droit ---------------------------------------------------
     def menu(self, e):
-        m = tk.Menu(self.racine, tearoff=False, font=("Segoe UI", 10))
-        m.add_command(label="🧰  Ouvrir le tableau de bord", command=ouvrir_tableau)
-        m.add_command(label="📝  Note rapide", command=self.note_rapide)
-        mails = f"  ({self.nb_mails} non lus)" if self.nb_mails else ""
-        m.add_command(label=f"✉️  Mails{mails}", command=lambda: ouvrir_tableau("mails"))
-        m.add_command(label="📅  Agenda", command=lambda: ouvrir_tableau("agenda"))
-        m.add_command(label="🗒️  Notes", command=lambda: ouvrir_tableau("notes"))
-        m.add_command(label="🔐  Mots de passe", command=lambda: ouvrir_tableau("motsdepasse"))
+        police = ("Segoe UI", 10)
+        m = tk.Menu(self.racine, tearoff=False, font=police)
+        m.add_command(label="🧰  " + tr("Ouvrir le tableau de bord"), command=ouvrir_tableau)
+        m.add_command(label="📝  " + tr("Note rapide"), command=self.note_rapide)
+        mails = f"  ({self.nb_mails} {tr('non lus')})" if self.nb_mails else ""
+        m.add_command(label=f"✉️  {tr('Mails')}{mails}", command=lambda: ouvrir_tableau("mails"))
+        m.add_command(label="📅  " + tr("Agenda"), command=lambda: ouvrir_tableau("agenda"))
+        m.add_command(label="🗒️  " + tr("Notes"), command=lambda: ouvrir_tableau("notes"))
+        m.add_command(label="🔐  " + tr("Mots de passe"), command=lambda: ouvrir_tableau("motsdepasse"))
         m.add_separator()
-        try:
-            outils = hub.lire_outils()["outils"]
-        except Exception:
-            outils = []
-        for outil in outils:
-            m.add_command(label=f"{outil.get('emoji', '•')}  {outil.get('nom', '')}",
-                          command=lambda o=outil: self.en_fond(hub.lancer_outil, o["id"]))
-        # Les derniers états connus (relus toutes les 6 s) : le menu s'ouvre
-        # sans attendre la liste des processus.
+        m.add_command(label="📦  " + tr("Projets"), command=lambda: ouvrir_tableau("projets"))
+        ci = f"  ({self.nb_ci} {tr('en échec')})" if self.nb_ci else ""
+        m.add_command(label=f"🐙  GitHub{ci}", command=lambda: ouvrir_tableau("github"))
+
+        # Serveurs : ceux des projets (derniers états connus, relus toutes
+        # les 6 s) puis ceux du gadget Odoo. Le menu s'ouvre sans attendre.
+        sous = tk.Menu(m, tearoff=False, font=police)
+        for s in self.serveurs_projets:
+            nom = f"{s.get('projet', '')} · {s.get('nom', '')}"
+            if s.get("etat") in ("marche", "demarrage"):
+                rond = "🟢" if s.get("etat") == "marche" else "🟡"
+                sous.add_command(label=f"{rond}  {tr('Ouvrir')} {nom}",
+                                 command=lambda s=s: self.action_projet(s, "ouvrir"))
+                sous.add_command(label=f"      {tr('Arrêter')} {nom}", command=lambda s=s: self.action_projet(s, "arreter"))
+            else:
+                sous.add_command(label=f"⚪  {tr('Démarrer')} {nom}", command=lambda s=s: self.action_projet(s, "demarrer"))
         etats = hub._cache_etats["valeur"] or {"disponible": False}
         if etats.get("disponible") and etats["serveurs"]:
-            sous = tk.Menu(m, tearoff=False, font=("Segoe UI", 10))
+            if self.serveurs_projets:
+                sous.add_separator()
             for s in etats["serveurs"]:
                 marche = s["etat"] in ("En marche", "Démarrage…")
                 rond = "🟢" if s["etat"] == "En marche" else "🟡" if marche else "⚪"
                 if marche:
-                    sous.add_command(label=f"{rond}  Ouvrir {s['base']}",
+                    sous.add_command(label=f"{rond}  {tr('Ouvrir')} 🐘 {s['base']}",
                                      command=lambda s=s: self.en_fond(hub.action_serveur, "ouvrir", s["port"]))
-                    sous.add_command(label=f"      Arrêter {s['base']}", command=lambda s=s: self.arreter(s))
+                    sous.add_command(label=f"      {tr('Arrêter')} 🐘 {s['base']}", command=lambda s=s: self.arreter(s))
                 else:
-                    sous.add_command(label=f"{rond}  Démarrer {s['base']}", command=lambda s=s: self.demarrer(s))
+                    sous.add_command(label=f"{rond}  {tr('Démarrer')} 🐘 {s['base']}", command=lambda s=s: self.demarrer(s))
+        if sous.index("end") is not None:
+            m.add_cascade(label="🖥️  " + tr("Serveurs locaux"), menu=sous)
+
+        # Chrono (onglet Temps)
+        temps = module("temps")
+        try:
+            chrono = temps.etat() if temps else {"en_cours": False}
+        except Exception:
+            chrono = {"en_cours": False}
+        if chrono.get("en_cours"):
+            minutes = int(chrono.get("secondes", 0)) // 60
+            m.add_command(label=f"⏹️  {tr('Arrêter le chrono')} ({chrono.get('projet', '')}, {minutes} min)",
+                          command=lambda: self.en_fond(temps.arreter))
+        elif temps:
+            m.add_command(label="⏱️  " + tr("Démarrer un chrono…"), command=lambda: ouvrir_tableau("temps"))
+
+        # Extraits favoris et presse-papiers : un clic = copié.
+        extraits = module("extraits")
+        try:
+            favoris = extraits.lister()[:10] if extraits else []
+        except Exception:
+            favoris = []
+        if favoris:
+            sous_e = tk.Menu(m, tearoff=False, font=police)
+            for x in favoris:
+                sous_e.add_command(label=self.court(x.get("titre") or x.get("contenu", "")),
+                                   command=lambda x=x: self.en_fond(extraits.copier, x["id"]))
+            m.add_cascade(label="✂️  " + tr("Extraits"), menu=sous_e)
+        presse_papiers = module("presse_papiers")
+        try:
+            historique = presse_papiers.lister()[:10] if presse_papiers else []
+        except Exception:
+            historique = []
+        if presse_papiers:
+            sous_p = tk.Menu(m, tearoff=False, font=police)
+            for x in historique:
+                sous_p.add_command(label=("📌 " if x.get("epingle") else "") + self.court(x.get("texte", "")),
+                                   command=lambda x=x: self.en_fond(presse_papiers.recopier, x["id"]))
+            if not historique:
+                sous_p.add_command(label=tr("(vide)"), state="disabled")
+            m.add_cascade(label="📋  " + tr("Presse-papiers"), menu=sous_p)
+
+        try:
+            outils = hub.lire_outils()["outils"]
+        except Exception:
+            outils = []
+        if outils:
             m.add_separator()
-            m.add_cascade(label="🐘  Serveurs Odoo", menu=sous)
+        for outil in outils:
+            m.add_command(label=f"{outil.get('emoji', '•')}  {outil.get('nom', '')}",
+                          command=lambda o=outil: self.en_fond(hub.lancer_outil, o["id"]))
         m.add_separator()
-        m.add_command(label="🙈  Masquer 15 minutes", command=self.masquer)
-        m.add_command(label="🚪  Quitter la bulle", command=self.quitter)
+        m.add_command(label="🙈  " + tr("Masquer 15 minutes"), command=self.masquer)
+        m.add_command(label="🚪  " + tr("Quitter la bulle"), command=self.quitter)
         try:
             m.tk_popup(e.x_root, e.y_root)
         finally:
             m.grab_release()
+
+    @staticmethod
+    def court(texte, n=48):
+        """Une ligne courte pour un menu (sans retour à la ligne)."""
+        texte = " ".join(str(texte).split())
+        return texte if len(texte) <= n else texte[:n - 1] + "…"
+
+    def action_projet(self, s, action):
+        projets = module("projets")
+        if not projets:
+            return
+        if action == "arreter" and not messagebox.askyesno(
+                tr("Arrêter"), tr("Arrêter {nom} ?", nom=f"{s.get('projet', '')} · {s.get('nom', '')}"),
+                default="no", parent=self.racine):
+            return
+        self.en_fond(projets.action_commande, s["projet_id"], s["id"], action)
 
     def en_fond(self, fonction, *args):
         def tache():
@@ -463,14 +647,14 @@ class Bulle:
 
     def demarrer(self, s):
         if s["reference"] and not messagebox.askyesno(
-                "Base de référence",
-                f"« {s['base']} » ne doit pas être modifiée.\n\nDémarrer quand même son serveur ?",
+                tr("Base de référence"),
+                tr("« {base} » ne doit pas être modifiée.\n\nDémarrer quand même son serveur ?", base=s["base"]),
                 icon="warning", default="no", parent=self.racine):
             return
         self.en_fond(hub.action_serveur, "demarrer", s["port"])
 
     def arreter(self, s):
-        if messagebox.askyesno("Arrêter", f"Arrêter le serveur {s['base']} (port {s['port']}) ?",
+        if messagebox.askyesno(tr("Arrêter"), tr("Arrêter le serveur {base} (port {port}) ?", base=s["base"], port=s["port"]),
                                default="no", parent=self.racine):
             self.en_fond(hub.action_serveur, "arreter", s["port"])
 
@@ -479,8 +663,8 @@ class Bulle:
         self.racine.after(15 * 60 * 1000, self.racine.deiconify)
 
     def quitter(self):
-        if messagebox.askyesno("Mes outils", "Quitter la bulle ?\n\nLes serveurs Odoo et les outils "
-                               "déjà lancés continuent de tourner.", parent=self.racine):
+        if messagebox.askyesno("Mes outils", tr("Quitter la bulle ?\n\nLes serveurs et les outils déjà lancés continuent de tourner."),
+                               parent=self.racine):
             self.memoriser()
             self.racine.destroy()
 

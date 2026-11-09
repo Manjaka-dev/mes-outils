@@ -4,205 +4,311 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mes outils</title>
+<script src="/js/i18n.js"></script>
+<script>
+  // Thème appliqué avant le premier affichage (pas d'éclair blanc).
+  (() => { let c = "auto"; try { c = localStorage.getItem("mes-outils-theme") || "auto"; } catch {}
+    const f = new URLSearchParams(location.search).get("theme");
+    const sombre = f ? f === "sombre" : c === "sombre" || (c === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.dataset.theme = sombre ? "sombre" : "clair"; })();
+</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='26' fill='%236c4cf5'/><text x='50' y='68' font-size='58' text-anchor='middle'>🧰</text></svg>">
 <style>
+  /* Couleurs : thème clair par défaut, thème sombre avec data-theme="sombre"
+     (« auto » suit Windows). Les onglets n'utilisent QUE ces variables. */
   :root {
-    --fond: #f4f2ff; --carte: #fff; --encre: #1f1a3a; --doux: #6b6790; --ligne: #e7e3fb;
-    --violet: #6c4cf5; --violet-clair: #efeaff; --corail: #ff7a59; --menthe: #18b597;
-    --ambre: #ffb020; --rouge: #e5484d; --gris: #a7a3bd;
-    --ombre: 0 14px 34px -16px rgba(76, 52, 190, .35);
+    color-scheme: light;
+    --fond: #f4f2ff; --carte: #fff; --surface: #f7f5fe; --champ: #fbfaff; --champ-focus: #fff;
+    --encre: #1f1a3a; --doux: #6b6790; --gris: #a7a3bd; --ligne: #e7e3fb;
+    --violet: #6c4cf5; --violet-2: #8b6cff; --violet-clair: #efeaff; --sur-violet: #fff;
+    --corail: #ff7a59; --menthe: #18b597; --ambre: #ffb020; --rouge: #e5484d;
+    --vert-clair: #e7f7f1; --vert-texte: #12795f; --rouge-clair: #fdecef; --rouge-texte: #b4234a;
+    --ambre-clair: #fff4dc; --ambre-texte: #9a6200; --bleu-clair: #e6f0ff; --bleu-texte: #1a5fb4;
+    --code: #f5f3fc; --code-texte: #2b2550; --verre: rgba(255,255,255,.72); --voile: rgba(31,26,58,.38);
+    --ombre: 0 1px 2px rgba(76,52,190,.06), 0 14px 34px -18px rgba(76, 52, 190, .38);
+    --ombre-forte: 0 2px 4px rgba(76,52,190,.08), 0 24px 44px -18px rgba(76, 52, 190, .5);
+    --bord: rgba(108, 76, 245, .08);
+    --bulle-1: #d9ccff; --bulle-2: #ffd9cc; --bulle-3: #c9f2e7;
+    --rayon: 20px; --mono: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
+    --ressort: cubic-bezier(.3, 1.5, .5, 1);
+  }
+  :root[data-theme="sombre"] {
+    color-scheme: dark;
+    --fond: #110f1e; --carte: #1b1830; --surface: #231f3a; --champ: #1f1b34; --champ-focus: #262143;
+    --encre: #ece9ff; --doux: #a7a2ca; --gris: #6f6a93; --ligne: #312c50;
+    --violet: #8b6cff; --violet-2: #a58cff; --violet-clair: #2b2452; --sur-violet: #fff;
+    --vert-clair: #12352d; --vert-texte: #5fd9b6; --rouge-clair: #3d1a27; --rouge-texte: #ff8fa8;
+    --ambre-clair: #3a2c10; --ambre-texte: #ffc95c; --bleu-clair: #172a48; --bleu-texte: #8ab8ff;
+    --code: #141127; --code-texte: #dcd6ff; --verre: rgba(27,24,48,.78); --voile: rgba(5,4,12,.62);
+    --ombre: 0 1px 2px rgba(0,0,0,.3), 0 14px 34px -18px rgba(0, 0, 0, .75);
+    --ombre-forte: 0 2px 4px rgba(0,0,0,.35), 0 24px 44px -18px rgba(0, 0, 0, .9);
+    --bord: rgba(255, 255, 255, .06);
+    --bulle-1: #2c2063; --bulle-2: #47203a; --bulle-3: #123a37;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body { margin: 0; min-height: 100%; }
   body {
-    font-family: "Segoe UI", system-ui, sans-serif; color: var(--encre); background: var(--fond);
-    overflow-x: hidden;
+    font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; color: var(--encre); background: var(--fond);
+    overflow-x: hidden; -webkit-font-smoothing: antialiased; transition: background .3s, color .3s;
   }
   button, input, select, textarea { font: inherit; color: inherit; }
+  ::selection { background: color-mix(in srgb, var(--violet) 30%, transparent); }
+  :focus-visible { outline: 2.5px solid color-mix(in srgb, var(--violet) 70%, transparent); outline-offset: 2px; border-radius: 10px; }
+  * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--doux) 35%, transparent) transparent; }
+  code, kbd, pre, .mono { font-family: var(--mono); }
+  kbd { background: var(--surface); border: 1px solid var(--ligne); border-bottom-width: 2px; border-radius: 6px; padding: 0 5px; font-size: 11.5px; color: var(--doux); }
+  a { color: var(--violet); }
 
   /* Fond animé ------------------------------------------------------- */
   .bulles { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
-  .bulles span { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55; animation: derive 22s ease-in-out infinite alternate; }
-  .bulles span:nth-child(1) { width: 520px; height: 520px; background: #d9ccff; left: -120px; top: -160px; }
-  .bulles span:nth-child(2) { width: 460px; height: 460px; background: #ffd9cc; right: -140px; top: 80px; animation-delay: -7s; }
-  .bulles span:nth-child(3) { width: 420px; height: 420px; background: #c9f2e7; left: 30%; bottom: -220px; animation-delay: -13s; }
+  .bulles span { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55; animation: derive 24s ease-in-out infinite alternate; transition: background .6s; }
+  .bulles span:nth-child(1) { width: 520px; height: 520px; background: var(--bulle-1); left: -120px; top: -160px; }
+  .bulles span:nth-child(2) { width: 460px; height: 460px; background: var(--bulle-2); right: -140px; top: 80px; animation-delay: -7s; }
+  .bulles span:nth-child(3) { width: 420px; height: 420px; background: var(--bulle-3); left: 30%; bottom: -220px; animation-delay: -13s; }
   @keyframes derive { to { transform: translate(60px, 40px) scale(1.15); } }
 
-  .page { max-width: 1300px; margin: 0 auto; padding: 28px 28px 48px; }
+  .page { max-width: 1480px; margin: 0 auto; padding: 18px 22px 36px; }
+  .corps { display: flex; gap: 22px; align-items: flex-start; }
+  main { flex: 1; min-width: 0; }
+
+  /* Menu latéral --------------------------------------------------------- */
+  .menu { position: sticky; top: 86px; width: 200px; flex: none; display: flex; flex-direction: column; gap: 2px;
+    background: var(--verre); backdrop-filter: blur(14px) saturate(1.4); border: 1px solid var(--bord);
+    padding: 10px 8px; border-radius: 22px; box-shadow: var(--ombre); max-height: calc(100vh - 104px); overflow-y: auto; }
+  .menu .groupe { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.1px; color: var(--gris); font-weight: 800; margin: 10px 12px 3px; }
+  .menu .groupe:first-child { margin-top: 4px; }
+  .menu button { border: 0; background: transparent; padding: 6px 10px; border-radius: 12px; font-size: 14.5px; cursor: pointer; font-weight: 650; color: var(--doux);
+    display: flex; align-items: center; gap: 10px; text-align: left; white-space: nowrap; position: relative;
+    transition: background .18s, color .18s, transform .18s; }
+  .menu button .ic { width: 24px; height: 24px; display: grid; place-items: center; font-size: 16px; flex: none; border-radius: 8px; transition: transform .3s var(--ressort); }
+  .menu button .lib { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .menu button:not(.actif):hover { background: var(--violet-clair); color: var(--violet); }
+  .menu button:not(.actif):hover .ic { transform: scale(1.15) rotate(-6deg); }
+  .menu button.actif { background: linear-gradient(135deg, var(--violet), var(--violet-2)); color: var(--sur-violet); box-shadow: 0 8px 18px -8px var(--violet); }
+  @media (max-width: 1100px) {
+    .menu { width: 60px; padding: 8px 7px; }
+    .menu .groupe { display: none; }
+    .menu .groupe + button { margin-top: 6px; }
+    .menu button { justify-content: center; padding: 9px 0; }
+    .menu button .lib { display: none; }
+    .menu .compteur { position: absolute; top: 1px; right: 1px; margin: 0; }
+  }
 
   /* En-tête ---------------------------------------------------------- */
-  header { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+  header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; margin: 0 -22px 18px; padding: 12px 22px;
+    background: color-mix(in srgb, var(--fond) 70%, transparent); backdrop-filter: blur(16px) saturate(1.4); border-bottom: 1px solid transparent; transition: border-color .3s, box-shadow .3s; }
+  header.colle { border-bottom-color: var(--ligne); box-shadow: 0 10px 24px -22px rgba(0,0,0,.5); }
   .avatar-hub {
-    width: 58px; height: 58px; border-radius: 19px; display: grid; place-items: center; font-size: 30px;
-    background: linear-gradient(135deg, var(--violet), #9b7bff); box-shadow: var(--ombre); transform: rotate(-6deg);
-    cursor: pointer; transition: transform .4s cubic-bezier(.3, 1.6, .5, 1);
+    width: 50px; height: 50px; border-radius: 17px; display: grid; place-items: center; font-size: 26px; flex: none;
+    background: linear-gradient(135deg, var(--violet), #9b7bff); box-shadow: 0 10px 22px -10px var(--violet); transform: rotate(-6deg);
+    cursor: pointer; transition: transform .4s var(--ressort);
   }
   .avatar-hub:hover { transform: rotate(10deg) scale(1.08); }
-  .salut h1 { margin: 0; font-size: 30px; letter-spacing: -.6px; }
-  .salut p { margin: 2px 0 0; color: var(--doux); font-weight: 500; }
+  .salut { min-width: 0; }
+  .salut h1 { margin: 0; font-size: 25px; letter-spacing: -.6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .salut p { margin: 1px 0 0; color: var(--doux); font-weight: 500; font-size: 13.5px; }
   header .espace { flex: 1; }
-  .horloge { text-align: right; margin-right: 6px; }
-  .horloge b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
-  .horloge small { color: var(--doux); }
-  .btn {
-    border: 0; border-radius: 13px; padding: 10px 16px; cursor: pointer; font-weight: 650; background: rgba(255,255,255,.85);
-    box-shadow: 0 1px 0 var(--ligne), 0 6px 16px -10px rgba(0,0,0,.3); display: inline-flex; align-items: center; gap: 7px;
-    transition: transform .12s, background .2s, box-shadow .2s;
-  }
-  .btn:hover { transform: translateY(-1px); }
-  .btn:active { transform: translateY(1px) scale(.97); }
-  .btn.principal { background: linear-gradient(135deg, var(--violet), #8b6cff); color: #fff; }
-  .btn.actif { background: var(--encre); color: #fff; }
-  .btn.discret { background: transparent; box-shadow: none; color: var(--doux); }
-  .btn.discret:hover { background: var(--violet-clair); color: var(--violet); }
-  .btn:disabled { opacity: .45; cursor: default; transform: none; }
+  .recherche-globale { display: flex; align-items: center; gap: 10px; min-width: 250px; border: 1px solid var(--ligne); background: var(--carte); color: var(--gris);
+    border-radius: 14px; padding: 9px 12px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: var(--ombre); transition: border-color .2s, transform .15s; }
+  .recherche-globale:hover { border-color: var(--violet); color: var(--doux); transform: translateY(-1px); }
+  .recherche-globale .t { flex: 1; text-align: left; }
+  .horloge { text-align: right; margin: 0 4px 0 8px; line-height: 1.15; }
+  .horloge b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+  .horloge small { color: var(--doux); font-size: 12.5px; }
+  @media (max-width: 1100px) { .recherche-globale { min-width: 0; } .recherche-globale .t, .recherche-globale kbd { display: none; } .salut p { display: none; } }
 
-  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 1px; color: var(--doux); margin: 30px 0 14px; display: flex; align-items: center; gap: 10px; }
+  /* Boutons ---------------------------------------------------------- */
+  .btn {
+    border: 1px solid var(--bord); border-radius: 13px; padding: 9px 15px; cursor: pointer; font-weight: 650; background: var(--carte);
+    box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 16px -12px rgba(0,0,0,.35); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+    transition: transform .12s, background .2s, box-shadow .2s, border-color .2s;
+  }
+  .btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--violet) 30%, transparent); }
+  .btn:active { transform: translateY(1px) scale(.97); }
+  .btn.principal { background: linear-gradient(135deg, var(--violet), var(--violet-2)); color: var(--sur-violet); border-color: transparent; box-shadow: 0 10px 20px -10px var(--violet); }
+  .btn.principal:hover { box-shadow: 0 14px 26px -10px var(--violet); }
+  .btn.danger { background: var(--rouge); color: #fff; border-color: transparent; }
+  .btn.actif { background: var(--encre); color: var(--fond); border-color: transparent; }
+  .btn.discret { background: transparent; box-shadow: none; border-color: transparent; color: var(--doux); }
+  .btn.discret:hover { background: var(--violet-clair); color: var(--violet); }
+  .btn.petit { padding: 6px 11px; font-size: 13px; border-radius: 11px; }
+  .btn:disabled { opacity: .45; cursor: default; transform: none; }
+  .icone-btn { width: 34px; height: 34px; border-radius: 11px; border: 0; cursor: pointer; background: var(--surface); color: var(--encre); font-size: 15px;
+    display: grid; place-items: center; flex: none; transition: background .15s, transform .12s; }
+  .icone-btn:hover { background: var(--violet-clair); transform: translateY(-1px); }
+  .icone-btn.go:hover { background: var(--vert-clair); }
+  .icone-btn.stop:hover, .icone-btn.danger:hover { background: var(--rouge-clair); }
+  .icone-btn:disabled { opacity: .35; cursor: default; transform: none; }
+
+  /* Champs de saisie : même apparence dans tous les onglets ------------- */
+  main input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),
+  main select, main textarea, .fenetre input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),
+  .fenetre select, .fenetre textarea {
+    border: 1.5px solid var(--ligne); border-radius: 12px; padding: 9px 12px; background: var(--champ); outline: none; color: var(--encre);
+    transition: border-color .15s, box-shadow .15s, background .15s;
+  }
+  main input:focus, main select:focus, main textarea:focus, .fenetre input:focus, .fenetre select:focus, .fenetre textarea:focus {
+    border-color: var(--violet); background: var(--champ-focus); box-shadow: 0 0 0 4px color-mix(in srgb, var(--violet) 14%, transparent);
+  }
+  input[type=checkbox], input[type=radio], input[type=range] { accent-color: var(--violet); }
+  ::placeholder { color: var(--gris); }
+
+  h2 { font-size: 13.5px; text-transform: uppercase; letter-spacing: 1.1px; color: var(--doux); margin: 30px 0 14px; display: flex; align-items: center; gap: 10px; }
   h2 .compte { background: var(--violet-clair); color: var(--violet); border-radius: 99px; padding: 1px 9px; font-size: 12px; letter-spacing: 0; }
   h2 .espace { flex: 1; }
 
   /* Tuiles des outils ------------------------------------------------ */
-  .tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; }
+  .tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(205px, 1fr)); gap: 16px; }
   .tuile {
-    position: relative; border: 0; text-align: left; cursor: pointer; padding: 20px; border-radius: 22px; min-height: 168px;
+    position: relative; border: 1px solid var(--bord); text-align: left; cursor: pointer; padding: 18px; border-radius: 22px; min-height: 160px; color: var(--encre);
     background: var(--carte); box-shadow: var(--ombre); display: flex; flex-direction: column; gap: 6px; overflow: hidden;
-    transition: transform .25s cubic-bezier(.3, 1.5, .5, 1), box-shadow .25s; animation: apparait .45s both;
+    transition: transform .25s var(--ressort), box-shadow .25s; animation: apparait .45s both;
   }
   .tuile::before {
     content: ""; position: absolute; right: -40px; top: -40px; width: 140px; height: 140px; border-radius: 50%;
-    background: var(--c); opacity: .12; transition: transform .4s;
+    background: var(--c); opacity: .13; transition: transform .4s;
   }
-  .tuile:hover { transform: translateY(-5px) rotate(-.6deg); box-shadow: 0 22px 40px -18px rgba(76, 52, 190, .45); }
+  .tuile:hover { transform: translateY(-5px) rotate(-.6deg); box-shadow: var(--ombre-forte); }
   .tuile:hover::before { transform: scale(1.35); }
   .tuile .emoji {
-    width: 58px; height: 58px; border-radius: 18px; display: grid; place-items: center; font-size: 30px; margin-bottom: 8px;
-    background: color-mix(in srgb, var(--c) 16%, #fff); transition: transform .35s cubic-bezier(.3, 1.8, .5, 1);
+    width: 54px; height: 54px; border-radius: 17px; display: grid; place-items: center; font-size: 28px; margin-bottom: 8px;
+    background: color-mix(in srgb, var(--c) 18%, var(--carte)); transition: transform .35s cubic-bezier(.3, 1.8, .5, 1);
   }
   .tuile:hover .emoji { transform: scale(1.12) rotate(-8deg); }
-  .tuile .nom { font-weight: 800; font-size: 17px; }
+  .tuile .nom { font-weight: 800; font-size: 16.5px; }
   .tuile .desc { color: var(--doux); font-size: 13.5px; line-height: 1.35; }
   .tuile .etat { margin-top: auto; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; color: var(--doux); }
-  .tuile.lance { animation: rebond .55s cubic-bezier(.3, 1.6, .5, 1); }
-  .tuile.ajout { border: 2.5px dashed #d4ccfa; background: rgba(255,255,255,.5); box-shadow: none; align-items: center; justify-content: center; color: var(--violet); font-weight: 800; }
+  .tuile.lance { animation: rebond .55s var(--ressort); }
+  .tuile.ajout { border: 2px dashed color-mix(in srgb, var(--violet) 35%, transparent); background: color-mix(in srgb, var(--carte) 50%, transparent); box-shadow: none; align-items: center; justify-content: center; color: var(--violet); font-weight: 800; }
   .tuile.ajout .emoji { background: var(--violet-clair); }
   .tuile .actions-edition { position: absolute; top: 10px; right: 10px; display: none; gap: 6px; z-index: 2; }
   .edition .tuile:not(.ajout) { animation: tremble .32s ease-in-out infinite alternate; }
   .edition .tuile:not(.ajout):nth-child(2n) { animation-delay: -.16s; }
   .edition .tuile .actions-edition { display: flex; }
-  .rond { width: 30px; height: 30px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; font-size: 14px; background: #fff; box-shadow: 0 4px 12px -4px rgba(0,0,0,.35); }
+  .rond { width: 30px; height: 30px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; font-size: 14px; background: var(--carte); color: var(--encre); box-shadow: 0 4px 12px -4px rgba(0,0,0,.35); }
   .rond.suppr { background: var(--rouge); color: #fff; }
-  @keyframes apparait { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+  @keyframes apparait { from { opacity: 0; transform: translateY(12px) scale(.97); } }
   @keyframes rebond { 30% { transform: scale(.94); } 60% { transform: scale(1.05) rotate(1deg); } }
   @keyframes tremble { from { transform: rotate(-1.1deg); } to { transform: rotate(1.1deg); } }
 
-  .point { width: 9px; height: 9px; border-radius: 50%; background: var(--gris); flex: none; }
+  .point { width: 9px; height: 9px; border-radius: 50%; background: var(--gris); flex: none; display: inline-block; }
   .point.marche { background: var(--menthe); box-shadow: 0 0 0 0 rgba(24,181,151,.6); animation: battement 2s infinite; }
   .point.demarrage { background: var(--ambre); animation: clignote .8s infinite alternate; }
-  .point.occupe { background: var(--rouge); }
+  .point.occupe, .point.erreur { background: var(--rouge); }
   @keyframes battement { 70% { box-shadow: 0 0 0 7px rgba(24,181,151,0); } 100% { box-shadow: 0 0 0 0 rgba(24,181,151,0); } }
   @keyframes clignote { to { opacity: .35; } }
 
-  /* Serveurs Odoo ---------------------------------------------------- */
-  .serveurs { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+  /* Serveurs ------------------------------------------------------------ */
+  .serveurs { display: grid; grid-template-columns: repeat(auto-fill, minmax(370px, 1fr)); gap: 12px; }
   .serveur {
-    background: var(--carte); border-radius: 18px; box-shadow: var(--ombre); padding: 14px 16px; display: flex; align-items: center; gap: 13px;
-    animation: apparait .4s both; transition: transform .2s;
+    background: var(--carte); border: 1px solid var(--bord); border-radius: 18px; box-shadow: var(--ombre); padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+    animation: apparait .4s both; transition: transform .2s, box-shadow .2s;
   }
-  .serveur:hover { transform: translateY(-2px); }
-  .serveur .pastille { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; background: #f1eefc; flex: none; position: relative; }
-  .serveur .pastille .point { position: absolute; right: -2px; bottom: -2px; border: 2.5px solid #fff; width: 14px; height: 14px; }
+  .serveur:hover { transform: translateY(-2px); box-shadow: var(--ombre-forte); }
+  .serveur .pastille { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; font-size: 21px; background: var(--surface); flex: none; position: relative; }
+  .serveur .pastille .point { position: absolute; right: -2px; bottom: -2px; border: 2.5px solid var(--carte); width: 14px; height: 14px; }
   .serveur .infos { flex: 1; min-width: 0; }
   .serveur .base { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .serveur .ligne2 { font-size: 12.5px; color: var(--doux); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .etiquette { border-radius: 99px; padding: 0 8px; font-size: 11.5px; font-weight: 700; }
-  .etiquette.ref { background: #fde8e8; color: #b00020; }
-  .etiquette.conf { background: #e6f0ff; color: #1a5fb4; }
   .serveur .boutons { display: flex; gap: 4px; }
-  .icone-btn { width: 34px; height: 34px; border-radius: 11px; border: 0; cursor: pointer; background: #f4f2fc; font-size: 15px; display: grid; place-items: center; transition: background .15s, transform .12s; }
-  .icone-btn:hover { background: var(--violet-clair); transform: translateY(-1px); }
-  .icone-btn.go:hover { background: #dcf7f0; }
-  .icone-btn.stop:hover { background: #fde8e8; }
-  .icone-btn:disabled { opacity: .35; cursor: default; transform: none; }
-  .vide { background: rgba(255,255,255,.6); border-radius: 18px; padding: 22px; color: var(--doux); text-align: center; }
+  .etiquette { border-radius: 99px; padding: 1px 8px; font-size: 11.5px; font-weight: 700; background: var(--surface); color: var(--doux); white-space: nowrap; }
+  .etiquette.ref, .etiquette.rouge { background: var(--rouge-clair); color: var(--rouge-texte); }
+  .etiquette.conf, .etiquette.bleu { background: var(--bleu-clair); color: var(--bleu-texte); }
+  .etiquette.vert { background: var(--vert-clair); color: var(--vert-texte); }
+  .etiquette.ambre { background: var(--ambre-clair); color: var(--ambre-texte); }
+  .etiquette.violet { background: var(--violet-clair); color: var(--violet); }
+  .vide { background: color-mix(in srgb, var(--carte) 65%, transparent); border: 1px dashed var(--ligne); border-radius: 18px; padding: 26px; color: var(--doux); text-align: center; }
+  .carte { background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 16px 18px; }
+  .squelette { border-radius: 14px; min-height: 60px; background: linear-gradient(90deg, var(--surface) 25%, var(--champ-focus) 50%, var(--surface) 75%); background-size: 200% 100%; animation: miroite 1.2s infinite; }
+  @keyframes miroite { to { background-position: -200% 0; } }
 
   /* Fenêtres, toasts --------------------------------------------------- */
-  .voile { position: fixed; inset: 0; background: rgba(31,26,58,.38); display: none; place-items: center; z-index: 40; backdrop-filter: blur(3px); }
-  .voile.visible { display: grid; }
-  .fenetre { width: min(540px, 94vw); max-height: 92vh; overflow: auto; background: #fff; border-radius: 24px; padding: 26px; box-shadow: var(--ombre); animation: pop .3s cubic-bezier(.3, 1.5, .5, 1) both; }
+  .voile { position: fixed; inset: 0; background: var(--voile); display: none; place-items: center; z-index: 40; backdrop-filter: blur(4px); }
+  .voile.visible { display: grid; animation: fondu .2s both; }
+  @keyframes fondu { from { opacity: 0; } }
+  .fenetre { width: min(540px, 94vw); max-height: 92vh; overflow: auto; background: var(--carte); color: var(--encre); border: 1px solid var(--bord); border-radius: 24px; padding: 24px; box-shadow: var(--ombre-forte); animation: pop .3s var(--ressort) both; }
   .fenetre.petite { width: min(400px, 92vw); text-align: center; }
   .fenetre .gros { font-size: 44px; }
   .fenetre h3 { margin: 6px 0 8px; font-size: 20px; }
   .fenetre p { color: var(--doux); margin: 0 0 18px; }
   .fenetre .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
   .fenetre.petite .actions { justify-content: center; }
-  @keyframes pop { from { opacity: 0; transform: scale(.9) translateY(10px); } }
+  @keyframes pop { from { opacity: 0; transform: scale(.92) translateY(10px); } }
   label.champ { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--doux); margin-bottom: 14px; }
-  .champ input, .champ select, .champ textarea {
-    border: 1.5px solid var(--ligne); border-radius: 12px; padding: 10px 12px; background: #fbfaff; outline: none; font-size: 14.5px; font-weight: 500; color: var(--encre);
-  }
-  .champ input:focus, .champ textarea:focus, .champ select:focus { border-color: var(--violet); background: #fff; box-shadow: 0 0 0 4px rgba(108,76,245,.12); }
+  .champ input, .champ select, .champ textarea { font-size: 14.5px; font-weight: 500; }
   .champ small { font-weight: 500; color: var(--doux); }
   .emojis { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
-  .emojis button { border: 0; background: #f6f4ff; border-radius: 10px; font-size: 20px; padding: 5px 0; cursor: pointer; transition: transform .12s; }
+  .emojis button { border: 0; background: var(--surface); border-radius: 10px; font-size: 20px; padding: 5px 0; cursor: pointer; transition: transform .12s; }
   .emojis button:hover { transform: scale(1.18); }
   .emojis button.choisi { background: var(--violet); box-shadow: 0 6px 12px -6px var(--violet); }
   .couleurs { display: flex; gap: 8px; flex-wrap: wrap; }
-  .couleurs button { width: 32px; height: 32px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; box-shadow: 0 0 0 1.5px var(--ligne); transition: transform .15s; }
+  .couleurs button { width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--carte); cursor: pointer; box-shadow: 0 0 0 1.5px var(--ligne); transition: transform .15s; }
   .couleurs button.choisi { transform: scale(1.18); box-shadow: 0 0 0 2.5px var(--encre); }
   .types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .types button { border: 1.5px solid var(--ligne); background: #fbfaff; border-radius: 13px; padding: 10px 6px; cursor: pointer; font-weight: 700; font-size: 13px; }
+  .types button { border: 1.5px solid var(--ligne); background: var(--champ); border-radius: 13px; padding: 10px 6px; cursor: pointer; font-weight: 700; font-size: 13px; }
   .types button span { display: block; font-size: 20px; }
   .types button.choisi { border-color: var(--violet); background: var(--violet-clair); color: var(--violet); }
   .apercu-tuile { display: flex; justify-content: center; margin-bottom: 18px; }
   .apercu-tuile .tuile { width: 230px; min-height: 140px; cursor: default; animation: none; }
 
-  #toasts { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 60; align-items: center; }
-  .toast { background: var(--encre); color: #fff; padding: 11px 18px; border-radius: 14px; box-shadow: var(--ombre); font-weight: 650; animation: pop .3s cubic-bezier(.3, 1.5, .5, 1) both; max-width: 560px; }
+  #toasts { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 60; align-items: center; pointer-events: none; }
+  .toast { background: #1f1a3a; color: #fff; padding: 11px 18px; border-radius: 14px; box-shadow: 0 16px 30px -12px rgba(0,0,0,.45); font-weight: 650; animation: pop .3s var(--ressort) both; max-width: 560px; }
+  :root[data-theme="sombre"] .toast { background: #2e2850; }
   .toast.erreur { background: var(--rouge); }
   .toast.succes { background: linear-gradient(135deg, #12a386, var(--menthe)); }
   .toast.part { animation: depart .3s forwards; }
   @keyframes depart { to { opacity: 0; transform: translateY(12px); } }
   footer { margin-top: 36px; text-align: center; color: var(--gris); font-size: 12.5px; }
 
-  /* Onglets ------------------------------------------------------------ */
-  .onglets { display: flex; gap: 4px; background: rgba(255,255,255,.75); padding: 5px; border-radius: 15px; box-shadow: var(--ombre); }
-  .onglets button { border: 0; background: transparent; padding: 8px 8px; white-space: nowrap; border-radius: 11px; cursor: pointer; font-weight: 700; color: var(--doux); position: relative; transition: background .2s, color .2s; }
-  .onglets button:not(.actif):hover { background: var(--violet-clair); color: var(--violet); }
-  .onglets button.actif { background: var(--violet); color: #fff; box-shadow: 0 6px 14px -6px var(--violet); }
-  .compteur { background: var(--corail); color: #fff; border-radius: 99px; font-size: 11px; padding: 1px 7px; margin-left: 3px; }
+  .compteur { background: var(--corail); color: #fff; border-radius: 99px; font-size: 11px; padding: 1px 7px; margin-left: 3px; font-weight: 800; }
   .vue { display: none; }
   .vue.actif { display: block; animation: apparait .35s both; }
-  header { flex-wrap: wrap; }
-  /* Fenêtre étroite (l'appli s'ouvre en 1180 px) : l'en-tête reste sur une ligne. */
-  @media (max-width: 1320px) {
-    .salut h1 { font-size: 24px; }
-    .salut p { display: none; }
-    .onglets button { padding: 7px 6px; font-size: 13.5px; }
-    .horloge b { font-size: 22px; }
-  }
 
   /* Aujourd'hui (accueil) ----------------------------------------------- */
-  .aujourdhui { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 8px; }
-  .carte-jour { background: var(--carte); border-radius: 20px; box-shadow: var(--ombre); padding: 16px 18px; cursor: pointer; transition: transform .2s; animation: apparait .4s both; }
-  .carte-jour:hover { transform: translateY(-3px); }
-  .carte-jour h4 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--doux); display: flex; gap: 8px; align-items: center; }
+  .aujourdhui { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 8px; }
+  .carte-jour { background: var(--carte); border: 1px solid var(--bord); border-radius: 20px; box-shadow: var(--ombre); padding: 16px 18px; cursor: pointer; transition: transform .2s, box-shadow .2s; animation: apparait .4s both; position: relative; overflow: hidden; }
+  .carte-jour::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--accent, var(--violet)); opacity: .8; }
+  .carte-jour:hover { transform: translateY(-3px); box-shadow: var(--ombre-forte); }
+  .carte-jour h4 { margin: 0 0 10px; font-size: 12.5px; text-transform: uppercase; letter-spacing: .9px; color: var(--doux); display: flex; gap: 8px; align-items: center; }
   .carte-jour .ligne-jour { display: flex; gap: 10px; align-items: center; padding: 5px 0; font-size: 14px; }
   .carte-jour .ligne-jour .heure { font-weight: 800; min-width: 46px; font-variant-numeric: tabular-nums; }
   .carte-jour .ligne-jour .pastille-c { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .carte-jour .grand { font-size: 30px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
   .carte-jour .rien { color: var(--gris); font-size: 14px; }
 
-  /* Éléments communs aux nouveaux onglets -------------------------------- */
-  .barre-vue { display: flex; align-items: center; gap: 10px; margin: 6px 0 18px; flex-wrap: wrap; }
-  .barre-vue h2 { margin: 0; }
+  /* Éléments communs aux onglets ---------------------------------------- */
+  .barre-vue { display: flex; align-items: center; gap: 10px; margin: 2px 0 18px; flex-wrap: wrap; }
+  .barre-vue h2 { margin: 0; font-size: 15px; color: var(--encre); letter-spacing: .8px; }
   .barre-vue .espace { flex: 1; }
   .champ-recherche { position: relative; }
-  .champ-recherche input { border: 1.5px solid var(--ligne); border-radius: 13px; padding: 9px 12px 9px 34px; background: rgba(255,255,255,.9); outline: none; width: 260px; }
-  .champ-recherche input:focus { border-color: var(--violet); }
-  .champ-recherche span { position: absolute; left: 11px; top: 8px; opacity: .6; }
-  .puces { display: flex; gap: 6px; }
-  .puce { border: 0; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.8); color: var(--doux); cursor: pointer; font-size: 13px; font-weight: 700; }
-  .puce.actif { background: var(--encre); color: #fff; }
+  .champ-recherche input { padding-left: 34px !important; width: 260px; }
+  .champ-recherche span { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); opacity: .6; pointer-events: none; }
+  .puces { display: flex; gap: 4px; flex-wrap: wrap; background: var(--verre); border: 1px solid var(--bord); padding: 4px; border-radius: 999px; }
+  .puce { border: 0; padding: 6px 13px; border-radius: 999px; background: transparent; color: var(--doux); cursor: pointer; font-size: 13px; font-weight: 700; transition: background .15s, color .15s; white-space: nowrap; }
+  .puce:not(.actif):hover { background: var(--violet-clair); color: var(--violet); }
+  .puce.actif { background: var(--encre); color: var(--fond); }
+
+  /* Palette de commandes (Ctrl + K) ------------------------------------- */
+  .palette-voile { position: fixed; inset: 0; z-index: 50; background: var(--voile); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: flex-start; padding-top: 12vh; }
+  .palette-voile.visible { display: flex; animation: fondu .15s both; }
+  .palette { width: min(640px, 92vw); background: var(--carte); border: 1px solid var(--bord); border-radius: 22px; box-shadow: var(--ombre-forte); overflow: hidden; animation: pop .25s var(--ressort) both; }
+  .palette .saisie { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--ligne); }
+  .palette .saisie input { flex: 1; border: 0 !important; background: transparent !important; box-shadow: none !important; font-size: 17px; padding: 4px 0 !important; outline: none; color: var(--encre); }
+  .palette .resultats { max-height: 52vh; overflow-y: auto; padding: 6px; }
+  .palette .section-p { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gris); font-weight: 800; padding: 10px 12px 4px; }
+  .palette .item { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 12px; cursor: pointer; }
+  .palette .item .ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--surface); flex: none; }
+  .palette .item .tx { flex: 1; min-width: 0; }
+  .palette .item .tx b { display: block; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .palette .item .tx small { color: var(--doux); }
+  .palette .item.choisi { background: var(--violet-clair); }
+  .palette .item.choisi .ic { background: var(--violet); }
+  .palette .pied { display: flex; gap: 14px; padding: 9px 16px; border-top: 1px solid var(--ligne); color: var(--gris); font-size: 12px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
 </style>
 </head>
 <body>
@@ -212,19 +318,15 @@
     <div class="avatar-hub" id="avatar" title="Coucou !">🧰</div>
     <div class="salut"><h1 id="salut">Bonjour</h1><p id="sous-titre">Que fait-on aujourd'hui ?</p></div>
     <div class="espace"></div>
-    <nav class="onglets" id="onglets">
-      <button data-vue="accueil" class="actif">🏠 Accueil</button>
-      <button data-vue="mails">✉️ Mails <span class="compteur" id="compteur-mails" hidden></span></button>
-      <button data-vue="notes">📝 Notes</button>
-      <button data-vue="agenda">📅 Agenda</button>
-      <button data-vue="motsdepasse">🔐 Mots de passe</button>
-      <button data-vue="ssh">🔑 SSH</button>
-      <button data-vue="github">🐙 GitHub</button>
-    </nav>
+    <button class="recherche-globale" id="btn-palette" title="Rechercher un onglet, un outil, une action (Ctrl + K)"><span>🔎</span><span class="t">Rechercher…</span><kbd>Ctrl K</kbd></button>
     <div class="horloge"><b id="heure">--:--</b><small id="date"></small></div>
+    <button class="btn discret" id="btn-theme" title="Thème clair ou sombre">🌙</button>
     <button class="btn discret" id="btn-quitter" title="Arrêter le tableau de bord">🚪</button>
   </header>
 
+  <div class="corps">
+  <nav class="menu" id="onglets"></nav>
+  <main id="vues">
   <section class="vue actif" id="vue-accueil">
   <div class="aujourdhui" id="aujourdhui"></div>
 
@@ -232,27 +334,43 @@
     <button class="btn" id="btn-edition" title="Ajouter, modifier ou retirer des outils">✏️ Modifier</button></h2>
   <div class="tuiles" id="tuiles"></div>
 
+  <div id="bloc-projets" hidden>
+  <h2>Serveurs des projets <span class="compte" id="nb-projets-marche">…</span><span class="espace"></span>
+    <button class="btn discret" onclick="montrerVue('projets')">📦 Projets</button></h2>
+  <div class="serveurs" id="serveurs-projets"></div>
+  </div>
+
+  <div id="bloc-serveurs" hidden>
   <h2>Serveurs Odoo <span class="compte" id="nb-marche">…</span><span class="espace"></span>
     <button class="btn discret" id="btn-gadget" title="Ouvrir le gadget « Serveurs Odoo » (ajouter un serveur, comptes…)">🧩 Gadget complet</button>
   </h2>
   <div class="serveurs" id="serveurs"><div class="vide">Lecture des serveurs…</div></div>
+  </div>
   </section>
-
-  <section class="vue" id="vue-mails"></section>
-  <section class="vue" id="vue-notes"></section>
-  <section class="vue" id="vue-agenda"></section>
-  <section class="vue" id="vue-motsdepasse"></section>
-  <section class="vue" id="vue-ssh"></section>
-  <section class="vue" id="vue-github"></section>
+  </main>
+  </div>
 
   <footer>Mes outils · tout tourne sur ce PC · <span id="maj"></span></footer>
 </div>
 
 <div class="voile" id="voile"><div class="fenetre" id="fenetre"></div></div>
+<div class="palette-voile" id="palette-voile"><div class="palette" role="dialog" aria-label="Palette de commandes">
+  <div class="saisie"><span>🔎</span><input id="palette-saisie" placeholder="Aller à un onglet, lancer un outil, une action…" autocomplete="off" spellcheck="false"></div>
+  <div class="resultats" id="palette-resultats"></div>
+  <div class="pied"><span><kbd>↑</kbd> <kbd>↓</kbd> choisir</span><span><kbd>Entrée</kbd> ouvrir</span><span><kbd>Échap</kbd> fermer</span></div>
+</div></div>
 <div id="toasts"></div>
 
 <script>
 "use strict";
+// Un élément facultatif absent (null, undefined, false) ne doit jamais
+// s'afficher en texte « null » : on l'ignore partout dans la page.
+for (const proto of [Element.prototype, DocumentFragment.prototype]) {
+  for (const nom of ["append", "prepend", "replaceChildren"]) {
+    const original = proto[nom];
+    proto[nom] = function (...enfants) { return original.apply(this, enfants.filter(x => x !== null && x !== undefined && x !== false)); };
+  }
+}
 const $ = (s, el = document) => el.querySelector(s);
 const S = { config: null, edition: false, serveurs: null };
 const EMOJIS = "🧾 📂 📱 🗂️ 🛠️ 🧪 📊 📈 💼 🧮 🗓️ ✉️ 🌐 🖥️ 🗄️ 🐘 🐍 🚀 ⚙️ 🔧 📦 🧰 📝 💡 🎯 🔒 🧠 🎨 📚 ☕".split(" ");
@@ -271,7 +389,7 @@ async function api(chemin, donnees) {
     method: "POST", headers: { "Content-Type": "application/json", "X-Mes-Outils": "1" }, body: JSON.stringify(donnees),
   });
   const json = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(json.erreur || "Erreur " + r.status);
+  if (!r.ok) throw new Error(I18N.traduire(json.erreur || "Erreur " + r.status));
   return json;
 }
 function el(tag, attrs = {}, ...enfants) {
@@ -281,17 +399,21 @@ function el(tag, attrs = {}, ...enfants) {
     else if (k === "style") e.setAttribute("style", v);
     else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
     else if (k === "value") e.value = v;
+    else if (k === "title" || k === "placeholder") e.setAttribute(k, I18N.traduire(String(v)));
     else if (v !== false && v !== null && v !== undefined) e.setAttribute(k, v);
   }
   // flat(Infinity) : une liste d'éléments peut en contenir d'autres (bloc
   // « Demain » de l'accueil) ; sans ça, elle s'affiche en texte brut.
-  for (const c of enfants.flat(Infinity)) if (c !== null && c !== undefined && c !== false) e.append(c);
+  for (const c of enfants.flat(Infinity)) {
+    if (c === null || c === undefined || c === false) continue;
+    e.append(typeof c === "string" ? I18N.traduire(c) : c);
+  }
   return e;
 }
 function toast(message, type = "", duree = 3000) {
-  const t = el("div", { class: "toast " + type }, message);
-  $("#toasts").append(t);
-  setTimeout(() => { t.classList.add("part"); setTimeout(() => t.remove(), 300); }, duree);
+  const bloc = el("div", { class: "toast " + type }, I18N.traduire(String(message)));
+  $("#toasts").append(bloc);
+  setTimeout(() => { bloc.classList.add("part"); setTimeout(() => bloc.remove(), 300); }, duree);
 }
 function fenetre(contenu, petite = false) {
   const f = $("#fenetre");
@@ -306,11 +428,22 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") fermer(); })
 function confirmer(icone, titre, texte, oui = "Oui") {
   return new Promise(resolve => {
     const fin = v => { fermer(); resolve(v); };
-    fenetre([el("div", { class: "gros" }, icone), el("h3", {}, titre), el("p", {}, texte),
+    fenetre([el("div", { class: "gros" }, icone), el("h3", {}, I18N.traduire(titre)), el("p", {}, I18N.traduire(texte)),
       el("div", { class: "actions" },
         el("button", { class: "btn", onclick: () => fin(false) }, "Annuler"),
         el("button", { class: "btn principal", onclick: () => fin(true) }, oui))], true);
   });
+}
+
+/** La fenêtre « Choisir un dossier » de Windows. Renvoie le chemin, ou null. */
+async function choisirDossier(titre = "Choisir un dossier", depart = "") {
+  try { return (await api("/api/reglages/choisir_dossier", { titre: I18N.traduire(titre), depart })).chemin; }
+  catch (e) { toast("😕 " + e.message, "erreur"); return null; }
+}
+/** Copie un texte dans le presse-papiers, avec un petit message. */
+async function copier(texte, message = "📋 Copié") {
+  try { await navigator.clipboard.writeText(texte); toast(message, "succes", 1500); }
+  catch { toast("😕 Copie impossible", "erreur"); }
 }
 
 // ------------------------------------------------------- en-tête vivant
@@ -320,16 +453,16 @@ const PHRASES = [
 ];
 function horloge() {
   const d = new Date();
-  $("#heure").textContent = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-  const date = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  $("#heure").textContent = d.toLocaleTimeString(I18N.locale(), { hour: "2-digit", minute: "2-digit" });
+  const date = d.toLocaleDateString(I18N.locale(), { weekday: "long", day: "numeric", month: "long" });
   $("#date").textContent = date.charAt(0).toUpperCase() + date.slice(1);
   const h = d.getHours();
-  const salut = h < 5 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
+  const salut = t(h < 5 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir");
   const prenom = S.config?.prenom ? " " + S.config.prenom : "";
   $("#salut").textContent = `${salut}${prenom} 👋`;
 }
 $("#avatar").addEventListener("click", () => {
-  $("#sous-titre").textContent = PHRASES[Math.floor(Math.random() * PHRASES.length)];
+  $("#sous-titre").textContent = t(PHRASES[Math.floor(Math.random() * PHRASES.length)]);
   const a = $("#avatar"); a.style.transform = "rotate(380deg) scale(1.1)";
   setTimeout(() => (a.style.transform = ""), 500);
 });
@@ -353,8 +486,8 @@ function tuile(outil, apercu = false) {
     : el("div", { class: "etat" }, (TYPES[outil.type]?.emoji || "") + " " + (TYPES[outil.type]?.nom || ""));
   const t = el("button", { class: "tuile", style: `--c:${outil.couleur || "#6c4cf5"}` },
     el("div", { class: "emoji" }, outil.emoji || "🧩"),
-    el("div", { class: "nom" }, outil.nom || "Sans nom"),
-    el("div", { class: "desc" }, outil.description || ""),
+    el("div", { class: "nom" }, outil.nom ? document.createTextNode(outil.nom) : "Sans nom"),
+    el("div", { class: "desc" }, document.createTextNode(outil.description || "")),
     statut);
   if (!apercu) {
     t.append(el("div", { class: "actions-edition" },
@@ -379,14 +512,14 @@ async function lancer(outil, t) {
   t.classList.remove("lance"); void t.offsetWidth; t.classList.add("lance");
   try {
     await api("/api/lancer", { id: outil.id });
-    toast(`${outil.emoji || "🚀"} ${outil.nom} : c'est parti !`, "succes");
+    toast(`${outil.emoji || "🚀"} ${outil.nom} : ${I18N.t("c'est parti !")}`, "succes");
     setTimeout(chargerOutils, 1500);
   } catch (e) { toast("😕 " + e.message, "erreur", 5500); }
 }
 $("#btn-edition").onclick = () => {
   S.edition = !S.edition;
   $("#btn-edition").classList.toggle("actif", S.edition);
-  $("#btn-edition").textContent = S.edition ? "✅ Terminé" : "✏️ Modifier";
+  $("#btn-edition").textContent = t(S.edition ? "✅ Terminé" : "✏️ Modifier");
   if (S.config) afficherTuiles();
 };
 
@@ -396,7 +529,7 @@ async function enregistrer() {
   await chargerOutils();
 }
 async function retirer(outil) {
-  if (!(await confirmer("👋", `Retirer « ${outil.nom} » ?`, "La tuile disparaît du tableau de bord. Le dossier ou le programme n'est pas touché.", "Retirer"))) return;
+  if (!(await confirmer("👋", t("Retirer « {nom} » ?", { nom: outil.nom }), "La tuile disparaît du tableau de bord. Le dossier ou le programme n'est pas touché.", "Retirer"))) return;
   S.config.outils = S.config.outils.filter(o => o.id !== outil.id);
   await enregistrer();
   toast("Tuile retirée");
@@ -476,7 +609,7 @@ async function chargerServeurs() {
   try {
     S.serveurs = await api("/api/serveurs");
     afficherServeurs();
-    $("#maj").textContent = "serveurs vérifiés à " + new Date().toLocaleTimeString("fr-FR");
+    $("#maj").textContent = t("serveurs vérifiés à {heure}", { heure: new Date().toLocaleTimeString(I18N.locale()) });
   } catch (e) {
     $("#serveurs").replaceChildren(el("div", { class: "vide" }, "😕 Impossible de lire les serveurs : " + e.message));
   }
@@ -486,15 +619,12 @@ function afficherServeurs() {
   const empreinte = JSON.stringify(S.serveurs);
   if (empreinte === S.empreinteServeurs) return;
   S.empreinteServeurs = empreinte;
-  if (!S.serveurs.disponible) {
-    box.replaceChildren(el("div", { class: "vide" }, "🧩 Gadget « Serveurs Odoo » introuvable (chemin dans outils.json)."));
-    $("#nb-marche").textContent = "—";
-    return;
-  }
+  $("#bloc-serveurs").hidden = !S.serveurs.disponible;
+  if (!S.serveurs.disponible) return;
   const liste = S.serveurs.serveurs;
   if (!liste.length) { box.replaceChildren(el("div", { class: "vide" }, "Aucun serveur : ajoutez-en depuis le gadget complet.")); return; }
   const marche = liste.filter(s => s.etat === "En marche").length;
-  $("#nb-marche").textContent = `${marche} / ${liste.length} en marche`;
+  $("#nb-marche").textContent = t("{n} / {total} en marche", { n: marche, total: liste.length });
   box.replaceChildren(...liste.map((s, i) => {
     const classe = CLASSE_ETAT[s.etat] ?? "";
     const enRoute = s.etat === "En marche" || s.etat === "Démarrage…";
@@ -502,7 +632,7 @@ function afficherServeurs() {
       el("div", { class: "pastille", title: s.etat }, s.reference ? "🛡️" : "🐘", el("span", { class: "point " + classe })),
       el("div", { class: "infos" },
         el("div", { class: "base", title: s.base }, s.base),
-        el("div", { class: "ligne2" }, `${s.etat} · port ${s.port}`,
+        el("div", { class: "ligne2" }, `${t(s.etat)} · port ${s.port}`,
           s.reference ? el("span", { class: "etiquette ref" }, "référence") : null,
           s.conf ? el("span", { class: "etiquette conf", title: "Fichier de configuration" }, s.conf) : null)),
       el("div", { class: "boutons" },
@@ -514,14 +644,14 @@ function afficherServeurs() {
 }
 async function serveur(action, s) {
   if (action === "demarrer" && s.reference &&
-      !(await confirmer("🛡️", "Base de référence", `« ${s.base} » ne doit pas être modifiée. Démarrer quand même son serveur ?`, "Démarrer"))) return;
-  if (action === "arreter" && !(await confirmer("✋", `Arrêter ${s.base} ?`, `Seul le serveur Odoo du port ${s.port} est arrêté.`, "Arrêter"))) return;
+      !(await confirmer("🛡️", "Base de référence", t("« {base} » ne doit pas être modifiée. Démarrer quand même son serveur ?", { base: s.base }), "Démarrer"))) return;
+  if (action === "arreter" && !(await confirmer("✋", t("Arrêter {base} ?", { base: s.base }), t("Seul le serveur Odoo du port {port} est arrêté.", { port: s.port }), "Arrêter"))) return;
   if (action === "ouvrir" && s.etat !== "En marche" &&
       !(await confirmer("🤔", "Serveur pas prêt", "Il ne répond pas encore. Ouvrir quand même ?", "Ouvrir"))) return;
   try {
     await api("/api/serveur", { action, port: s.port });
-    if (action === "demarrer") toast(`🚀 ${s.base} démarre…`, "succes");
-    if (action === "arreter") toast(`😴 ${s.base} arrêté`);
+    if (action === "demarrer") toast("🚀 " + t("{base} démarre…", { base: s.base }), "succes");
+    if (action === "arreter") toast("😴 " + t("{base} arrêté", { base: s.base }));
     setTimeout(chargerServeurs, 600);
   } catch (e) { toast("😕 " + e.message, "erreur", 5500); }
 }
@@ -532,25 +662,92 @@ $("#btn-quitter").onclick = async () => {
   if (!(await confirmer("🚪", "Fermer le tableau de bord ?", "Les serveurs Odoo et les outils déjà lancés continuent de tourner.", "Fermer"))) return;
   await api("/api/quitter", {}).catch(() => {});
   document.body.replaceChildren(el("div", { style: "height:100vh;display:grid;place-items:center;text-align:center;font-family:Segoe UI" },
-    el("div", {}, el("div", { style: "font-size:70px" }, "👋"), el("h2", {}, "À bientôt !"), el("p", { style: "color:#6b6790" }, "Vous pouvez fermer cette fenêtre."))));
+    el("div", {}, el("div", { style: "font-size:70px" }, "👋"), el("h2", {}, "À bientôt !"), el("p", { style: "color:var(--doux)" }, "Vous pouvez fermer cette fenêtre."))));
   setTimeout(() => window.close(), 1200);
 };
 
 // ------------------------------------------------------------ onglets
-// Chaque onglet (notes.js, agenda.js, mails.js) s'enregistre ici avec une
-// fonction afficher(), appelée à chaque fois qu'on l'ouvre.
+// Chaque fichier outil/web/<nom>.js est chargé au démarrage et s'enregistre :
+//   VUES.<nom> = { afficher, titre: "Titre", icone: "🧩", groupe: "dev", ordre: 50 }
+// afficher() est appelée à chaque ouverture de l'onglet (section #vue-<nom>).
+// Groupes : quotidien, dev, outils, systeme.
 window.VUES = window.VUES || {};
+const GROUPES = { quotidien: "Au quotidien", dev: "Développement", outils: "Petits outils", systeme: "Mes outils" };
+// Onglets écrits avant le menu latéral (ils ne déclarent que afficher()).
+const ONGLETS_CONNUS = {
+  accueil: { titre: "Accueil", icone: "🏠", groupe: "quotidien", ordre: 0 },
+  mails: { titre: "Mails", icone: "✉️", groupe: "quotidien", ordre: 10 },
+  notes: { titre: "Notes", icone: "📝", groupe: "quotidien", ordre: 20 },
+  agenda: { titre: "Agenda", icone: "📅", groupe: "quotidien", ordre: 30 },
+  motsdepasse: { titre: "Mots de passe", icone: "🔐", groupe: "quotidien", ordre: 40 },
+  github: { titre: "GitHub", icone: "🐙", groupe: "dev", ordre: 20 },
+  ssh: { titre: "SSH", icone: "🔑", groupe: "dev", ordre: 60 },
+};
+VUES.accueil = { afficher: () => afficherAujourdhui() };
+function infosOnglet(nom) { return { ...(ONGLETS_CONNUS[nom] || {}), ...(VUES[nom] || {}) }; }
+/** Les onglets qui ont un titre, avec leurs infos (Réglages s'en sert). */
+function listeOnglets() {
+  return Object.keys(VUES).filter(n => $("#vue-" + n) && infosOnglet(n).titre).map(n => ({ nom: n, ...infosOnglet(n) }));
+}
+function construireMenu() {
+  const masques = new Set(S.masques || []);
+  const parGroupe = {};
+  for (const o of listeOnglets()) {
+    if (masques.has(o.nom) && o.nom !== "accueil" && o.nom !== "reglages") continue;
+    (parGroupe[o.groupe || "outils"] ||= []).push(o);
+  }
+  const nav = $("#onglets");
+  nav.replaceChildren();
+  for (const g of Object.keys(GROUPES)) {
+    const liste = (parGroupe[g] || []).sort((a, b) => (a.ordre ?? 99) - (b.ordre ?? 99));
+    if (!liste.length) continue;
+    nav.append(el("div", { class: "groupe" }, GROUPES[g]));
+    for (const o of liste) {
+      const titre = I18N.traduire(o.titre);
+      nav.append(el("button", { "data-vue": o.nom, title: titre, onclick: () => montrerVue(o.nom) },
+        el("span", { class: "ic" }, o.icone || "🧩"), el("span", { class: "lib" }, titre),
+        o.nom === "mails" ? el("span", { class: "compteur", id: "compteur-mails", hidden: "" }) : null));
+    }
+  }
+  if (S.vue) nav.querySelectorAll("button").forEach(b => b.classList.toggle("actif", b.dataset.vue === S.vue));
+  if (S.mailsNonLus) { const c = $("#compteur-mails"); if (c) { c.hidden = false; c.textContent = S.mailsNonLus; } }
+}
 function montrerVue(nom) {
-  if (!$("#vue-" + nom)) return;
+  if (!$("#vue-" + nom) || !VUES[nom]) nom = "accueil";
   document.querySelectorAll(".vue").forEach(v => v.classList.toggle("actif", v.id === "vue-" + nom));
   document.querySelectorAll("#onglets button").forEach(b => b.classList.toggle("actif", b.dataset.vue === nom));
   S.vue = nom;
-  if (nom === "accueil") afficherAujourdhui();
-  else VUES[nom]?.afficher();
+  try { VUES[nom]?.afficher(); } catch (e) { console.error(e); toast("😕 " + e.message, "erreur"); }
   history.replaceState(null, "", "#" + nom);
 }
-document.querySelectorAll("#onglets button").forEach(b => b.addEventListener("click", () => montrerVue(b.dataset.vue)));
 window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (v && v !== S.vue) montrerVue(v); });
+function chargerScript(src) {
+  return new Promise(resolve => {
+    const sc = document.createElement("script");
+    sc.src = src; sc.onload = resolve;
+    sc.onerror = () => { console.error("Onglet illisible : " + src); resolve(); };
+    document.body.append(sc);
+  });
+}
+async function demarrerOnglets() {
+  let info = { fichiers: [], langue: "fr", masques: [] };
+  try { info = await api("/api/onglets"); } catch (e) { toast("😕 " + e.message, "erreur", 8000); }
+  I18N.langue = info.langue;
+  S.masques = info.masques;
+  appliquerTheme(info.theme || "auto");
+  for (const f of info.fichiers) {
+    const nom = f.replace(/\.js$/, "");
+    if (!$("#vue-" + nom)) $("#vues").append(el("section", { class: "vue", id: "vue-" + nom }));
+  }
+  // Dans l'ordre, l'un après l'autre : chacun peut compter sur les précédents.
+  for (const f of info.fichiers) await chargerScript("/js/" + f);
+  for (const zone of ["header", "#vue-accueil", "footer", "#palette-voile"]) I18N.traduirePage($(zone));
+  construireMenu();
+  horloge();
+  montrerVue((location.hash || "#accueil").slice(1) || "accueil");
+  compterMails();
+  chargerServeursProjets();
+}
 
 // La bulle peut demander un onglet (rappel, note rapide…).
 setInterval(async () => {
@@ -569,25 +766,103 @@ async function afficherAujourdhui() {
   const epinglees = notes.filter(n => n.epinglee).slice(0, 4);
   const ligneRdv = e => el("div", { class: "ligne-jour" },
     el("span", { class: "heure" }, e.journee ? "Jour" : e.debut.slice(11, 16)),
-    el("span", { class: "pastille-c", style: `background:${e.couleur || "#6c4cf5"}` }), e.titre || "Rendez-vous");
+    el("span", { class: "pastille-c", style: `background:${e.couleur || "#6c4cf5"}` }), e.titre ? document.createTextNode(e.titre) : "Rendez-vous");
   const cartes = [
-    el("div", { class: "carte-jour", onclick: () => montrerVue("agenda") },
+    el("div", { class: "carte-jour", style: "--accent:var(--violet)", onclick: () => montrerVue("agenda") },
       el("h4", {}, "📅 Aujourd'hui"),
       duJour.length ? duJour.map(ligneRdv) : el("div", { class: "rien" }, "Rien de prévu, profitez-en 🌴"),
       deDemain.length ? [el("h4", { style: "margin-top:12px" }, "Demain"), deDemain.slice(0, 3).map(ligneRdv)] : null),
-    el("div", { class: "carte-jour", onclick: () => montrerVue("notes") },
+    el("div", { class: "carte-jour", style: "--accent:var(--ambre)", onclick: () => montrerVue("notes") },
       el("h4", {}, "📌 Notes épinglées"),
       epinglees.length ? epinglees.map(n => el("div", { class: "ligne-jour" },
-        el("span", { class: "pastille-c", style: `background:${n.couleur || "#ffb020"}` }), n.titre || (n.texte || "").slice(0, 50) || "Note"))
+        el("span", { class: "pastille-c", style: `background:${n.couleur || "#ffb020"}` }), (n.titre || (n.texte || "").slice(0, 50)) ? document.createTextNode(n.titre || (n.texte || "").slice(0, 50)) : "Note"))
         : el("div", { class: "rien" }, "Épinglez une note pour la retrouver ici")),
   ];
   if (S.mailsNonLus !== undefined && S.mailsNonLus !== null) {
-    cartes.push(el("div", { class: "carte-jour", onclick: () => montrerVue("mails") },
+    cartes.push(el("div", { class: "carte-jour", style: "--accent:var(--corail)", onclick: () => montrerVue("mails") },
       el("h4", {}, "✉️ Mails"),
       el("div", { class: "ligne-jour" }, el("span", { class: "heure", style: "font-size:26px" }, String(S.mailsNonLus)),
         S.mailsNonLus === 1 ? "mail non lu" : "mails non lus")));
   }
-  $("#aujourdhui").replaceChildren(...cartes);
+  // Redessinée plusieurs fois (mails, Git…) : l'animation d'arrivée une seule fois.
+  const box = $("#aujourdhui");
+  if (box.children.length) cartes.forEach(c => (c.style.animation = "none"));
+  const tour = (S.tourAujourdhui = (S.tourAujourdhui || 0) + 1);
+  // Les cartes de développement d'un affichage précédent restent en place
+  // jusqu'à l'arrivée des nouvelles (pas de clignotement).
+  box.replaceChildren(...cartes, ...box.querySelectorAll(".carte-dev"));
+
+  // Développement : état Git des projets, tests GitHub, chrono en cours.
+  // Chaque morceau est facultatif (onglet masqué ou absent : rien) et
+  // s'ajoute quand il arrive (GitHub peut être lent).
+  const dev = [];
+  const [git, ci, chrono] = await Promise.all([
+    VUES.projets ? api("/api/projets/git/etats", {}).catch(() => null) : null,
+    VUES.github ? api("/api/github/echecs_ci", {}).catch(() => null) : null,
+    VUES.temps ? api("/api/temps/etat", {}).catch(() => null) : null,
+  ]);
+  if (git?.git) {
+    const etats = Object.values(git.git).filter(g => !g.erreur);
+    const aEnvoyer = etats.filter(g => g.avance > 0).length, modifies = etats.filter(g => g.modifies + g.non_suivis > 0).length;
+    const enRetard = etats.filter(g => g.retard > 0).length;
+    const ligne = (icone, n, texte) => el("div", { class: "ligne-jour" }, el("span", { class: "heure" }, icone + " " + n), t(texte));
+    dev.push(el("div", { class: "carte-jour carte-dev", style: "--accent:var(--menthe)", onclick: () => montrerVue("projets") },
+      el("h4", {}, "💻 " + t("Code")),
+      aEnvoyer || modifies || enRetard || ci?.nombre
+        ? [aEnvoyer ? ligne("⬆️", aEnvoyer, aEnvoyer > 1 ? "projets à envoyer" : "projet à envoyer") : null,
+           modifies ? ligne("✏️", modifies, modifies > 1 ? "projets modifiés" : "projet modifié") : null,
+           enRetard ? ligne("⬇️", enRetard, enRetard > 1 ? "projets en retard" : "projet en retard") : null,
+           ci?.nombre ? el("div", { class: "ligne-jour", style: "color:var(--rouge-texte);font-weight:700", onclick: e => { e.stopPropagation(); montrerVue("github"); } },
+             el("span", { class: "heure" }, "❌ " + ci.nombre), t(ci.nombre > 1 ? "tests GitHub en échec" : "test GitHub en échec")) : null]
+        : el("div", { class: "rien" }, t("Tout est envoyé, rien en attente ✨"))));
+  }
+  if (chrono?.en_cours) {
+    const depuis = Math.floor((chrono.secondes || 0) / 60);
+    dev.push(el("div", { class: "carte-jour carte-dev", style: "--accent:var(--ambre)", onclick: () => montrerVue("temps") },
+      el("h4", {}, "⏱️ " + t("Chrono en cours")),
+      el("div", { class: "grand" }, `${Math.floor(depuis / 60)} h ${String(depuis % 60).padStart(2, "0")}`),
+      el("div", { class: "ligne-jour" }, chrono.projet || "")));
+  }
+  if (tour !== S.tourAujourdhui) return;  // un affichage plus récent a pris le relais
+  if (box.querySelector(".carte-dev")) dev.forEach(c => (c.style.animation = "none"));
+  box.querySelectorAll(".carte-dev").forEach(c => c.remove());
+  box.append(...dev);
+}
+
+// ------------------------------------------- serveurs des projets (accueil)
+const CLASSE_PROJET = { marche: "marche", demarrage: "demarrage", occupe: "occupe", arrete: "" };
+const TEXTE_PROJET = { marche: "En marche", demarrage: "Démarrage…", occupe: "Port occupé (autre programme)", arrete: "Arrêté" };
+async function chargerServeursProjets() {
+  if (!VUES.projets || (S.masques || []).includes("projets")) { $("#bloc-projets").hidden = true; return; }
+  let liste = [];
+  try { liste = (await api("/api/projets/etats", {})).serveurs || []; } catch { return; }
+  const empreinte = JSON.stringify(liste);
+  if (empreinte === S.empreinteProjets) return;
+  S.empreinteProjets = empreinte;
+  $("#bloc-projets").hidden = !liste.length;
+  $("#nb-projets-marche").textContent = t("{n} / {total} en marche", { n: liste.filter(s => s.etat === "marche").length, total: liste.length });
+  $("#serveurs-projets").replaceChildren(...liste.map((s, i) => {
+    const enRoute = s.etat === "marche" || s.etat === "demarrage";
+    return el("div", { class: "serveur", style: `animation-delay:${i * 40}ms` },
+      el("div", { class: "pastille", title: t(TEXTE_PROJET[s.etat] || s.etat) }, "📦", el("span", { class: "point " + (CLASSE_PROJET[s.etat] ?? "") })),
+      el("div", { class: "infos" },
+        el("div", { class: "base", title: `${s.projet} · ${s.nom}` }, s.projet),
+        el("div", { class: "ligne2" }, s.nom, s.port ? el("span", { class: "etiquette" }, ":" + s.port) : null)),
+      el("div", { class: "boutons" },
+        el("button", { class: "icone-btn go", title: "Démarrer", disabled: enRoute || s.etat === "occupe" ? "" : null, onclick: () => commandeProjet(s, "demarrer") }, "▶"),
+        el("button", { class: "icone-btn stop", title: "Arrêter", disabled: !enRoute ? "" : null, onclick: () => commandeProjet(s, "arreter") }, "■"),
+        el("button", { class: "icone-btn", title: "Ouvrir dans le navigateur", disabled: s.url || s.port ? null : "", onclick: () => commandeProjet(s, "ouvrir") }, "↗")));
+  }));
+}
+async function commandeProjet(s, action) {
+  if (action === "arreter" && !(await confirmer("✋", t("Arrêter {base} ?", { base: `${s.projet} · ${s.nom}` }), "Le programme lancé par Mes outils est arrêté.", "Arrêter"))) return;
+  try {
+    await api("/api/projets/commande", { projet: s.projet_id, commande: s.id, action });
+    if (action === "demarrer") toast("🚀 " + t("{base} démarre…", { base: s.projet }), "succes");
+    if (action === "arreter") toast("😴 " + t("{base} arrêté", { base: s.projet }));
+    S.empreinteProjets = null;
+    setTimeout(chargerServeursProjets, 800);
+  } catch (e) { toast("😕 " + e.message, "erreur", 5500); }
 }
 
 async function compterMails() {
@@ -595,27 +870,145 @@ async function compterMails() {
     const { non_lus } = await api("/api/mail/non_lus");
     S.mailsNonLus = non_lus;
     const c = $("#compteur-mails");
-    c.hidden = !non_lus; c.textContent = non_lus || "";
+    if (c) { c.hidden = !non_lus; c.textContent = non_lus || ""; }
   } catch { S.mailsNonLus = null; }
 }
 
+// Textes ajoutés avec le thème et la palette (le reste de hub.html : i18n.js).
+I18N.ajouter({
+  "Rechercher…": "Search…", "Rechercher un onglet, un outil, une action (Ctrl + K)": "Search a tab, a tool, an action (Ctrl + K)",
+  "Aller à un onglet, lancer un outil, une action…": "Go to a tab, launch a tool, run an action…",
+  "Thème clair ou sombre": "Light or dark theme", "Thème : automatique (comme Windows)": "Theme: automatic (like Windows)",
+  "Thème : sombre": "Theme: dark", "Thème : clair": "Theme: light", "Thème sombre": "Dark theme", "Thème clair": "Light theme",
+  "Thème automatique (comme Windows)": "Automatic theme (like Windows)", "Modifier les tuiles": "Edit the tiles",
+  "Recharger la page": "Reload the page", "Onglets": "Tabs", "Mes outils": "My tools", "Actions": "Actions", "Rien trouvé": "Nothing found",
+  "choisir": "select", "ouvrir": "open", "fermer": "close", "Entrée": "Enter", "Échap": "Esc",
+  "Au quotidien": "Everyday", "Développement": "Development", "Petits outils": "Handy tools",
+  "Palette de commandes": "Command palette",
+  "Serveurs des projets": "Project servers", "📦 Projets": "📦 Projects", "Code": "Code",
+  "projet à envoyer": "project to push", "projets à envoyer": "projects to push",
+  "projet modifié": "modified project", "projets modifiés": "modified projects",
+  "projet en retard": "project behind", "projets en retard": "projects behind",
+  "test GitHub en échec": "failing GitHub check", "tests GitHub en échec": "failing GitHub checks",
+  "Tout est envoyé, rien en attente ✨": "Everything is pushed, nothing pending ✨", "Chrono en cours": "Timer running",
+  "Le programme lancé par Mes outils est arrêté.": "The program started by Mes outils is stopped.",
+});
+
+// --------------------------------------------------------------- thème
+// « auto » suit Windows ; ?theme=sombre dans l'adresse force un thème (captures).
+const THEMES = ["auto", "clair", "sombre"];
+const sombreWindows = matchMedia("(prefers-color-scheme: dark)");
+function appliquerTheme(choix) {
+  if (!THEMES.includes(choix)) choix = "auto";
+  S.theme = choix;
+  const force = new URLSearchParams(location.search).get("theme");
+  const sombre = force ? force === "sombre" : choix === "sombre" || (choix === "auto" && sombreWindows.matches);
+  document.documentElement.dataset.theme = sombre ? "sombre" : "clair";
+  const b = $("#btn-theme");
+  b.textContent = choix === "auto" ? "🌗" : sombre ? "🌙" : "☀️";
+  b.title = I18N.traduire(choix === "auto" ? "Thème : automatique (comme Windows)" : sombre ? "Thème : sombre" : "Thème : clair");
+  try { localStorage.setItem("mes-outils-theme", choix); } catch {}
+}
+sombreWindows.addEventListener("change", () => { if (S.theme === "auto") appliquerTheme("auto"); });
+async function changerTheme(choix) {
+  appliquerTheme(choix);
+  try { await api("/api/reglages/enregistrer", { theme: choix }); } catch (e) { toast("😕 " + e.message, "erreur"); }
+}
+$("#btn-theme").onclick = () => changerTheme(THEMES[(THEMES.indexOf(S.theme) + 1) % THEMES.length]);
+// En-tête collant : un trait sous l'en-tête dès qu'on fait défiler.
+addEventListener("scroll", () => $("header").classList.toggle("colle", scrollY > 6), { passive: true });
+
+// ------------------------------------------------- palette de commandes
+// Ctrl + K : aller à un onglet, lancer un outil, ou une action proposée par
+// un onglet (VUES.<nom>.commandes = () => [{ icone, titre, detail, action }]).
+const P = { items: [], vus: [], choix: 0 };
+const sansAccents = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+function elementsPalette() {
+  const items = [];
+  for (const o of listeOnglets()) {
+    items.push({ section: "Onglets", icone: o.icone || "🧩", titre: I18N.traduire(o.titre), detail: I18N.traduire(GROUPES[o.groupe] || ""), action: () => montrerVue(o.nom) });
+  }
+  for (const o of S.config?.outils || []) {
+    items.push({ section: "Mes outils", icone: o.emoji || "🧩", titre: o.nom, detail: o.description || "", action: () => lancer(o, document.createElement("div")) });
+  }
+  for (const n of Object.keys(VUES)) {
+    try { for (const c of VUES[n].commandes?.() || []) items.push({ section: "Actions", icone: "⚡", ...c, titre: I18N.traduire(c.titre), detail: I18N.traduire(c.detail || "") }); }
+    catch (e) { console.error(e); }
+  }
+  items.push(
+    { section: "Actions", icone: "🌙", titre: I18N.traduire("Thème sombre"), action: () => changerTheme("sombre") },
+    { section: "Actions", icone: "☀️", titre: I18N.traduire("Thème clair"), action: () => changerTheme("clair") },
+    { section: "Actions", icone: "🌗", titre: I18N.traduire("Thème automatique (comme Windows)"), action: () => changerTheme("auto") },
+    { section: "Actions", icone: "✏️", titre: I18N.traduire("Modifier les tuiles"), action: () => { montrerVue("accueil"); if (!S.edition) $("#btn-edition").click(); } },
+    { section: "Actions", icone: "🔄", titre: I18N.traduire("Recharger la page"), action: () => location.reload() });
+  return items;
+}
+function filtrerPalette(texte) {
+  const mots = sansAccents(texte).split(/\s+/).filter(Boolean);
+  if (!mots.length) return P.items.filter(i => i.section !== "Actions" || i.icone !== "⚡").slice(0, 60);
+  return P.items.map(i => {
+    const titre = sansAccents(i.titre), tout = titre + " " + sansAccents(i.detail) + " " + sansAccents(i.section);
+    if (!mots.every(m => tout.includes(m))) return null;
+    const score = (titre.startsWith(mots[0]) ? 0 : titre.includes(mots[0]) ? 1 : 2) + (i.section === "Onglets" ? 0 : .5);
+    return { i, score };
+  }).filter(Boolean).sort((a, b) => a.score - b.score).slice(0, 40).map(x => x.i);
+}
+function dessinerPalette() {
+  const box = $("#palette-resultats");
+  box.replaceChildren();
+  if (!P.vus.length) { box.append(el("div", { class: "vide", style: "margin:8px" }, "Rien trouvé")); return; }
+  let section = null;
+  P.vus.forEach((it, n) => {
+    if (it.section !== section) { section = it.section; box.append(el("div", { class: "section-p" }, section)); }
+    const ligne = el("div", { class: "item" + (n === P.choix ? " choisi" : ""), onmousemove: () => { if (P.choix !== n) { P.choix = n; dessinerPalette(); } },
+      onclick: () => executerPalette(n) },
+      el("span", { class: "ic" }, it.icone || "•"),
+      el("span", { class: "tx" }, el("b", {}, it.titre), it.detail ? el("small", {}, it.detail) : null));
+    box.append(ligne);
+    if (n === P.choix) requestAnimationFrame(() => ligne.scrollIntoView({ block: "nearest" }));
+  });
+}
+function ouvrirPalette() {
+  P.items = elementsPalette();
+  const saisie = $("#palette-saisie");
+  saisie.value = "";
+  P.vus = filtrerPalette(""); P.choix = 0;
+  $("#palette-voile").classList.add("visible");
+  dessinerPalette();
+  setTimeout(() => saisie.focus(), 20);
+}
+function fermerPalette() { $("#palette-voile").classList.remove("visible"); }
+function executerPalette(n) {
+  const it = P.vus[n];
+  fermerPalette();
+  if (it) try { it.action(); } catch (e) { toast("😕 " + e.message, "erreur"); }
+}
+$("#palette-saisie").addEventListener("input", e => { P.vus = filtrerPalette(e.target.value); P.choix = 0; dessinerPalette(); });
+$("#palette-saisie").addEventListener("keydown", e => {
+  if (e.key === "ArrowDown") { e.preventDefault(); P.choix = Math.min(P.vus.length - 1, P.choix + 1); dessinerPalette(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); P.choix = Math.max(0, P.choix - 1); dessinerPalette(); }
+  else if (e.key === "Enter") { e.preventDefault(); executerPalette(P.choix); }
+  else if (e.key === "Escape") { e.preventDefault(); fermerPalette(); }
+});
+$("#palette-voile").addEventListener("mousedown", e => { if (e.target.id === "palette-voile") fermerPalette(); });
+$("#btn-palette").onclick = ouvrirPalette;
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+    e.preventDefault();
+    $("#palette-voile").classList.contains("visible") ? fermerPalette() : ouvrirPalette();
+  }
+});
+
 // -------------------------------------------------------------- départ
-compterMails().then(() => { if (S.vue === "accueil") afficherAujourdhui(); });
 setInterval(compterMails, 120000);
-// Après le chargement de notes.js, agenda.js et mails.js (placés plus bas).
-document.addEventListener("DOMContentLoaded", () => montrerVue((location.hash || "#accueil").slice(1) || "accueil"));
+demarrerOnglets().then(() => { if (S.vue === "accueil") afficherAujourdhui(); });
 horloge();
 setInterval(horloge, 10000);
 chargerOutils().catch(e => toast("😕 " + e.message, "erreur", 8000));
 chargerServeurs();
 setInterval(chargerServeurs, 5000);
+setInterval(() => { if (S.vue === "accueil") chargerServeursProjets(); }, 5000);
 setInterval(() => chargerOutils().catch(() => {}), 15000);
 </script>
-<script src="/js/notes.js"></script>
-<script src="/js/agenda.js"></script>
-<script src="/js/mails.js"></script>
-<script src="/js/motsdepasse.js"></script>
-<script src="/js/ssh.js"></script>
-<script src="/js/github.js"></script>
 </body>
 </html>

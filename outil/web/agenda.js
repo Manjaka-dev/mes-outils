@@ -2,10 +2,70 @@
 /* Onglet « Agenda » : vue semaine et vue mois, rendez-vous colorés,
    rappels par la bulle (donnees/agenda.json). */
 (() => {
+  I18N.ajouter({
+    "Agenda": "Calendar",
+    "Pas de rappel": "No reminder",
+    "À l'heure": "At the time",
+    "5 min avant": "5 min before",
+    "15 min avant": "15 min before",
+    "30 min avant": "30 min before",
+    "1 h avant": "1 h before",
+    "La veille": "The day before",
+    "Aujourd'hui": "Today",
+    "Précédent": "Previous",
+    "Suivant": "Next",
+    "Semaine": "Week",
+    "Mois": "Month",
+    "＋ Rendez-vous": "＋ Appointment",
+    "Rendez-vous": "Appointment",
+    "jour": "all day",
+    "à {heure}": "at {heure}",
+    "⧉ Copié au {quand}": "⧉ Copied to {quand}",
+    "📅 Déplacé au {quand}": "📅 Moved to {quand}",
+    "glisser pour déplacer, Ctrl + glisser pour dupliquer": "drag to move, Ctrl + drag to duplicate",
+    "copie": "copy",
+    "+ {n} autres": "+ {n} more",
+    "💡 Glissez un rendez-vous pour le déplacer · Ctrl + glisser pour le dupliquer": "💡 Drag an appointment to move it · Ctrl + drag to duplicate it",
+    "Début": "Start",
+    "Fin": "End",
+    "Titre": "Title",
+    "Jour": "Day",
+    "Toute la journée": "All day",
+    "Lieu": "Place",
+    "Rappel (par la bulle)": "Reminder (from the bubble)",
+    "Couleur": "Colour",
+    "Notes": "Notes",
+    "ex. Réunion client": "e.g. Client meeting",
+    "ex. Bureau, Teams…": "e.g. Office, Teams…",
+    "Détails, ordre du jour…": "Details, agenda…",
+    "✏️ Rendez-vous": "✏️ Appointment",
+    "⧉ Copie du rendez-vous": "⧉ Copy of the appointment",
+    "✨ Nouveau rendez-vous": "✨ New appointment",
+    "Supprimer ce rendez-vous ?": "Delete this appointment?",
+    "Supprimer": "Delete",
+    "🗑 Supprimer": "🗑 Delete",
+    "🗑️ Rendez-vous supprimé": "🗑️ Appointment deleted",
+    "Créer une copie (choisissez ensuite le jour)": "Create a copy (then choose the day)",
+    "⧉ Dupliquer": "⧉ Duplicate",
+    "⧉ Copie prête : changez le jour si besoin, puis « Ajouter »": "⧉ Copy ready: change the day if needed, then “Add”",
+    "Annuler": "Cancel",
+    "Enregistrer": "Save",
+    "Ajouter": "Add",
+    "Donnez un titre au rendez-vous 😉": "Give the appointment a title 😉",
+    "La fin doit être après le début": "The end must be after the start",
+    "📅 Rendez-vous modifié": "📅 Appointment updated",
+    "🎉 Rendez-vous ajouté !": "🎉 Appointment added!",
+  });
+
   const COULEURS_RDV = ["#6c4cf5", "#ff7a59", "#18b597", "#ffb020", "#e5488d", "#2f8cff", "#475569"];
   const RAPPELS = [["", "Pas de rappel"], ["0", "À l'heure"], ["5", "5 min avant"], ["15", "15 min avant"], ["30", "30 min avant"], ["60", "1 h avant"], ["1440", "La veille"]];
   const H0 = 6, H1 = 23, PX = 46;            // heures affichées, pixels par heure
-  const JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  /** « Lun », « Mar »… (ou « Mon », « Tue »…) dans la langue choisie. */
+  const nomsJours = () => [...Array(7)].map((_, i) => {
+    // Le 1er janvier 2024 est un lundi.
+    const j = new Date(2024, 0, 1 + i).toLocaleDateString(I18N.locale(), { weekday: "short" }).replace(/\.$/, "");
+    return j.charAt(0).toUpperCase() + j.slice(1);
+  });
   const A = { evenements: [], mode: "semaine", ref: new Date() };
 
   const style = document.createElement("style");
@@ -15,17 +75,17 @@
     .entete-semaine { display: grid; grid-template-columns: 54px repeat(7, minmax(0, 1fr)); padding-right: 8px; }
     .entete-semaine .tete-jour { text-align: center; padding: 10px 4px; border-bottom: 1px solid var(--ligne); font-size: 13px; color: var(--doux); font-weight: 700; }
     .entete-semaine .tete-jour b { display: block; font-size: 20px; color: var(--encre); }
-    .entete-semaine .tete-jour.auj b { background: var(--violet); color: #fff; border-radius: 12px; width: 36px; margin: 2px auto 0; }
+    .entete-semaine .tete-jour.auj b { background: var(--violet); color: var(--sur-violet); border-radius: 12px; width: 36px; margin: 2px auto 0; }
     .bande-jour { display: grid; grid-template-columns: 54px repeat(7, minmax(0, 1fr)); border-bottom: 1px solid var(--ligne); min-height: 30px; padding-right: 8px; }
     .bande-jour .case { padding: 3px; display: flex; flex-direction: column; gap: 3px; border-left: 1px solid var(--ligne); }
     .bande-jour .etiquette-h { font-size: 11px; color: var(--gris); text-align: right; padding: 8px 6px 0 0; }
     .defilement { max-height: 560px; overflow-y: scroll; }
     .defilement::-webkit-scrollbar { width: 8px; }
-    .defilement::-webkit-scrollbar-thumb { background: #d9d3f5; border-radius: 8px; }
+    .defilement::-webkit-scrollbar-thumb { background: var(--ligne); border-radius: 8px; }
     .corps-semaine { display: grid; grid-template-columns: 54px repeat(7, minmax(0, 1fr)); position: relative; }
     .heures div { height: ${PX}px; font-size: 11px; color: var(--gris); text-align: right; padding-right: 6px; transform: translateY(-7px); }
     .colonne { position: relative; border-left: 1px solid var(--ligne); background-image: repeating-linear-gradient(to bottom, transparent 0, transparent ${PX - 1}px, var(--ligne) ${PX - 1}px, var(--ligne) ${PX}px); cursor: copy; }
-    .colonne.auj { background-color: #faf8ff; }
+    .colonne.auj { background-color: var(--surface); }
     .rdv { position: absolute; left: 3px; right: 3px; border-radius: 10px; padding: 4px 7px; font-size: 12.5px; color: #fff; overflow: hidden; cursor: pointer;
            box-shadow: 0 6px 14px -8px rgba(0,0,0,.45); transition: transform .15s, filter .15s; animation: apparait .3s both; }
     .rdv:hover { transform: scale(1.02); filter: brightness(1.05); z-index: 3; }
@@ -37,10 +97,10 @@
     .mois { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
     .mois .nom-jour { text-align: center; font-size: 12px; font-weight: 700; color: var(--doux); padding: 10px 0; border-bottom: 1px solid var(--ligne); }
     .mois .jour { min-height: 98px; border-left: 1px solid var(--ligne); border-bottom: 1px solid var(--ligne); padding: 6px; cursor: pointer; transition: background .15s; }
-    .mois .jour:hover { background: #faf8ff; }
-    .mois .jour.autre { background: #fbfbfd; color: var(--gris); }
+    .mois .jour:hover { background: var(--violet-clair); }
+    .mois .jour.autre { background: var(--surface); color: var(--gris); }
     .mois .jour .num { font-weight: 800; font-size: 13px; margin-bottom: 4px; display: inline-block; min-width: 24px; text-align: center; border-radius: 8px; }
-    .mois .jour.auj .num { background: var(--violet); color: #fff; }
+    .mois .jour.auj .num { background: var(--violet); color: var(--sur-violet); }
     .puce-rdv { font-size: 11.5px; border-radius: 7px; padding: 2px 6px; color: #fff; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .plus-rdv { font-size: 11.5px; color: var(--doux); font-weight: 700; }
     .titre-periode { font-size: 19px; font-weight: 800; margin: 0 6px; min-width: 250px; }
@@ -62,6 +122,10 @@
   const debutDe = e => new Date(e.debut);
   const finDe = e => e.fin ? new Date(e.fin) : new Date(debutDe(e).getTime() + 3600e3);
   const memeJourA = (a, b) => a.toDateString() === b.toDateString();
+  // Données de l'utilisateur (titres, lieux) : jamais traduites.
+  const brut = s => document.createTextNode(s ?? "");
+  const titreDe = e => (e.titre ? brut(e.titre) : t("Rendez-vous"));
+  const astuce = e => (e.titre || "") + " — " + t("glisser pour déplacer, Ctrl + glisser pour dupliquer");
 
   async function charger() {
     A.evenements = await api("/api/agenda");
@@ -72,22 +136,22 @@
     const lun = lundi(A.ref), dim = plusJours(lun, 6);
     const titre = A.mode === "semaine"
       ? (lun.getMonth() === dim.getMonth()
-        ? `${lun.getDate()} – ${dim.getDate()} ${dim.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}`
-        : `${lun.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} – ${dim.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}`)
-      : A.ref.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+        ? `${lun.getDate()} – ${dim.getDate()} ${dim.toLocaleDateString(I18N.locale(), { month: "long", year: "numeric" })}`
+        : `${lun.toLocaleDateString(I18N.locale(), { day: "numeric", month: "short" })} – ${dim.toLocaleDateString(I18N.locale(), { day: "numeric", month: "short", year: "numeric" })}`)
+      : A.ref.toLocaleDateString(I18N.locale(), { month: "long", year: "numeric" });
     const decaler = sens => {
       A.ref = A.mode === "semaine" ? plusJours(A.ref, 7 * sens) : new Date(A.ref.getFullYear(), A.ref.getMonth() + sens, 1);
       dessiner();
     };
     return el("div", { class: "barre-vue" },
-      el("h2", {}, "📅 Agenda"),
+      el("h2", {}, "📅 " + t("Agenda")),
       el("button", { class: "btn", onclick: () => { A.ref = new Date(); dessiner(); } }, "Aujourd'hui"),
       el("button", { class: "btn discret", title: "Précédent", onclick: () => decaler(-1) }, "‹"),
       el("button", { class: "btn discret", title: "Suivant", onclick: () => decaler(1) }, "›"),
       el("span", { class: "titre-periode" }, titre.charAt(0).toUpperCase() + titre.slice(1)),
       el("div", { class: "espace" }),
-      el("div", { class: "puces" }, [["semaine", "Semaine"], ["mois", "Mois"]].map(([m, t]) =>
-        el("button", { class: "puce" + (A.mode === m ? " actif" : ""), onclick: () => { A.mode = m; dessiner(); } }, t))),
+      el("div", { class: "puces" }, [["semaine", "Semaine"], ["mois", "Mois"]].map(([m, libelle]) =>
+        el("button", { class: "puce" + (A.mode === m ? " actif" : ""), onclick: () => { A.mode = m; dessiner(); } }, libelle))),
       el("button", { class: "btn principal", onclick: () => editer(nouveau(new Date())) }, "＋ Rendez-vous"));
   }
 
@@ -111,8 +175,8 @@
     try {
       await api("/api/agenda/enregistrer", { element: x });
       await charger();
-      const quand = nouveauDebut.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + (x.journee ? "" : " à " + x.debut.slice(11, 16));
-      toast(copier ? `⧉ Copié au ${quand}` : `📅 Déplacé au ${quand}`, "succes");
+      const quand = nouveauDebut.toLocaleDateString(I18N.locale(), { weekday: "short", day: "numeric", month: "short" }) + (x.journee ? "" : " " + t("à {heure}", { heure: x.debut.slice(11, 16) }));
+      toast(t(copier ? "⧉ Copié au {quand}" : "📅 Déplacé au {quand}", { quand }), "succes");
     } catch (err) { toast("😕 " + err.message, "erreur"); await charger(); }
   }
 
@@ -166,7 +230,7 @@
       bloc.style.top = `${top0 + minutes / 60 * PX}px`;
       bloc.style.left = "3px"; bloc.style.width = "calc(100% - 6px)";
       const d = nouveauDebut();
-      etiquette.textContent = `${isoMinute(d).slice(11, 16)} – ${isoMinute(new Date(d.getTime() + duree)).slice(11, 16)}${mv.ctrlKey ? " · copie" : ""}`;
+      etiquette.textContent = `${isoMinute(d).slice(11, 16)} – ${isoMinute(new Date(d.getTime() + duree)).slice(11, 16)}${mv.ctrlKey ? " · " + t("copie") : ""}`;
     };
     const lacher = up => {
       document.removeEventListener("mousemove", suivre);
@@ -179,24 +243,25 @@
   }
 
   function puce(e) {
-    return el("div", { class: "puce-rdv", style: `background:${e.couleur || "#6c4cf5"}`, title: (e.titre || "") + " — glisser pour déplacer, Ctrl + glisser pour dupliquer",
-      ...deplacable(e), onclick: ev => { ev.stopPropagation(); editer(e); } }, (e.journee ? "" : e.debut.slice(11, 16) + " ") + (e.titre || "Rendez-vous"));
+    return el("div", { class: "puce-rdv", style: `background:${e.couleur || "#6c4cf5"}`, title: astuce(e),
+      ...deplacable(e), onclick: ev => { ev.stopPropagation(); editer(e); } }, brut((e.journee ? "" : e.debut.slice(11, 16) + " ") + (e.titre || t("Rendez-vous"))));
   }
 
   // -- vue semaine -----------------------------------------------------------
   function vueSemaine() {
     const lun = lundi(A.ref);
     const jours = [...Array(7)].map((_, i) => plusJours(lun, i));
+    const noms = nomsJours();
     const auj = new Date();
     const grille = el("div", { class: "semaine" },
       el("div", { class: "entete-semaine" },
         el("div", { class: "tete-jour" }),
-        jours.map((d, i) => el("div", { class: "tete-jour" + (memeJourA(d, auj) ? " auj" : "") }, JOURS[i], el("b", {}, String(d.getDate()))))));
+        jours.map((d, i) => el("div", { class: "tete-jour" + (memeJourA(d, auj) ? " auj" : "") }, noms[i], el("b", {}, String(d.getDate()))))));
     // Rendez-vous de la journée entière
     grille.append(el("div", { class: "bande-jour" },
       el("div", { class: "etiquette-h" }, "jour"),
       jours.map(d => el("div", { class: "case", ...zoneDepot(d) }, A.evenements.filter(e => e.journee && memeJourA(debutDe(e), d)).map(e =>
-        el("div", { class: "rdv jour", style: `background:${e.couleur || "#6c4cf5"}`, ...deplacable(e), onclick: () => editer(e) }, el("b", {}, e.titre || "Rendez-vous")))))));
+        el("div", { class: "rdv jour", style: `background:${e.couleur || "#6c4cf5"}`, ...deplacable(e), onclick: () => editer(e) }, el("b", {}, titreDe(e))))))));
     const corps = el("div", { class: "corps-semaine" },
       el("div", { class: "heures" }, [...Array(H1 - H0)].map((_, i) => el("div", {}, i ? `${H0 + i}:00` : ""))));
     jours.forEach(d => {
@@ -208,10 +273,10 @@
         const haut = Math.max(0, (deb.getHours() + deb.getMinutes() / 60 - H0) * PX);
         const hauteur = Math.max(22, (fin - deb) / 3600e3 * PX - 2);
         const bloc = el("div", { class: "rdv", style: `top:${haut}px;height:${hauteur}px;background:${e.couleur || "#6c4cf5"};left:calc(${voie * 100 / voies}% + 3px);width:calc(${100 / voies}% - 6px);right:auto`,
-          title: (e.titre || "") + " — glisser pour déplacer, Ctrl + glisser pour dupliquer",
+          title: astuce(e),
           onmousedown: ev => glisserRdv(ev, e, bloc, jours), onclick: ev => ev.stopPropagation() },
-          el("b", {}, e.titre || "Rendez-vous"),
-          el("span", {}, `${e.debut.slice(11, 16)} – ${isoMinute(fin).slice(11, 16)}${e.lieu ? " · " + e.lieu : ""}`));
+          el("b", {}, titreDe(e)),
+          el("span", {}, brut(`${e.debut.slice(11, 16)} – ${isoMinute(fin).slice(11, 16)}${e.lieu ? " · " + e.lieu : ""}`)));
         col.append(bloc);
       });
       if (memeJourA(d, auj)) {
@@ -255,7 +320,7 @@
     const premier = new Date(A.ref.getFullYear(), A.ref.getMonth(), 1);
     const debut = lundi(premier);
     const auj = new Date();
-    const grille = el("div", { class: "mois" }, JOURS.map(j => el("div", { class: "nom-jour" }, j)));
+    const grille = el("div", { class: "mois" }, nomsJours().map(j => el("div", { class: "nom-jour" }, j)));
     for (let i = 0; i < 42; i++) {
       const d = plusJours(debut, i);
       const duJour = A.evenements.filter(e => memeJourA(debutDe(e), d)).sort((a, b) => (b.journee ? 1 : 0) - (a.journee ? 1 : 0) || a.debut.localeCompare(b.debut));
@@ -263,7 +328,7 @@
         onclick: () => editer(nouveau(d)), ...zoneDepot(d) },
         el("span", { class: "num" }, String(d.getDate())),
         duJour.slice(0, 3).map(puce),
-        duJour.length > 3 ? el("div", { class: "plus-rdv", onclick: ev => { ev.stopPropagation(); A.mode = "semaine"; A.ref = d; dessiner(); } }, `+ ${duJour.length - 3} autres`) : null));
+        duJour.length > 3 ? el("div", { class: "plus-rdv", onclick: ev => { ev.stopPropagation(); A.mode = "semaine"; A.ref = d; dessiner(); } }, t("+ {n} autres", { n: duJour.length - 3 })) : null));
     }
     return el("div", { class: "agenda-carte" }, grille);
   }
@@ -295,7 +360,7 @@
       onclick: ev => { e.couleur = c; [...couleurs.children].forEach(b => b.classList.toggle("choisi", b === ev.currentTarget)); } })));
     const titre = el("input", { value: e.titre || "", placeholder: "ex. Réunion client" });
     const lieu = el("input", { value: e.lieu || "", placeholder: "ex. Bureau, Teams…" });
-    const rappel = el("select", {}, RAPPELS.map(([v, t]) => el("option", { value: v, selected: String(e.rappel_minutes ?? "") === v ? "" : null }, t)));
+    const rappel = el("select", {}, RAPPELS.map(([v, libelle]) => el("option", { value: v, selected: String(e.rappel_minutes ?? "") === v ? "" : null }, libelle)));
     const notes = el("textarea", { rows: 3, value: e.notes || "", placeholder: "Détails, ordre du jour…" });
 
     fenetre([
@@ -309,7 +374,7 @@
       champ("Notes", notes),
       el("div", { class: "actions" },
         e.id ? el("button", { class: "btn discret", style: "margin-right:auto;color:var(--rouge)", onclick: async () => {
-          if (!(await confirmer("🗑️", "Supprimer ce rendez-vous ?", e.titre || "", "Supprimer"))) { editer(e); return; }
+          if (!(await confirmer("🗑️", "Supprimer ce rendez-vous ?", e.titre ? "« " + e.titre + " »" : "", "Supprimer"))) { editer(e); return; }
           await api("/api/agenda/supprimer", { id: e.id });
           await charger(); toast("🗑️ Rendez-vous supprimé");
         } }, "🗑 Supprimer") : null,
@@ -343,5 +408,6 @@
   // La ligne « maintenant » avance toute seule.
   setInterval(() => { if (S.vue === "agenda" && A.mode === "semaine" && !$("#voile").classList.contains("visible")) dessiner(); }, 300000);
 
-  VUES.agenda = { afficher: () => charger().catch(err => toast("😕 " + err.message, "erreur")) };
+  VUES.agenda = { afficher: () => charger().catch(err => toast("😕 " + err.message, "erreur")),
+    titre: "Agenda", icone: "📅", groupe: "quotidien", ordre: 30 };
 })();

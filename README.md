@@ -19,6 +19,10 @@ d'adresse. Aucun compte, aucun service en ligne.
 - **Mots de passe** : coffre chiffré (AES-256-GCM, clé tirée du mot de passe
   maître par scrypt), presse-papiers effacé après 30 secondes.
 - **SSH** : une clé par serveur, déposée en un clic, puis `ssh <nom-court>`.
+- **GitHub** : tous vos dépôts, ceux déjà sur le PC repérés (dossier, VS Code),
+  clonage en un clic, et création d'un dépôt à partir d'un dossier (contenu
+  vérifié avant l'envoi : `.gitignore`, fichiers sensibles, taille). Connexion
+  par un code à valider sur github.com, sans mot de passe.
 - **Serveurs Odoo** (facultatif) : démarrer, arrêter, ouvrir, voir le journal.
 
 ## Installation
@@ -42,6 +46,12 @@ puis y placer un raccourci vers `Mes outils.bat`.
 
 Pour utiliser un autre Python que celui du PATH, définir la variable
 d'environnement `MES_OUTILS_PYTHON` (chemin complet de `pythonw.exe`).
+
+## Tests
+
+```bat
+python -m unittest discover -s tests
+```
 
 ## Mode d'emploi
 

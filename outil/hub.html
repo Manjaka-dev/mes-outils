@@ -219,6 +219,7 @@
       <button data-vue="agenda">📅 Agenda</button>
       <button data-vue="motsdepasse">🔐 Mots de passe</button>
       <button data-vue="ssh">🔑 SSH</button>
+      <button data-vue="github">🐙 GitHub</button>
     </nav>
     <div class="horloge"><b id="heure">--:--</b><small id="date"></small></div>
     <button class="btn discret" id="btn-quitter" title="Arrêter le tableau de bord">🚪</button>
@@ -242,6 +243,7 @@
   <section class="vue" id="vue-agenda"></section>
   <section class="vue" id="vue-motsdepasse"></section>
   <section class="vue" id="vue-ssh"></section>
+  <section class="vue" id="vue-github"></section>
 
   <footer>Mes outils · tout tourne sur ce PC · <span id="maj"></span></footer>
 </div>
@@ -614,5 +616,6 @@ setInterval(() => chargerOutils().catch(() => {}), 15000);
 <script src="/js/mails.js"></script>
 <script src="/js/motsdepasse.js"></script>
 <script src="/js/ssh.js"></script>
+<script src="/js/github.js"></script>
 </body>
 </html>

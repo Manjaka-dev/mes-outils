@@ -89,6 +89,21 @@ LES ONGLETS
              raccourcis dans %USERPROFILE%\.ssh\config (blocs « Mes outils »),
              liste dans donnees\ssh.json (aucun secret).
 
+🐙 GitHub    Tous vos dépôts (publics, privés, ceux de vos organisations),
+             avec recherche et filtre (privés, publics, sur ce PC ou non).
+             Connexion une seule fois : « Connecter GitHub » affiche un code
+             de 8 caractères (déjà copié) et ouvre github.com/login/device ;
+             collez-le, cliquez sur Authorize, c'est fini. L'accès est rangé
+             dans le coffre de Windows (« MesOutils:github ») ; 🔌 le retire.
+             📁 Dossiers de projets : l'outil y repère les dépôts déjà sur ce
+             PC (le dossier et ses sous-dossiers directs) et y clone les
+             nouveaux. Pour chaque dépôt : 🌐 GitHub, puis 📂 Dossier et
+             💻 VS Code s'il est sur ce PC, sinon ⬇️ Cloner.
+             ＋ Nouveau dépôt : choisir un dossier, « Vérifier le contenu »
+             (nombre de fichiers, .gitignore respecté, fichiers sensibles
+             comme .env ou clés signalés, fichiers de plus de 100 Mo
+             refusés), puis « Créer et envoyer » (privé par défaut).
+
 💬 WhatsApp  La tuile ouvre WhatsApp Web dans sa propre fenêtre (votre
              WhatsApp habituel : scannez le QR code une fois avec le téléphone).
 
@@ -126,6 +141,9 @@ LES FICHIERS
   outil\donnees.py     enregistrement des notes, de l'agenda et des rappels
   outil\mail.py        la connexion Gmail (IMAP pour lire, SMTP pour envoyer)
   outil\coffre.py      le coffre à mots de passe
+  outil\github.py      l'onglet GitHub (connexion, dépôts, clonage, envoi)
+  outil\coffre_windows.py  lecture et écriture dans le coffre de Windows
+  tests\               tests automatiques : python -m unittest discover -s tests
 
 Sécurité : le serveur n'écoute que sur ce PC et refuse tout ordre qui ne
 vient pas de la page elle-même (une page web ouverte dans le navigateur ne

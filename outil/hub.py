@@ -382,6 +382,8 @@ class Gestionnaire(BaseHTTPRequestHandler):
                 return self.coffre(chemin[len("/api/coffre/"):], donnees_requete)
             if chemin.startswith("/api/ssh/"):
                 return self.ssh(chemin[len("/api/ssh/"):], donnees_requete)
+            if chemin.startswith("/api/github/"):
+                return self.github(chemin[len("/api/github/"):], donnees_requete)
             if chemin == "/api/gadget":
                 g = gadget()
                 bat = os.path.join(os.path.dirname(g.__file__), "Gestion serveurs Odoo.bat")
@@ -396,7 +398,7 @@ class Gestionnaire(BaseHTTPRequestHandler):
         except (ValueError, RuntimeError, FileNotFoundError) as e:
             self.repondre(400, {"erreur": str(e)})
         except Exception as e:  # noqa: BLE001
-            if type(e).__name__ in ("ErreurMail", "ErreurCoffre", "ErreurSSH"):
+            if type(e).__name__ in ("ErreurMail", "ErreurCoffre", "ErreurSSH", "ErreurGitHub"):
                 return self.repondre(400, {"erreur": str(e)})
             journal(traceback.format_exc())
             self.repondre(500, {"erreur": f"Erreur inattendue : {e}"})
@@ -452,6 +454,54 @@ class Gestionnaire(BaseHTTPRequestHandler):
             return self.repondre(200, ssh_cles.ouvrir_terminal(d["alias"]))
         if action == "retirer":
             return self.repondre(200, ssh_cles.retirer(d["alias"]))
+        return self.repondre(404, {"erreur": "Introuvable."})
+
+    def github(self, action, d):
+        """GitHub (voir github.py). Le jeton reste dans le coffre de Windows :
+        il ne passe jamais par la page."""
+        import github
+        reglages = lire_outils().get("github") or {}
+        dossiers = reglages.get("dossiers") or []
+        if action == "etat":
+            return self.repondre(200, {**github.etat(), "dossiers": dossiers})
+        if action == "connexion/debut":
+            return self.repondre(200, github.connexion_debut(reglages.get("client_id") or github.CLIENT_ID))
+        if action == "connexion/suite":
+            return self.repondre(200, github.connexion_suite())
+        if action == "deconnexion":
+            github.deconnecter()
+            return self.repondre(200, {"connecte": False})
+        if action == "depots":
+            return self.repondre(200, github.lister_depots(dossiers))
+        if action == "dossiers":
+            nouveaux = []
+            for chemin in d.get("dossiers") or []:
+                chemin = os.path.normpath(str(chemin).strip().strip('"'))
+                if not os.path.isdir(chemin):
+                    raise ValueError(f"Dossier introuvable : {chemin}")
+                if chemin not in nouveaux:
+                    nouveaux.append(chemin)
+            actuel = lire_outils()
+            actuel.pop("bulle", None)
+            actuel.setdefault("github", {})["dossiers"] = nouveaux
+            ecrire_outils(actuel)
+            return self.repondre(200, {"dossiers": nouveaux})
+        if action == "cloner":
+            return self.repondre(200, github.cloner(d.get("complet"), d.get("dossier"), dossiers))
+        if action == "ouvrir_page":
+            github.ouvrir_page(d.get("url"))
+            return self.repondre(200, {"ok": True})
+        if action == "ouvrir_dossier":
+            github.ouvrir_dossier(d.get("chemin"))
+            return self.repondre(200, {"ok": True})
+        if action == "vscode":
+            github.ouvrir_vscode(d.get("chemin"))
+            return self.repondre(200, {"ok": True})
+        if action == "apercu":
+            return self.repondre(200, github.apercu(d.get("dossier")))
+        if action == "creer":
+            return self.repondre(200, github.creer_et_envoyer(d.get("dossier"), d.get("nom"),
+                                                              d.get("description", ""), d.get("prive", True)))
         return self.repondre(404, {"erreur": "Introuvable."})
 
     def mail(self, action, d):

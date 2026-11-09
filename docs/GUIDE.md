@@ -116,6 +116,8 @@ La page d'arrivée (voir la capture en haut de ce guide).
 
 ### 🖥️ Serveurs
 
+![Onglet Serveurs : serveurs Odoo et serveurs de dev des projets](images/fr/serveurs.webp)
+
 Tous vos serveurs au même endroit : les serveurs de dev de vos projets (les
 commandes définies dans 📦 Projets) et, si vous l'utilisez, les serveurs Odoo
 d'un gadget externe (`gestion_serveurs.py`, chemin dans `outils.json`, clé

@@ -112,6 +112,8 @@ The landing page (see the screenshot at the top of this guide).
 
 ### 🖥️ Servers
 
+![Servers tab: Odoo servers and project dev servers](images/en/serveurs.webp)
+
 All your servers in one place: your projects' dev servers (the commands set
 in 📦 Projects) and, if you use it, the Odoo servers of an external gadget
 (`gestion_serveurs.py`, path in `outils.json`, key `serveurs_odoo` › `gadget`).

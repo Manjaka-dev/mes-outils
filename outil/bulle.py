@@ -26,7 +26,7 @@ from tkinter import messagebox
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hub  # noqa: E402
 
-FICHIER_POSITION = os.path.join(hub.RACINE, "bulle.json")
+FICHIER_POSITION = hub.config.FICHIER_BULLE
 TITRE_TABLEAU = "Mes outils"          # titre de la page du tableau de bord
 CLE = "#010203"                       # couleur rendue transparente autour de la bulle
 TAILLE = 64                           # diamètre à 100 % d'affichage
@@ -84,7 +84,10 @@ _verrou_instance = None
 def deja_lancee():
     """Vrai si une bulle tourne déjà. Le verrou reste tenu tant que celle-ci vit."""
     global _verrou_instance
-    _verrou_instance = _noyau.CreateMutexW(None, False, "MesOutils.Bulle")
+    # Nom connu de l'installateur (AppMutex) ; une copie d'essai sur un autre
+    # port (MES_OUTILS_PORT) a son propre verrou.
+    nom = "MesOutils.Bulle" if hub.PORT == 8760 else f"MesOutils.Bulle.{hub.PORT}"
+    _verrou_instance = _noyau.CreateMutexW(None, False, nom)
     return ctypes.get_last_error() == 183  # ERROR_ALREADY_EXISTS
 
 
@@ -674,6 +677,14 @@ def main():
         # Raccourci relancé alors que la bulle est là : ouvrir le tableau de bord.
         ouvrir_tableau()
         return
+    # Premier lancement du programme installé : reprise des réglages et des
+    # données d'une ancienne copie « code source » (copiés, pas déplacés).
+    try:
+        reprise = hub.config.premier_lancement()
+        if reprise:
+            hub.journal(f"Données reprises depuis {reprise}")
+    except Exception as erreur:  # noqa: BLE001
+        hub.journal(f"Reprise des anciennes données impossible : {erreur}")
     Bulle().racine.mainloop()
 
 

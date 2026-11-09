@@ -38,7 +38,12 @@
     "Déjà à jour 👍": "Already up to date 👍",
     "Enregistré": "Saved",
     "Choisir un dossier de projets": "Choose a projects folder",
-    "Installé sans git clone : téléchargez la nouvelle version sur GitHub.": "Installed without git clone: download the new version from GitHub.",
+    "Version {v} disponible": "Version {v} available",
+    "Télécharger le nouvel installateur ? Fermez la bulle (clic droit › Quitter), puis lancez-le : vos réglages et vos données sont gardés.":
+      "Download the new installer? Close the bubble (right-click › Quit), then run it: your settings and data are kept.",
+    "Télécharger": "Download",
+    "Aucune version publiée pour l'instant.": "No version published yet.",
+    "Pas de connexion à GitHub (Internet ?).": "No connection to GitHub (Internet?).",
     "Relancez la bulle (clic droit › Quitter, puis le raccourci) pour finir la mise à jour.":
       "Restart the bubble (right-click › Quit, then the shortcut) to finish the update.",
   });
@@ -120,11 +125,17 @@
       } }), texte);
 
     const majBtn = el("button", { class: "btn", onclick: async () => {
-      if (!i.maj_possible) { toast(t("Installé sans git clone : téléchargez la nouvelle version sur GitHub."), "", 5000); return; }
       majBtn.disabled = true; majBtn.textContent = t("Recherche…");
       try {
         const r = await api("/api/reglages/mise_a_jour", {});
-        if (r.change) { toast(t("✅ Mis à jour : la page va se recharger"), "succes", 3000); toast(t("Relancez la bulle (clic droit › Quitter, puis le raccourci) pour finir la mise à jour."), "", 9000); setTimeout(() => location.reload(), 2500); }
+        if (r.nouvelle) {
+          // Programme installé : on télécharge le nouvel installateur, qui
+          // remplace l'ancien programme en gardant les données.
+          if (await confirmer("🎁", t("Version {v} disponible", { v: r.nouvelle }),
+              t("Télécharger le nouvel installateur ? Fermez la bulle (clic droit › Quitter), puis lancez-le : vos réglages et vos données sont gardés."), "Télécharger")) {
+            await api("/api/github/ouvrir_page", { url: r.telecharger });
+          }
+        } else if (r.change) { toast(t("✅ Mis à jour : la page va se recharger"), "succes", 3000); toast(t("Relancez la bulle (clic droit › Quitter, puis le raccourci) pour finir la mise à jour."), "", 9000); setTimeout(() => location.reload(), 2500); }
         else toast(t("Déjà à jour 👍"), "succes");
       } catch (e) { toast("😕 " + e.message, "erreur", 7000); }
       finally { majBtn.disabled = false; majBtn.textContent = t("🔄 Rechercher une mise à jour"); }

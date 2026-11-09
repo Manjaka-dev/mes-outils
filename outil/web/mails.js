@@ -134,7 +134,7 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    .boite { display: grid; grid-template-columns: 380px 1fr; gap: 16px; height: 640px; }
+    .boite { display: grid; grid-template-columns: 380px 1fr; gap: 16px; height: max(420px, calc(100vh - var(--entete, 74px) - 96px)); }
     .boite .colonne-liste, .boite .lecture { background: var(--carte); border-radius: 22px; box-shadow: var(--ombre); overflow: hidden; display: flex; flex-direction: column; animation: apparait .35s both; }
     .liste-mails { overflow-y: auto; flex: 1; }
     .mail { padding: 11px 16px; border-bottom: 1px solid var(--ligne); cursor: pointer; display: flex; gap: 11px; transition: background .15s; }
@@ -149,7 +149,7 @@
     .mail.non-lu .qui, .mail.non-lu .objet { font-weight: 800; color: var(--encre); }
     .point-nonlu { width: 8px; height: 8px; border-radius: 50%; background: var(--corail); flex: none; margin-top: 6px; }
     .entete-liste { padding: 12px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--ligne); flex-wrap: wrap; }
-    .entete-liste input { flex: 1; min-width: 120px; border: 1.5px solid var(--ligne); border-radius: 12px; padding: 8px 11px; outline: none; background: var(--champ); color: var(--encre); }
+    .entete-liste input { flex: 1 1 100%; min-width: 0; border: 1.5px solid var(--ligne); border-radius: 12px; padding: 8px 11px; outline: none; background: var(--champ); color: var(--encre); }
     .entete-liste input:focus { border-color: var(--violet); background: var(--champ-focus); }
     .lecture .tete { padding: 18px 22px 12px; border-bottom: 1px solid var(--ligne); }
     .lecture .tete h3 { margin: 0 0 10px; font-size: 19px; }

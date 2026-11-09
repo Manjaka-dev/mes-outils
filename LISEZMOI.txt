@@ -218,7 +218,12 @@ peut pas lui parler).
   outil\hub.log        les erreurs éventuelles
   outil\mes_outils.ico l'icône des raccourcis
 
-Installation sur un autre PC : installer.bat (vérifie Python, installe les
+Installation sur un autre PC : le plus simple est Mes-outils-Setup.exe (page
+Releases du dépôt GitHub) : Python et tout le nécessaire sont inclus, sans
+droits administrateur. Le programme va dans %LOCALAPPDATA%\Programs\Mes outils,
+les réglages et données dans %APPDATA%\Mes outils (repris automatiquement
+d'une ancienne copie « code source » au premier lancement).
+Depuis le code source : installer.bat (vérifie Python, installe les
 bibliothèques, crée les raccourcis, lance la bulle).
 « Mes outils.bat » utilise pythonw du PATH, ou le Python indiqué dans la
 variable d'environnement MES_OUTILS_PYTHON. Bibliothèques nécessaires :

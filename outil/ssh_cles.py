@@ -5,7 +5,7 @@
   Windows dans %USERPROFILE%\\.ssh, nommée « mesoutils_<alias> ».
 - Le mot de passe du serveur ne sert qu'une fois, pour déposer la clé dans
   ~/.ssh/authorized_keys. Il passe à ssh par un petit programme intermédiaire
-  (ssh_askpass.py) et une variable d'environnement du seul processus ssh : il
+  (ssh_askpass.cmd) et une variable d'environnement du seul processus ssh : il
   n'est ni enregistré, ni journalisé, ni écrit sur la ligne de commande.
 - Chaque serveur reçoit un bloc dans %USERPROFILE%\\.ssh\\config, encadré par
   des repères « Mes outils » : « ssh <alias> » suffit ensuite. Le reste du
@@ -20,16 +20,21 @@ import subprocess
 import sys
 import threading
 
-RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ICI = os.path.dirname(os.path.abspath(__file__))
-FICHIER = os.path.join(RACINE, "donnees", "ssh.json")
+import config  # noqa: E402
+
+FICHIER = os.path.join(config.DONNEES, "ssh.json")
 DOSSIER_SSH = os.path.join(os.path.expanduser("~"), ".ssh")
 CONFIG_SSH = os.path.join(DOSSIER_SSH, "config")
 OPENSSH = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "System32", "OpenSSH")
 SSH = os.path.join(OPENSSH, "ssh.exe")
 SSH_KEYGEN = os.path.join(OPENSSH, "ssh-keygen.exe")
-ASKPASS_CMD = os.path.join(ICI, "ssh_askpass.cmd")
-ASKPASS_PY = os.path.join(ICI, "ssh_askpass.py")
+ASKPASS_CMD = os.path.join(config.DONNEES, "ssh_askpass.cmd")
+# Rend à ssh le mot de passe placé dans l'environnement de ce seul processus
+# ssh. PowerShell lit la variable sans l'interpréter (caractères spéciaux
+# sans risque) ; pas besoin de Python, donc aussi dans le programme installé.
+CONTENU_ASKPASS = ('@powershell -NoProfile -NonInteractive -Command '
+                   '"[Console]::OutputEncoding = [Text.Encoding]::UTF8; '
+                   '[Console]::Out.WriteLine($env:MESOUTILS_SSH_SECRET)"\n')
 CREATE_NO_WINDOW = 0x08000000
 DELAI = 25  # secondes pour une connexion
 _verrou = threading.Lock()
@@ -153,12 +158,9 @@ def _poser_bloc(serveur):
 # ---------------------------------------------------------------------------
 def _preparer_askpass():
     """Le petit programme que ssh appelle pour obtenir le mot de passe : il
-    le lit dans son environnement et l'écrit pour ssh, rien de plus. Python
-    « console » (python.exe), car pythonw n'a pas de sortie."""
-    python = sys.executable
-    if os.path.basename(python).lower() == "pythonw.exe":
-        python = os.path.join(os.path.dirname(python), "python.exe")
-    contenu = f'@"{python}" "%~dp0ssh_askpass.py"\n'
+    le lit dans son environnement et l'écrit pour ssh, rien de plus."""
+    contenu = CONTENU_ASKPASS
+    os.makedirs(os.path.dirname(ASKPASS_CMD), exist_ok=True)
     actuel = None
     if os.path.exists(ASKPASS_CMD):
         with open(ASKPASS_CMD, encoding="utf-8") as f:
@@ -173,7 +175,7 @@ def _executer(commande, secret=None, delai=DELAI):
     env.pop("MESOUTILS_SSH_SECRET", None)
     if secret is not None:
         # Le mot de passe ne vit que dans l'environnement de ce processus ssh,
-        # qui le demande à ssh_askpass.py au moment de se connecter.
+        # qui le demande à ssh_askpass.cmd au moment de se connecter.
         _preparer_askpass()
         env.update(SSH_ASKPASS=ASKPASS_CMD, SSH_ASKPASS_REQUIRE="force", DISPLAY="mes-outils",
                    MESOUTILS_SSH_SECRET=secret)

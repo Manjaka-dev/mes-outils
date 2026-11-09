@@ -79,7 +79,7 @@
     .bande-jour { display: grid; grid-template-columns: 54px repeat(7, minmax(0, 1fr)); border-bottom: 1px solid var(--ligne); min-height: 30px; padding-right: 8px; }
     .bande-jour .case { padding: 3px; display: flex; flex-direction: column; gap: 3px; border-left: 1px solid var(--ligne); }
     .bande-jour .etiquette-h { font-size: 11px; color: var(--gris); text-align: right; padding: 8px 6px 0 0; }
-    .defilement { max-height: 560px; overflow-y: scroll; }
+    .defilement { max-height: max(320px, calc(100vh - var(--entete, 74px) - 210px)); overflow-y: scroll; }
     .defilement::-webkit-scrollbar { width: 8px; }
     .defilement::-webkit-scrollbar-thumb { background: var(--ligne); border-radius: 8px; }
     .corps-semaine { display: grid; grid-template-columns: 54px repeat(7, minmax(0, 1fr)); position: relative; }

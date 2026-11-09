@@ -10,10 +10,12 @@ import os
 import subprocess
 import sys
 
-ICI = os.path.dirname(os.path.abspath(__file__))
-RACINE = os.path.dirname(ICI)
+# Programme installé (Mes outils.exe, sans Python) ou code source.
+GELE = bool(getattr(sys, "frozen", False))
+ICI = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.abspath(__file__))
+RACINE = os.path.dirname(sys.executable) if GELE else os.path.dirname(ICI)
 NOM_RACCOURCI = "Mes outils.lnk"
-ICONE = os.path.join(ICI, "mes_outils.ico")
+ICONE = sys.executable if GELE else os.path.join(ICI, "mes_outils.ico")
 BULLE = os.path.join(ICI, "bulle.py")
 CREATE_NO_WINDOW = 0x08000000
 # Dossiers spéciaux de Windows (SHGetFolderPathW)
@@ -37,6 +39,8 @@ def chemin_raccourci(genre):
 def python_fenetre():
     """pythonw.exe (sans fenêtre noire) : celui de MES_OUTILS_PYTHON, sinon
     celui qui fait tourner ce programme."""
+    if GELE:
+        return sys.executable  # Mes outils.exe lance lui-même la bulle
     choisi = os.environ.get("MES_OUTILS_PYTHON")
     if choisi and os.path.isfile(choisi):
         return choisi
@@ -49,7 +53,7 @@ def creer_raccourci(genre):
     """Raccourci « Mes outils » qui lance la bulle. Les chemins passent par
     l'environnement de PowerShell, jamais dans le texte de la commande."""
     cible = chemin_raccourci(genre)
-    env = dict(os.environ, MO_LNK=cible, MO_CIBLE=python_fenetre(), MO_ARGS=f'"{BULLE}"',
+    env = dict(os.environ, MO_LNK=cible, MO_CIBLE=python_fenetre(), MO_ARGS="" if GELE else f'"{BULLE}"',
                MO_DOSSIER=RACINE, MO_ICONE=ICONE)
     script = ("$r = (New-Object -ComObject WScript.Shell).CreateShortcut($env:MO_LNK); "
               "$r.TargetPath = $env:MO_CIBLE; $r.Arguments = $env:MO_ARGS; "
@@ -81,6 +85,8 @@ def etat():
 def verifier():
     """Ce qui manque pour faire tourner « Mes outils » (liste vide = tout va bien)."""
     manque = []
+    if GELE:
+        return manque  # tout est déjà dans le programme installé
     if sys.version_info < (3, 10):
         manque.append(f"Python 3.10 ou plus récent (ici {sys.version.split()[0]})")
     if importlib.util.find_spec("tkinter") is None:
@@ -111,7 +117,7 @@ def installer():
 
 def lancer():
     """Démarre la bulle, détachée de la fenêtre d'installation."""
-    subprocess.Popen([python_fenetre(), BULLE], cwd=RACINE, close_fds=True,
+    subprocess.Popen([python_fenetre()] + ([] if GELE else [BULLE]), cwd=RACINE, close_fds=True,
                      creationflags=0x00000008 | 0x00000200)  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
 
 

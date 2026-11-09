@@ -11,3 +11,10 @@ __pycache__/
 
 # Créé par l'application avec le chemin de Python de chaque PC
 outil/ssh_askpass.cmd
+
+# Textes de publication (réseaux sociaux) : pas dans le dépôt
+publication/
+
+# Construction du programme et de l'installateur (packaging/construire.ps1)
+build/
+dist/

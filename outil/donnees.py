@@ -12,8 +12,9 @@ import shutil
 import threading
 import uuid
 
-RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DOSSIER = os.path.join(RACINE, "donnees")
+import config  # noqa: E402
+
+DOSSIER = config.DONNEES
 _verrou = threading.RLock()
 
 

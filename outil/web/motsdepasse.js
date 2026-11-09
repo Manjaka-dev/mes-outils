@@ -33,7 +33,7 @@
     "Ouverture…": "Opening…",
     "Coffre verrouillé": "Vault locked",
     "Il se referme tout seul après 5 minutes sans utilisation.": "It locks itself after 5 minutes without use.",
-    "Chercher (nom, identifiant, site)…": "Search (name, username, site)…",
+    "Chercher un mot de passe…": "Search passwords…",
     "＋ Nouveau": "＋ New",
     "🎲 Générateur": "🎲 Generator",
     "Verrouiller maintenant": "Lock now",
@@ -267,7 +267,7 @@
   }
   function dessiner() {
     const cats = [...new Set(C.entrees.map(e => e.categorie).filter(Boolean))].sort();
-    const recherche = el("input", { placeholder: "Chercher (nom, identifiant, site)…", value: C.recherche,
+    const recherche = el("input", { placeholder: "Chercher un mot de passe…", value: C.recherche,
       oninput: e => { C.recherche = e.target.value; dessinerListe(); } });
     racine().replaceChildren(...[
       el("div", { class: "barre-vue" },

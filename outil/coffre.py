@@ -25,8 +25,9 @@ from ctypes import wintypes
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FICHIER = os.path.join(RACINE, "donnees", "coffre.json")
+import config  # noqa: E402
+
+FICHIER = os.path.join(config.DONNEES, "coffre.json")
 DELAI_VERROU = 5 * 60          # secondes sans usage avant verrouillage
 DELAI_PRESSE_PAPIERS = 30      # secondes avant d'effacer une copie
 SCRYPT = {"n": 2 ** 15, "r": 8, "p": 1}

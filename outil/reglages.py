@@ -5,8 +5,12 @@ raccourcis Windows, mise à jour. Routes POST /api/reglages/<action>.
 Aussi : la fenêtre « Choisir un dossier » de Windows, utilisée par tous les
 onglets (POST /api/reglages/choisir_dossier).
 """
+import json
 import os
+import re
 import subprocess
+import urllib.error
+import urllib.request
 
 import config
 import installation
@@ -30,7 +34,8 @@ def lire(_d=None):
         "version": config.VERSION,
         "depot": config.DEPOT,
         "raccourcis": installation.etat(),
-        "maj_possible": os.path.isdir(os.path.join(config.RACINE, ".git")),
+        "maj_possible": True,
+        "installe": config.GELE,
     }
 
 
@@ -71,11 +76,41 @@ def raccourci(d):
     return lire()
 
 
+def _version(texte):
+    """« v1.10.2 » → (1, 10, 2), pour comparer des versions."""
+    return tuple(int(x) for x in re.findall(r"\d+", texte or "")[:3])
+
+
+def derniere_version():
+    """La dernière version publiée sur GitHub (page Releases) et son
+    installateur (Mes-outils-Setup.exe)."""
+    requete = urllib.request.Request(config.API_VERSIONS, headers={
+        "Accept": "application/vnd.github+json", "User-Agent": "mes-outils"})
+    try:
+        with urllib.request.urlopen(requete, timeout=15) as r:
+            d = json.load(r)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise ValueError("Aucune version publiée pour l'instant.") from None
+        raise ValueError(f"GitHub ne répond pas (erreur {e.code}).") from None
+    except OSError:
+        raise ValueError("Pas de connexion à GitHub (Internet ?).") from None
+    setup = next((a.get("browser_download_url") for a in d.get("assets") or []
+                  if str(a.get("name", "")).lower().endswith(".exe")), None)
+    return {"version": str(d.get("tag_name") or "").lstrip("vV"), "page": d.get("html_url") or config.DEPOT + "/releases",
+            "setup": setup}
+
+
 def mise_a_jour(_d=None):
-    """git pull --ff-only : seulement si « Mes outils » a été installé avec
-    git clone, et jamais par-dessus des modifications locales."""
-    if not os.path.isdir(os.path.join(config.RACINE, ".git")):
-        raise ValueError("Mise à jour automatique impossible : « Mes outils » n'a pas été installé avec git clone.")
+    """Programme installé (ou copie sans git) : compare avec la dernière
+    version publiée sur GitHub et donne le lien de l'installateur.
+    Copie installée avec git clone : git pull --ff-only, jamais par-dessus des
+    modifications locales."""
+    if config.GELE or not os.path.isdir(os.path.join(config.RACINE, ".git")):
+        info = derniere_version()
+        if _version(info["version"]) > _version(config.VERSION):
+            return {"change": False, "nouvelle": info["version"], "telecharger": info["setup"] or info["page"]}
+        return {"change": False}
     if _git("status", "--porcelain", "--untracked-files=no").stdout.strip():
         raise ValueError("Des fichiers de « Mes outils » ont été modifiés sur ce PC : mise à jour annulée.")
     avant = _git("rev-parse", "HEAD").stdout.strip()

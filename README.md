@@ -1,5 +1,11 @@
 # Mes outils
 
+⬇️ **[Télécharger Mes outils pour Windows (Setup.exe)](https://github.com/rarianaAina/mes-outils/releases/latest/download/Mes-outils-Setup.exe)** · rien d'autre à installer
+
+📖 **[Guide d'utilisation illustré](docs/GUIDE.md)** · **[Illustrated guide (English)](docs/GUIDE.en.md)**
+
+![Accueil de Mes outils](docs/images/fr/accueil.webp)
+
 Un tableau de bord personnel pour Windows, pensé pour les développeurs : une
 petite bulle 🧰 flotte sur l'écran et ouvre, d'un clic, vos projets, vos
 serveurs de dev, GitHub, vos mails, notes, agenda, mots de passe et une boîte
@@ -46,8 +52,13 @@ anglais, thème clair ou sombre, palette de commandes (Ctrl + K).
 
 ## Installation
 
-Il faut Windows 10 ou 11 et Python 3.10 ou plus récent (avec tkinter, inclus
-dans l'installateur de python.org).
+**Le plus simple** : téléchargez **[Mes-outils-Setup.exe](https://github.com/rarianaAina/mes-outils/releases/latest/download/Mes-outils-Setup.exe)** et
+lancez-le. Python et tout le nécessaire sont inclus, sans droits
+administrateur. Windows peut afficher « Windows a protégé votre ordinateur »
+(installateur non signé) : **Informations complémentaires › Exécuter quand
+même**. Vos réglages et données sont dans `%APPDATA%\Mes outils`.
+
+**Depuis le code source** (pour contribuer) : Python 3.10+ avec tkinter, puis
 
 ```bat
 git clone https://github.com/rarianaAina/mes-outils.git
@@ -55,16 +66,14 @@ cd mes-outils
 installer.bat
 ```
 
-`installer.bat` vérifie Python, installe les bibliothèques, crée les raccourcis
-(Bureau et démarrage de Windows) et lance la bulle. Les réglages se font
-ensuite dans l'onglet ⚙️ Réglages, y compris la mise à jour (`git pull`).
+Les données sont alors à côté du code (`outils.json`, `donnees\`, exclus du
+dépôt). Pour utiliser un autre Python que celui du PATH : variable
+`MES_OUTILS_PYTHON` (chemin de `pythonw.exe`).
 
-Au premier lancement, `outils.json` est créé à partir de
-`outils.exemple.json`. Vos données (`outils.json`, `donnees\`) restent sur
-votre PC et sont exclues du dépôt.
-
-Pour utiliser un autre Python que celui du PATH, définir la variable
-d'environnement `MES_OUTILS_PYTHON` (chemin complet de `pythonw.exe`).
+**Construire l'installateur** : `pip install pyinstaller`, Inno Setup 6, puis
+`powershell -ExecutionPolicy Bypass -File packaging\construire.ps1`. Une
+étiquette `vX.Y.Z` poussée sur GitHub le construit et le publie tout seul
+(`.github/workflows/version.yml`).
 
 ## Ajouter un onglet
 
@@ -79,7 +88,8 @@ python -m unittest discover -s tests
 
 ## Mode d'emploi
 
-Tout est détaillé dans [LISEZMOI.txt](LISEZMOI.txt).
+- [Guide d'utilisation illustré](docs/GUIDE.md) ([English](docs/GUIDE.en.md))
+- Tout le détail, onglet par onglet : [LISEZMOI.txt](LISEZMOI.txt)
 
 ## Licence
 

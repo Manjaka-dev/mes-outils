@@ -4,6 +4,11 @@
    (sauvegardés dans le coffre chiffré). Voir projets.py. */
 (() => {
   I18N.ajouter({
+    "Aucune commande de dev": "No dev command",
+    "Local": "Local",
+    "Pas de branche distante : rien à comparer": "No remote branch: nothing to compare",
+    "Pas de dépôt Git": "No Git repository",
+    "Lecture de l'état Git…": "Reading Git status…",
     "Projets": "Projects",
     "Rechercher un projet…": "Search a project…",
     "Tous": "All",
@@ -169,8 +174,16 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    .pj-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 12px; align-items: start; }
-    .pj-carte { background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; animation: apparait .3s both; min-width: 0; }
+    /* Grille : cartes de même hauteur sur une rangée, chaque ligne à la même
+       place d'une carte à l'autre, boutons toujours en bas. */
+    .pj-liste { display: grid; grid-template-columns: repeat(auto-fill, minmax(430px, 1fr)); gap: 14px; align-items: stretch; }
+    .pj-carte { background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 9px; animation: apparait .3s both; min-width: 0; transition: box-shadow .2s, transform .2s; }
+    .pj-carte:hover { box-shadow: var(--ombre-forte); }
+    .pj-carte .pj-mini.masquer { opacity: 0; transition: opacity .15s; }
+    .pj-carte:hover .pj-mini.masquer, .pj-carte.masque .pj-mini.masquer { opacity: 1; }
+    .pj-milieu { display: flex; flex-direction: column; gap: 9px; flex: 1; }
+    .pj-types { min-height: 20px; }
+    .pj-aucune { font-size: 12.5px; color: var(--gris); }
     .pj-carte.masque { opacity: .6; }
     .pj-l1 { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .pj-ic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; font-size: 21px; background: var(--violet-clair); flex: none; }
@@ -195,10 +208,11 @@
     .pj-cmd .e { font-size: 12px; color: var(--doux); white-space: nowrap; flex: 1; }
     .pj-cmd .icone-btn { width: 30px; height: 30px; font-size: 13.5px; background: var(--carte); }
     .pj-propose { font-size: 12.5px; color: var(--doux); display: flex; align-items: center; gap: 8px; }
-    .pj-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-    .pj-actions .btn { padding: 5px 10px; font-size: 12.5px; gap: 5px; }
-    .pj-icones { display: flex; gap: 4px; margin-left: auto; }
-    .pj-actions .icone-btn { width: 30px; height: 30px; font-size: 13.5px; background: var(--surface); }
+    .pj-actions { display: flex; gap: 6px; flex-wrap: nowrap; align-items: center; padding-top: 10px; border-top: 1px solid var(--ligne); }
+    .pj-actions .btn { padding: 6px 10px; font-size: 12.5px; gap: 5px; box-shadow: none; background: var(--surface); }
+    .pj-actions .btn:hover { background: var(--violet-clair); color: var(--violet); }
+    .pj-icones { display: flex; gap: 4px; margin-left: auto; flex: none; }
+    .pj-actions .icone-btn { width: 32px; height: 32px; font-size: 14px; background: var(--surface); }
     .pj-mini { border: 0; background: transparent; color: var(--gris); cursor: pointer; border-radius: 9px; width: 26px; height: 26px; font-size: 13px; display: grid; place-items: center; flex: none; }
     .pj-mini:hover { background: var(--violet-clair); color: var(--violet); }
     .pj-puces { flex-wrap: wrap; }
@@ -325,7 +339,10 @@
     if (g.avance) b.push(el("span", { class: "pj-badge envoi", title: "Commits à envoyer (push)" }, `⬆️ ${g.avance}`));
     if (g.retard) b.push(el("span", { class: "pj-badge retard", title: "Commits à récupérer (pull)" }, `⬇️ ${g.retard}`));
     if (modifs) b.push(el("span", { class: "pj-badge modif", title: "Fichiers modifiés ou nouveaux" }, `✏️ ${modifs}`));
-    if (!b.length && !g.erreur_fetch) b.push(el("span", { class: "pj-badge ok" }, "✓ " + t("À jour")));
+    // « À jour » seulement s'il y a une branche distante à comparer.
+    if (!b.length && !g.erreur_fetch) b.push(g.amont && !g.sans_commit
+      ? el("span", { class: "pj-badge ok" }, "✓ " + t("À jour"))
+      : el("span", { class: "pj-badge", style: "background:var(--surface);color:var(--doux)", title: "Pas de branche distante : rien à comparer" }, "💾 " + t("Local")));
     if (g.erreur_fetch) b.push(el("span", { class: "pj-badge err", title: g.erreur_fetch }, "⚠️"));
     return b;
   }
@@ -372,7 +389,7 @@
       : p.proposees.length
         ? el("div", { class: "pj-propose" }, t("💡 {n} commande(s) proposée(s)", { n: p.proposees.length }),
             el("button", { class: "btn discret", style: "padding:4px 10px", onclick: () => editerCommandes(p) }, "Configurer"))
-        : null;
+        : el("div", { class: "pj-aucune" }, "Aucune commande de dev");
     const actions = [
       el("button", { class: "btn", title: "Ouvrir le dossier", onclick: () => appel("ouvrir/dossier", { projet: p.id }, "📂 Dossier ouvert") }, "📂 " + t("Dossier")),
       P.infos.vscode ? el("button", { class: "btn", title: "Ouvrir dans VS Code", onclick: () => appel("ouvrir/vscode", { projet: p.id }, "💻 VS Code s'ouvre…") }, "💻 VS Code") : null,
@@ -388,13 +405,14 @@
           el("div", { class: "pj-nom", title: p.nom }, p.nom),
           el("div", { class: "pj-chemin", title: p.chemin }, el("bdi", {}, p.chemin))),
         el("div", { class: "pj-badges" }, badgesGit(gitDe(p))),
-        el("button", { class: "pj-mini", title: p.masque ? "Afficher ce projet" : "Masquer ce projet", onclick: () => masquer(p) }, p.masque ? "👁️" : "🙈"),
+        el("button", { class: "pj-mini masquer", title: p.masque ? "Afficher ce projet" : "Masquer ce projet", onclick: () => masquer(p) }, p.masque ? "👁️" : "🙈"),
         p.manuel ? el("button", { class: "pj-mini", title: "Retirer de la liste", onclick: () => retirer(p) }, "✕") : null),
-      p.types.length || p.manuel ? el("div", { class: "pj-types" },
-        p.types.slice(0, 4).map(ty => el("span", { class: "pj-type" }, ty)),
-        p.manuel ? el("span", { class: "pj-type" }, "Ajouté à la main") : null) : null,
-      ligneGit(p),
-      cmds,
+      el("div", { class: "pj-milieu" },
+        el("div", { class: "pj-types" },
+          p.types.slice(0, 4).map(ty => el("span", { class: "pj-type" }, ty)),
+          p.manuel ? el("span", { class: "pj-type" }, "Ajouté à la main") : null),
+        ligneGit(p) || el("div", { class: "pj-git" }, el("span", { class: "pj-aucune" }, p.git ? "Lecture de l'état Git…" : "Pas de dépôt Git")),
+        cmds),
       el("div", { class: "pj-actions" }, actions));
   }
 

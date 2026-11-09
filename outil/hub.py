@@ -27,11 +27,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config  # noqa: E402  (outils.json et dossier donnees)
 import donnees  # noqa: E402  (notes et agenda)
 
-HOTE, PORT = "127.0.0.1", 8760
+# MES_OUTILS_PORT : un autre port (essais, seconde copie à côté de la vraie).
+HOTE, PORT = "127.0.0.1", int(os.environ.get("MES_OUTILS_PORT") or 8760)
 ICI = config.ICI
 RACINE = config.RACINE
 PAGE = os.path.join(ICI, "hub.html")
-JOURNAL = os.path.join(ICI, "hub.log")
+JOURNAL = config.JOURNAL
 
 NAVIGATEURS_APPLI = [
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
@@ -46,6 +47,7 @@ DETACHED = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROU
 
 
 def journal(message):
+    os.makedirs(os.path.dirname(JOURNAL), exist_ok=True)
     with open(JOURNAL, "a", encoding="utf-8") as f:
         f.write(time.strftime("%Y-%m-%d %H:%M:%S ") + message + "\n")
 
@@ -69,8 +71,19 @@ def ecrire_outils(contenu):
 MODULE_VALIDE = re.compile(r"^[a-z][a-z0-9_]{1,30}$")
 
 
+def modules_connus():
+    """Les modules de « Mes outils » (jamais un module quelconque de Python).
+    Depuis le code source : les fichiers outil/*.py ; dans le programme
+    installé : la liste écrite au moment de la construction (modules.json)."""
+    liste = os.path.join(ICI, "modules.json")
+    if config.GELE and os.path.isfile(liste):
+        with open(liste, encoding="utf-8") as f:
+            return set(json.load(f))
+    return {n[:-3] for n in os.listdir(ICI) if n.endswith(".py")} - {"hub", "bulle"}
+
+
 def routes_module(nom):
-    if not MODULE_VALIDE.match(nom) or not os.path.isfile(os.path.join(ICI, nom + ".py")):
+    if not MODULE_VALIDE.match(nom) or nom not in modules_connus():
         return None
     routes = getattr(importlib.import_module(nom), "ROUTES", None)
     return routes if isinstance(routes, dict) else None

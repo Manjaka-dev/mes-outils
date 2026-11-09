@@ -68,14 +68,19 @@
   .bulles span:nth-child(3) { width: 420px; height: 420px; background: var(--bulle-3); left: 30%; bottom: -220px; animation-delay: -13s; }
   @keyframes derive { to { transform: translate(60px, 40px) scale(1.15); } }
 
-  .page { max-width: 1480px; margin: 0 auto; padding: 18px 22px 36px; }
-  .corps { display: flex; gap: 22px; align-items: flex-start; }
-  main { flex: 1; min-width: 0; }
+  /* Mise en page : en-tête en haut sur toute la largeur, menu en « dock »
+     collé au bord gauche sur toute la hauteur, contenu à droite. */
+  :root { --entete: 74px; }
+  .page { padding: 0 22px 0 0; }
+  .corps { display: flex; gap: 24px; align-items: flex-start; min-height: calc(100vh - var(--entete)); }
+  main { flex: 1; min-width: 0; padding: 14px 0 24px; max-width: 1500px; }
 
-  /* Menu latéral --------------------------------------------------------- */
-  .menu { position: sticky; top: 86px; width: 200px; flex: none; display: flex; flex-direction: column; gap: 2px;
-    background: var(--verre); backdrop-filter: blur(14px) saturate(1.4); border: 1px solid var(--bord);
-    padding: 10px 8px; border-radius: 22px; box-shadow: var(--ombre); max-height: calc(100vh - 104px); overflow-y: auto; }
+  /* Menu (dock) ----------------------------------------------------------- */
+  .menu { position: sticky; top: var(--entete); height: calc(100vh - var(--entete)); width: 212px; flex: none;
+    display: flex; flex-direction: column; gap: 2px; overflow: hidden;
+    background: var(--verre); backdrop-filter: blur(14px) saturate(1.4); border: 1px solid var(--bord); border-left: 0; border-bottom: 0;
+    padding: 12px 10px 14px; border-radius: 0 24px 0 0; box-shadow: var(--ombre); }
+  .menu .groupe.bas { margin-top: auto; }
   .menu .groupe { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.1px; color: var(--gris); font-weight: 800; margin: 10px 12px 3px; }
   .menu .groupe:first-child { margin-top: 4px; }
   .menu button { border: 0; background: transparent; padding: 6px 10px; border-radius: 12px; font-size: 14.5px; cursor: pointer; font-weight: 650; color: var(--doux);
@@ -94,9 +99,28 @@
     .menu button .lib { display: none; }
     .menu .compteur { position: absolute; top: 1px; right: 1px; margin: 0; }
   }
+  /* Le menu reste toujours fixe et entier, jamais de barre de défilement :
+     ajusterMenu() le resserre par étapes selon la hauteur de la fenêtre. */
+  @media (max-height: 860px) { header { padding-top: 8px; padding-bottom: 8px; } }
+  .menu.serre { padding: 6px 7px; gap: 0; }
+  .menu.serre .groupe { margin: 6px 12px 1px; font-size: 10px; }
+  .menu.serre .groupe:first-child { margin-top: 2px; }
+  .menu.serre button { padding: 3px 10px; font-size: 13.5px; line-height: 1.25; }
+  .menu.serre button .ic { width: 22px; height: 22px; font-size: 15px; }
+  .menu.tres-serre .groupe { display: none; }
+  .menu.tres-serre .groupe + button { margin-top: 5px; }
+  .menu.tres-serre button { padding: 2px 10px; }
+  .menu.icones { width: 60px; }
+  .menu.icones button { justify-content: center; padding: 2px 0; }
+  .menu.icones button .lib { display: none; }
+  .menu.icones .compteur { position: absolute; top: 0; right: 0; margin: 0; }
+  .menu.serre .groupe.bas { margin-top: auto; }
+  /* Titres masqués : celui du bas reste comme ressort, Réglages reste en bas. */
+  .menu.tres-serre .groupe.bas { display: block; visibility: hidden; height: 0; margin: auto 0 0; }
+  @media (max-width: 1100px) { .menu .groupe.bas { display: block; visibility: hidden; height: 0; margin: auto 0 0; } }
 
   /* En-tête ---------------------------------------------------------- */
-  header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; margin: 0 -22px 18px; padding: 12px 22px;
+  header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; margin: 0 -22px 0 0; padding: 12px 22px; min-height: var(--entete);
     background: color-mix(in srgb, var(--fond) 70%, transparent); backdrop-filter: blur(16px) saturate(1.4); border-bottom: 1px solid transparent; transition: border-color .3s, box-shadow .3s; }
   header.colle { border-bottom-color: var(--ligne); box-shadow: 0 10px 24px -22px rgba(0,0,0,.5); }
   .avatar-hub {
@@ -347,10 +371,9 @@
   <div class="serveurs" id="serveurs"><div class="vide">Lecture des serveurs…</div></div>
   </div>
   </section>
+  <footer>Mes outils · tout tourne sur ce PC · <span id="maj"></span></footer>
   </main>
   </div>
-
-  <footer>Mes outils · tout tourne sur ce PC · <span id="maj"></span></footer>
 </div>
 
 <div class="voile" id="voile"><div class="fenetre" id="fenetre"></div></div>
@@ -701,7 +724,8 @@ function construireMenu() {
   for (const g of Object.keys(GROUPES)) {
     const liste = (parGroupe[g] || []).sort((a, b) => (a.ordre ?? 99) - (b.ordre ?? 99));
     if (!liste.length) continue;
-    nav.append(el("div", { class: "groupe" }, GROUPES[g]));
+    // « Mes outils » (Réglages) tout en bas du dock.
+    nav.append(el("div", { class: "groupe" + (g === "systeme" ? " bas" : "") }, GROUPES[g]));
     for (const o of liste) {
       const titre = I18N.traduire(o.titre);
       nav.append(el("button", { "data-vue": o.nom, title: titre, onclick: () => montrerVue(o.nom) },
@@ -711,7 +735,21 @@ function construireMenu() {
   }
   if (S.vue) nav.querySelectorAll("button").forEach(b => b.classList.toggle("actif", b.dataset.vue === S.vue));
   if (S.mailsNonLus) { const c = $("#compteur-mails"); if (c) { c.hidden = false; c.textContent = S.mailsNonLus; } }
+  ajusterMenu();
 }
+/** Menu collant s'il tient dans la fenêtre, sinon il défile avec la page. */
+function ajusterMenu() {
+  const nav = $("#onglets");
+  document.documentElement.style.setProperty("--entete", $("header").offsetHeight + "px");
+  nav.classList.remove("serre", "tres-serre", "icones");
+  // Le dock a la hauteur de la fenêtre : du plus confortable au plus
+  // compact, jusqu'à ce que tout son contenu tienne (jamais de défilement).
+  for (const etape of ["serre", "tres-serre", "icones"]) {
+    if (nav.scrollHeight <= nav.clientHeight + 1) break;
+    nav.classList.add(etape);
+  }
+}
+addEventListener("resize", () => ajusterMenu());
 function montrerVue(nom) {
   if (!$("#vue-" + nom) || !VUES[nom]) nom = "accueil";
   document.querySelectorAll(".vue").forEach(v => v.classList.toggle("actif", v.id === "vue-" + nom));
@@ -737,7 +775,7 @@ async function demarrerOnglets() {
   appliquerTheme(info.theme || "auto");
   for (const f of info.fichiers) {
     const nom = f.replace(/\.js$/, "");
-    if (!$("#vue-" + nom)) $("#vues").append(el("section", { class: "vue", id: "vue-" + nom }));
+    if (!$("#vue-" + nom)) $("#vues").insertBefore(el("section", { class: "vue", id: "vue-" + nom }), $("#vues > footer"));
   }
   // Dans l'ordre, l'un après l'autre : chacun peut compter sur les précédents.
   for (const f of info.fichiers) await chargerScript("/js/" + f);

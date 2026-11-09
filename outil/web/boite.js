@@ -143,7 +143,7 @@
     json: "", jsonIndent: "2", jsonTri: false, jsonSortie: null,
     unix: "", unite: "auto", dateLocale: "",
     nbUuid: 5, uuidMaj: false, uuidSansTirets: false, uuids: [],
-    motif: "(\\w+)@(\\w+)\\.com", drapeaux: "g", texteRegex: "contact@exemple.com, support@exemple.com",
+    motif: "(\\w+)@(\\w+)\\.com", drapeaux: "g", texteRegex: "contact@example.com, support@example.com",
     url: "", urlSortie: null,
     hache: "", fichier: null, attendu: "",
     couleur: "#6c4cf5",
@@ -282,7 +282,7 @@
     const exemple = () => {
       const enc = o => octetsVersBase64(new TextEncoder().encode(JSON.stringify(o)), true);
       const n = Math.floor(Date.now() / 1000);
-      B.jwt = `${enc({ alg: "HS256", typ: "JWT" })}.${enc({ sub: "1234567890", name: "Exemple", iat: n - 3600, exp: n + 7200 })}.signature-exemple`;
+      B.jwt = `${enc({ alg: "HS256", typ: "JWT" })}.${enc({ sub: "1234567890", name: t("Exemple"), iat: n - 3600, exp: n + 7200 })}.signature`;
       afficher();
     };
     dessiner();

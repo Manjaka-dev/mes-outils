@@ -39,6 +39,17 @@
     "Enregistré": "Saved",
     "Choisir un dossier de projets": "Choose a projects folder",
     "Version {v} disponible": "Version {v} available",
+    "Installer maintenant ? Mes outils se ferme quelques secondes puis redémarre tout seul. Vos réglages et vos données sont gardés.":
+      "Install now? Mes outils closes for a few seconds, then restarts by itself. Your settings and data are kept.",
+    "Installer": "Install",
+    "Téléchargement de la version {v}…": "Downloading version {v}…",
+    "Mise à jour de Mes outils": "Updating Mes outils",
+    "Installation en cours : Mes outils redémarre tout seul, cette page se rechargera.": "Installing: Mes outils restarts by itself, this page will reload.",
+    "✅ Version {v} installée": "✅ Version {v} installed",
+    "La mise à jour prend du temps : relancez Mes outils depuis son raccourci.": "The update is taking a while: restart Mes outils from its shortcut.",
+    "Téléchargement de la mise à jour impossible (Internet ?).": "Unable to download the update (Internet?).",
+    "Installateur introuvable dans la dernière version publiée.": "Installer not found in the latest release.",
+    "Le fichier téléchargé n'est pas un installateur valide.": "The downloaded file is not a valid installer.",
     "Télécharger le nouvel installateur ? Fermez la bulle (clic droit › Quitter), puis lancez-le : vos réglages et vos données sont gardés.":
       "Download the new installer? Close the bubble (right-click › Quit), then run it: your settings and data are kept.",
     "Télécharger": "Download",
@@ -128,9 +139,15 @@
       majBtn.disabled = true; majBtn.textContent = t("Recherche…");
       try {
         const r = await api("/api/reglages/mise_a_jour", {});
-        if (r.nouvelle) {
-          // Programme installé : on télécharge le nouvel installateur, qui
-          // remplace l'ancien programme en gardant les données.
+        if (r.nouvelle && r.automatique) {
+          // Programme installé : téléchargement, installation et redémarrage
+          // tout seuls ; réglages et données gardés.
+          if (await confirmer("🎁", t("Version {v} disponible", { v: r.nouvelle }),
+              t("Installer maintenant ? Mes outils se ferme quelques secondes puis redémarre tout seul. Vos réglages et vos données sont gardés."), "Installer")) {
+            await installerMiseAJour(r.nouvelle);
+          }
+        } else if (r.nouvelle) {
+          // Copie sans installateur : on ouvre la page de téléchargement.
           if (await confirmer("🎁", t("Version {v} disponible", { v: r.nouvelle }),
               t("Télécharger le nouvel installateur ? Fermez la bulle (clic droit › Quitter), puis lancez-le : vos réglages et vos données sont gardés."), "Télécharger")) {
             await api("/api/github/ouvrir_page", { url: r.telecharger });
@@ -159,6 +176,27 @@
           el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
             el("button", { class: "btn", onclick: () => api("/api/github/ouvrir_page", { url: i.depot }).catch(e => toast("😕 " + e.message, "erreur")) }, "🌐 Code source sur GitHub"),
             majBtn))));
+  }
+
+  /** Lance la mise à jour, puis attend que la nouvelle version réponde. */
+  async function installerMiseAJour(version) {
+    const etat = el("p", {}, t("Téléchargement de la version {v}…", { v: version }));
+    fenetre([el("div", { class: "gros" }, "⏳"), el("h3", {}, t("Mise à jour de Mes outils")), etat], true);
+    let r;
+    try { r = await api("/api/reglages/installer_mise_a_jour", {}); }
+    catch (e) { fermer(); toast("😕 " + e.message, "erreur", 8000); return; }
+    if (r.a_jour) { fermer(); toast(t("Déjà à jour 👍"), "succes"); return; }
+    etat.textContent = t("Installation en cours : Mes outils redémarre tout seul, cette page se rechargera.");
+    const debut = Date.now();
+    const attendre = async () => {
+      try {
+        const infos = await api("/api/reglages/lire", {});
+        if (infos.version === version) { etat.textContent = t("✅ Version {v} installée", { v: version }); setTimeout(() => location.reload(), 1200); return; }
+      } catch { /* Mes outils est en train de redémarrer */ }
+      if (Date.now() - debut > 180000) { etat.textContent = t("La mise à jour prend du temps : relancez Mes outils depuis son raccourci."); return; }
+      setTimeout(attendre, 2000);
+    };
+    setTimeout(attendre, 4000);
   }
 
   async function majDossiers(liste) {

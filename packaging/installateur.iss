@@ -71,3 +71,16 @@ Type: files; Name: "{userstartup}\Mes outils.lnk"
 
 [Run]
 Filename: "{app}\Mes outils.exe"; Description: "{cm:LaunchProgram,Mes outils}"; Flags: nowait postinstall skipifsilent
+; Mise à jour lancée par Mes outils lui-même (/RELANCER) : il redémarre seul.
+Filename: "{app}\Mes outils.exe"; Flags: nowait; Check: RelancerDemande
+
+[Code]
+function RelancerDemande(): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+    if CompareText(ParamStr(I), '/RELANCER') = 0 then
+      Result := True;
+end;

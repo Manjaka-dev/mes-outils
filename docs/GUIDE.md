@@ -14,7 +14,7 @@ boîte à outils. Tout tourne sur votre PC, sans compte ni service en ligne.
 - [Installation](#installation)
 - [La bulle](#la-bulle)
 - [Se déplacer](#se-déplacer)
-- Les onglets : [Accueil](#-accueil) · [Projets](#-projets) · [GitHub](#-github) ·
+- Les onglets : [Accueil](#-accueil) · [Serveurs](#️-serveurs) · [Projets](#-projets) · [GitHub](#-github) ·
   [Ports](#-ports) · [Docker](#-docker) · [Testeur d'API](#-testeur-dapi) ·
   [SSH](#-ssh) · [Mails](#️-mails) · [Notes](#-notes) · [Agenda](#-agenda) ·
   [Mots de passe](#-mots-de-passe) · [Boîte à outils](#-boîte-à-outils) ·
@@ -113,6 +113,19 @@ La page d'arrivée (voir la capture en haut de ce guide).
 - **Code** : projets à envoyer, modifiés, en retard, tests GitHub en échec.
 - **Mes outils** : vos tuiles (dossier, fichier, programme, page web ou appli
   locale). « ✏️ Modifier » pour en ajouter, modifier ou retirer.
+
+### 🖥️ Serveurs
+
+Tous vos serveurs au même endroit : les serveurs de dev de vos projets (les
+commandes définies dans 📦 Projets) et, si vous l'utilisez, les serveurs Odoo
+d'un gadget externe (`gestion_serveurs.py`, chemin dans `outils.json`, clé
+`serveurs_odoo` › `gadget`).
+
+- ▶ démarrer, ■ arrêter, ↗ ouvrir dans le navigateur, ☰ journal ;
+- pastille verte = en marche, orange = démarrage, rouge = port pris par un
+  autre programme ;
+- une base Odoo marquée « référence » demande une confirmation avant d'être
+  démarrée.
 
 ### 📦 Projets
 
@@ -349,11 +362,12 @@ Installez Docker Desktop et démarrez-le ; l'onglet propose de le télécharger 
 Sans Docker, le reste de l'outil fonctionne normalement.
 
 **Comment mettre à jour Mes outils ?**
-Réglages › À propos › « 🔄 Rechercher une mise à jour ». Avec l'installateur, la
-nouvelle version se télécharge en un clic (vos données sont gardées) ; avec
-une installation faite avec
-`git clone`). Relancez ensuite la bulle : clic droit › « Quitter la bulle »,
-puis le raccourci « Mes outils ».
+Réglages › À propos › « 🔄 Rechercher une mise à jour ». Avec l'installateur,
+cliquez sur **Installer** : la nouvelle version se télécharge, s'installe et
+Mes outils redémarre tout seul (vos réglages et données sont gardés). Avec une
+installation faite avec `git clone`, la mise à jour fait un `git pull` ;
+relancez ensuite la bulle (clic droit › « Quitter la bulle », puis le
+raccourci).
 
 **La bulle a disparu.**
 Elle est peut-être masquée pour 15 minutes, ou vous l'avez quittée : relancez

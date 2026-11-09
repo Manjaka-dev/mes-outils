@@ -44,6 +44,14 @@ with open(FICHIER_VERSION, "w", encoding="utf-8") as f:
     VarFileInfo([VarStruct('Translation', [1036, 1200])])])
 """)
 
+# Toute la bibliothèque standard de Python : un script externe chargé par
+# « Mes outils » (ex. le gadget Serveurs Odoo) peut en avoir besoin.
+import importlib.util
+import sys
+SANS = {"idlelib", "turtledemo", "turtle", "test", "ensurepip", "lib2to3", "pydoc_data", "venv", "distutils", "this", "antigravity"}
+STANDARD = sorted(n for n in sys.stdlib_module_names
+                  if not n.startswith("_") and n not in SANS and importlib.util.find_spec(n) is not None)
+
 ICONE = os.path.join(OUTIL, "mes_outils.ico")
 
 a = Analysis(
@@ -56,9 +64,8 @@ a = Analysis(
         (os.path.join(RACINE, "outils.exemple.json"), "."),
         (LISTE, "."),
     ],
-    hiddenimports=MODULES,
-    # Rien de tout cela n'est utilisé : un programme plus léger.
-    excludes=["unittest", "pydoc", "test", "lib2to3", "numpy", "IPython", "matplotlib"],
+    hiddenimports=MODULES + STANDARD,
+    excludes=sorted(SANS) + ["numpy", "IPython", "matplotlib"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

@@ -89,6 +89,41 @@ class TestSocle(ServeurTest):
         with mock.patch.object(config, "GELE", True),                 mock.patch.object(reglages.urllib.request, "urlopen", side_effect=erreur),                 self.assertRaisesRegex(ValueError, "Aucune version"):
             reglages.mise_a_jour()
 
+    def test_installation_automatique(self):
+        """Programme installé : la nouvelle version est téléchargée puis
+        l'installateur est lancé (/SILENT /RELANCER) ; Mes outils se ferme."""
+        url = config.DEPOT + "/releases/download/v9.0.0/Mes-outils-Setup.exe"
+        sortie = {"tag_name": "v9.0.0", "html_url": "x", "assets": [{"name": "Mes-outils-Setup.exe", "browser_download_url": url}]}
+        programme = b"MZ" + b"\0" * 1_200_000
+
+        def fausse_connexion(requete, timeout=0):
+            adresse = requete.full_url if hasattr(requete, "full_url") else requete
+            return self._reponse_github(sortie) if "api.github.com" in adresse else self._fichier(programme)
+
+        with mock.patch.object(config, "GELE", True),                 mock.patch.object(reglages.urllib.request, "urlopen", side_effect=fausse_connexion),                 mock.patch.object(reglages.subprocess, "Popen") as lancer,                 mock.patch.object(reglages.threading, "Timer") as minuterie:
+            r = reglages.installer_mise_a_jour()
+        self.assertEqual(r, {"installation": True, "version": "9.0.0"})
+        env = lancer.call_args.kwargs["env"]
+        self.assertTrue(os.path.isfile(env["MO_SETUP"]), "l'installateur est téléchargé")
+        self.assertIn("/RELANCER", lancer.call_args.args[0][-1])
+        minuterie.assert_called_once()
+        minuterie.return_value.start.assert_called_once()
+        os.remove(env["MO_SETUP"])
+
+    def _fichier(self, contenu):
+        r = mock.MagicMock()
+        r.__enter__.return_value = io.BytesIO(contenu)
+        return r
+
+    def test_installateur_refuse(self):
+        with self.assertRaisesRegex(ValueError, "introuvable"):
+            reglages.telecharger_installateur("https://exemple.com/Setup.exe", "9.0.0")
+        url = config.DEPOT + "/releases/download/v9.0.0/Mes-outils-Setup.exe"
+        with mock.patch.object(reglages.urllib.request, "urlopen", return_value=self._fichier(b"<html>")),                 self.assertRaisesRegex(ValueError, "pas un installateur"):
+            reglages.telecharger_installateur(url, "9.0.0")
+        with mock.patch.object(config, "GELE", False), self.assertRaisesRegex(ValueError, "programme installé"):
+            reglages.installer_mise_a_jour()
+
     def test_comparaison_des_versions(self):
         self.assertGreater(reglages._version("v1.10.0"), reglages._version("1.9.9"))
         self.assertEqual(reglages._version("v1.3.0"), (1, 3, 0))

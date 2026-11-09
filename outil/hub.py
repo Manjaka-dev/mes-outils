@@ -122,7 +122,12 @@ _verrou_etats = threading.Lock()
 def etats_serveurs(forcer=False):
     """État de chaque serveur Odoo. Relu au plus toutes les 3 secondes : la
     liste des processus passe par PowerShell, qui prend une seconde."""
-    g = gadget()
+    try:
+        g = gadget()
+    except Exception as erreur:  # noqa: BLE001
+        # Gadget présent mais illisible : le dire sur l'Accueil plutôt que
+        # de faire disparaître la section.
+        return {"disponible": False, "serveurs": [], "erreur": f"{type(erreur).__name__} : {erreur}"}
     if not g:
         return {"disponible": False, "serveurs": []}
     with _verrou_etats:
@@ -374,11 +379,17 @@ class Gestionnaire(BaseHTTPRequestHandler):
 
     def do_POST(self):
         chemin = urllib.parse.urlparse(self.path).path
+        # Toujours lire la requête avant de répondre, même pour la refuser :
+        # sinon Windows coupe brutalement la connexion (erreur 10053).
+        try:
+            longueur = min(int(self.headers.get("Content-Length") or 0), 50 * 1024 * 1024)
+        except ValueError:
+            longueur = 0
+        corps = self.rfile.read(longueur) if longueur > 0 else b""
         if not self.requete_sure(ecriture=True):
             return self.repondre(403, {"erreur": "Accès refusé."})
         try:
-            longueur = int(self.headers.get("Content-Length") or 0)
-            donnees_requete = json.loads(self.rfile.read(longueur).decode("utf-8") or "{}")
+            donnees_requete = json.loads(corps.decode("utf-8") or "{}")
             if chemin == "/api/lancer":
                 lancer_outil(donnees_requete["id"])
                 return self.repondre(200, {"ok": True})

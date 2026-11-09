@@ -9,6 +9,8 @@ import json
 import os
 import re
 import subprocess
+import tempfile
+import threading
 import urllib.error
 import urllib.request
 
@@ -16,6 +18,7 @@ import config
 import installation
 
 CREATE_NO_WINDOW = 0x08000000
+DETACHED = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
 
 
 def _git(*args, delai=60):
@@ -109,7 +112,8 @@ def mise_a_jour(_d=None):
     if config.GELE or not os.path.isdir(os.path.join(config.RACINE, ".git")):
         info = derniere_version()
         if _version(info["version"]) > _version(config.VERSION):
-            return {"change": False, "nouvelle": info["version"], "telecharger": info["setup"] or info["page"]}
+            return {"change": False, "nouvelle": info["version"], "telecharger": info["setup"] or info["page"],
+                    "automatique": config.GELE and bool(info["setup"])}
         return {"change": False}
     if _git("status", "--porcelain", "--untracked-files=no").stdout.strip():
         raise ValueError("Des fichiers de « Mes outils » ont été modifiés sur ce PC : mise à jour annulée.")
@@ -119,6 +123,62 @@ def mise_a_jour(_d=None):
         raise RuntimeError("La mise à jour a échoué : " + (r.stderr or r.stdout).strip()[:300])
     apres = _git("rev-parse", "HEAD").stdout.strip()
     return {"change": avant != apres, "message": (r.stdout or "").strip()[:500]}
+
+
+# L'installateur ne peut venir que des versions publiées du dépôt.
+PREFIXE_SETUP = config.DEPOT + "/releases/download/"
+# Une fois Mes outils fermé, l'installateur tourne seul (barre de progression,
+# aucune question) puis relance Mes outils (/RELANCER, voir installateur.iss).
+SCRIPT_MISE_A_JOUR = ("Start-Sleep -Seconds 3; Start-Process -FilePath $env:MO_SETUP "
+                      "-ArgumentList '/SILENT','/SUPPRESSMSGBOXES','/NORESTART','/RELANCER'")
+
+
+def telecharger_installateur(url, version):
+    """Télécharge Mes-outils-Setup.exe dans le dossier temporaire et vérifie
+    que c'est bien un programme Windows."""
+    if not url or not url.startswith(PREFIXE_SETUP):
+        raise ValueError("Installateur introuvable dans la dernière version publiée.")
+    dossier = os.path.join(tempfile.gettempdir(), "mes-outils-mise-a-jour")
+    os.makedirs(dossier, exist_ok=True)
+    chemin = os.path.join(dossier, f"Mes-outils-Setup-{re.sub(r'[^0-9.]', '', version)}.exe")
+    partiel = chemin + ".part"
+    requete = urllib.request.Request(url, headers={"User-Agent": "mes-outils"})
+    try:
+        with urllib.request.urlopen(requete, timeout=60) as r, open(partiel, "wb") as f:
+            while True:
+                bloc = r.read(1 << 16)
+                if not bloc:
+                    break
+                f.write(bloc)
+    except OSError:
+        raise ValueError("Téléchargement de la mise à jour impossible (Internet ?).") from None
+    with open(partiel, "rb") as f:
+        debut = f.read(2)
+    if debut != b"MZ" or os.path.getsize(partiel) < 1_000_000:
+        os.remove(partiel)
+        raise ValueError("Le fichier téléchargé n'est pas un installateur valide.")
+    os.replace(partiel, chemin)
+    return chemin
+
+
+def installer_mise_a_jour(_d=None):
+    """Programme installé : télécharge la dernière version, ferme Mes outils
+    et lance l'installateur, qui relance Mes outils à la fin. Les réglages et
+    les données (dans %APPDATA%) ne sont pas touchés."""
+    if not config.GELE:
+        raise ValueError("Installation automatique réservée au programme installé (Setup.exe).")
+    info = derniere_version()
+    if _version(info["version"]) <= _version(config.VERSION):
+        return {"a_jour": True}
+    chemin = telecharger_installateur(info["setup"], info["version"])
+    subprocess.Popen(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command",
+                      SCRIPT_MISE_A_JOUR], env=dict(os.environ, MO_SETUP=chemin),
+                     creationflags=DETACHED | CREATE_NO_WINDOW, close_fds=True,
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # La réponse part d'abord, puis Mes outils (bulle et serveur) se ferme
+    # pour que l'installateur puisse remplacer le programme.
+    threading.Timer(1.5, lambda: os._exit(0)).start()
+    return {"installation": True, "version": info["version"]}
 
 
 SCRIPT_DOSSIER = r"""
@@ -154,5 +214,6 @@ ROUTES = {
     "dossiers": dossiers,
     "raccourci": raccourci,
     "mise_a_jour": mise_a_jour,
+    "installer_mise_a_jour": installer_mise_a_jour,
     "choisir_dossier": choisir_dossier,
 }

@@ -357,12 +357,12 @@
   <h2>Mes outils <span class="compte" id="nb-outils">0</span><span class="espace"></span>
     <button class="btn" id="btn-edition" title="Ajouter, modifier ou retirer des outils">✏️ Modifier</button></h2>
   <div class="tuiles" id="tuiles"></div>
+  </section>
 
-  <div id="bloc-projets" hidden>
-  <h2>Serveurs des projets <span class="compte" id="nb-projets-marche">…</span><span class="espace"></span>
-    <button class="btn discret" onclick="montrerVue('projets')">📦 Projets</button></h2>
-  <div class="serveurs" id="serveurs-projets"></div>
-  </div>
+  <!-- Onglet Serveurs (son code : web/serveurs.js et les fonctions plus bas) -->
+  <section class="vue" id="vue-serveurs">
+  <div class="barre-vue"><h2>🖥️ Serveurs</h2><span class="espace"></span>
+    <button class="btn" onclick="rafraichirServeurs()">🔄 Actualiser</button></div>
 
   <div id="bloc-serveurs" hidden>
   <h2>Serveurs Odoo <span class="compte" id="nb-marche">…</span><span class="espace"></span>
@@ -370,6 +370,14 @@
   </h2>
   <div class="serveurs" id="serveurs"><div class="vide">Lecture des serveurs…</div></div>
   </div>
+
+  <div id="bloc-projets" hidden>
+  <h2>Serveurs des projets <span class="compte" id="nb-projets-marche">…</span><span class="espace"></span>
+    <button class="btn discret" onclick="montrerVue('projets')">📦 Projets</button></h2>
+  <div class="serveurs" id="serveurs-projets"></div>
+  </div>
+
+  <div class="vide" id="aucun-serveur" hidden>Aucun serveur pour l'instant. Ajoutez les commandes de vos serveurs de dev dans l'onglet 📦 Projets (bouton ⚙️ d'un projet).</div>
   </section>
   <footer>Mes outils · tout tourne sur ce PC · <span id="maj"></span></footer>
   </main>
@@ -642,7 +650,13 @@ function afficherServeurs() {
   const empreinte = JSON.stringify(S.serveurs);
   if (empreinte === S.empreinteServeurs) return;
   S.empreinteServeurs = empreinte;
-  $("#bloc-serveurs").hidden = !S.serveurs.disponible;
+  $("#bloc-serveurs").hidden = !S.serveurs.disponible && !S.serveurs.erreur;
+  majVideServeurs();
+  if (S.serveurs.erreur) {
+    $("#nb-marche").textContent = "—";
+    box.replaceChildren(el("div", { class: "vide" }, "😕 " + t("Le gadget « Serveurs Odoo » ne se charge pas : {e}", { e: S.serveurs.erreur })));
+    return;
+  }
   if (!S.serveurs.disponible) return;
   const liste = S.serveurs.serveurs;
   if (!liste.length) { box.replaceChildren(el("div", { class: "vide" }, "Aucun serveur : ajoutez-en depuis le gadget complet.")); return; }
@@ -870,14 +884,23 @@ async function afficherAujourdhui() {
 // ------------------------------------------- serveurs des projets (accueil)
 const CLASSE_PROJET = { marche: "marche", demarrage: "demarrage", occupe: "occupe", arrete: "" };
 const TEXTE_PROJET = { marche: "En marche", demarrage: "Démarrage…", occupe: "Port occupé (autre programme)", arrete: "Arrêté" };
+/** L'onglet Serveurs : « aucun serveur » si les deux listes sont vides. */
+function majVideServeurs() {
+  $("#aucun-serveur").hidden = !($("#bloc-serveurs").hidden && $("#bloc-projets").hidden);
+}
+function rafraichirServeurs() {
+  S.empreinteServeurs = S.empreinteProjets = null;
+  chargerServeurs(); chargerServeursProjets();
+}
 async function chargerServeursProjets() {
-  if (!VUES.projets || (S.masques || []).includes("projets")) { $("#bloc-projets").hidden = true; return; }
+  if (!VUES.projets || (S.masques || []).includes("projets")) { $("#bloc-projets").hidden = true; majVideServeurs(); return; }
   let liste = [];
   try { liste = (await api("/api/projets/etats", {})).serveurs || []; } catch { return; }
   const empreinte = JSON.stringify(liste);
   if (empreinte === S.empreinteProjets) return;
   S.empreinteProjets = empreinte;
   $("#bloc-projets").hidden = !liste.length;
+  majVideServeurs();
   $("#nb-projets-marche").textContent = t("{n} / {total} en marche", { n: liste.filter(s => s.etat === "marche").length, total: liste.length });
   $("#serveurs-projets").replaceChildren(...liste.map((s, i) => {
     const enRoute = s.etat === "marche" || s.etat === "demarrage";
@@ -923,7 +946,11 @@ I18N.ajouter({
   "choisir": "select", "ouvrir": "open", "fermer": "close", "Entrée": "Enter", "Échap": "Esc",
   "Au quotidien": "Everyday", "Développement": "Development", "Petits outils": "Handy tools",
   "Palette de commandes": "Command palette",
-  "Serveurs des projets": "Project servers", "📦 Projets": "📦 Projects", "Code": "Code",
+  "Serveurs des projets": "Project servers",
+  "Serveurs": "Servers", "🔄 Actualiser": "🔄 Refresh",
+  "Aucun serveur pour l'instant. Ajoutez les commandes de vos serveurs de dev dans l'onglet 📦 Projets (bouton ⚙️ d'un projet).":
+    "No server yet. Add your dev server commands in the 📦 Projects tab (a project's ⚙️ button).",
+  "Le gadget « Serveurs Odoo » ne se charge pas : {e}": "The “Odoo servers” gadget does not load: {e}", "📦 Projets": "📦 Projects", "Code": "Code",
   "projet à envoyer": "project to push", "projets à envoyer": "projects to push",
   "projet modifié": "modified project", "projets modifiés": "modified projects",
   "projet en retard": "project behind", "projets en retard": "projects behind",
@@ -1045,7 +1072,7 @@ setInterval(horloge, 10000);
 chargerOutils().catch(e => toast("😕 " + e.message, "erreur", 8000));
 chargerServeurs();
 setInterval(chargerServeurs, 5000);
-setInterval(() => { if (S.vue === "accueil") chargerServeursProjets(); }, 5000);
+setInterval(() => { if (S.vue === "serveurs") chargerServeursProjets(); }, 5000);
 setInterval(() => chargerOutils().catch(() => {}), 15000);
 </script>
 </body>

@@ -14,7 +14,7 @@ Everything runs on your PC, with no account and no online service.
 - [Installation](#installation)
 - [The bubble](#the-bubble)
 - [Getting around](#getting-around)
-- The tabs: [Home](#-home) · [Projects](#-projects) · [GitHub](#-github) ·
+- The tabs: [Home](#-home) · [Servers](#️-servers) · [Projects](#-projects) · [GitHub](#-github) ·
   [Ports](#-ports) · [Docker](#-docker) · [API tester](#-api-tester) ·
   [SSH](#-ssh) · [Mail](#️-mail) · [Notes](#-notes) · [Calendar](#-calendar) ·
   [Passwords](#-passwords) · [Toolbox](#-toolbox) · [Snippets](#️-snippets) ·
@@ -109,6 +109,17 @@ The landing page (see the screenshot at the top of this guide).
 - **Code**: projects to push, modified, behind, failing GitHub tests.
 - **My tools**: your tiles (folder, file, program, web page or local app).
   "✏️ Edit" to add, change or remove them.
+
+### 🖥️ Servers
+
+All your servers in one place: your projects' dev servers (the commands set
+in 📦 Projects) and, if you use it, the Odoo servers of an external gadget
+(`gestion_serveurs.py`, path in `outils.json`, key `serveurs_odoo` › `gadget`).
+
+- ▶ start, ■ stop, ↗ open in the browser, ☰ log;
+- green dot = running, orange = starting, red = port taken by another
+  program;
+- an Odoo database marked "reference" asks for confirmation before starting.
 
 ### 📦 Projects
 
@@ -340,10 +351,11 @@ Install Docker Desktop and start it; the tab offers to download it or start
 it. Without Docker, the rest of the tool works normally.
 
 **How do I update Mes outils?**
-Settings › About › "🔄 Check for updates". With the installer, the new version
-downloads in one click (your data is kept); with `git clone`, it runs `git pull`.
-Then restart the bubble: right-click › "Quit the bubble", then the
-"Mes outils" shortcut.
+Settings › About › "🔄 Check for updates". With the installer, click
+**Install**: the new version downloads, installs and Mes outils restarts by
+itself (your settings and data are kept). When installed with `git clone`, the
+update runs `git pull`; then restart the bubble (right-click › "Quit the
+bubble", then the shortcut).
 
 **The bubble has disappeared.**
 It may be hidden for 15 minutes, or you quit it: start the "Mes outils"

@@ -18,7 +18,8 @@ import config
 import installation
 
 CREATE_NO_WINDOW = 0x08000000
-DETACHED = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+NOUVEAU_GROUPE = 0x00000200  # CREATE_NEW_PROCESS_GROUP
+HORS_DU_JOB = 0x01000000     # CREATE_BREAKAWAY_FROM_JOB
 
 
 def _git(*args, delai=60):
@@ -161,6 +162,21 @@ def telecharger_installateur(url, version):
     return chemin
 
 
+def lancer_apres_fermeture(chemin):
+    """Lance la petite tâche PowerShell qui installera la mise à jour une fois
+    Mes outils fermé. Pas de DETACHED_PROCESS : PowerShell a besoin d'une
+    console (invisible ici) pour démarrer. Elle quitte si possible le groupe
+    de processus de Mes outils pour lui survivre."""
+    commande = ["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", SCRIPT_MISE_A_JOUR]
+    options = dict(env=dict(os.environ, MO_SETUP=chemin), close_fds=True,
+                   stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    base = CREATE_NO_WINDOW | NOUVEAU_GROUPE
+    try:
+        return subprocess.Popen(commande, creationflags=base | HORS_DU_JOB, **options)
+    except OSError:
+        return subprocess.Popen(commande, creationflags=base, **options)
+
+
 def installer_mise_a_jour(_d=None):
     """Programme installé : télécharge la dernière version, ferme Mes outils
     et lance l'installateur, qui relance Mes outils à la fin. Les réglages et
@@ -171,10 +187,7 @@ def installer_mise_a_jour(_d=None):
     if _version(info["version"]) <= _version(config.VERSION):
         return {"a_jour": True}
     chemin = telecharger_installateur(info["setup"], info["version"])
-    subprocess.Popen(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command",
-                      SCRIPT_MISE_A_JOUR], env=dict(os.environ, MO_SETUP=chemin),
-                     creationflags=DETACHED | CREATE_NO_WINDOW, close_fds=True,
-                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    lancer_apres_fermeture(chemin)
     # La réponse part d'abord, puis Mes outils (bulle et serveur) se ferme
     # pour que l'installateur puisse remplacer le programme.
     threading.Timer(1.5, lambda: os._exit(0)).start()

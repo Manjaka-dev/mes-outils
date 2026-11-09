@@ -106,6 +106,8 @@ class TestSocle(ServeurTest):
         env = lancer.call_args.kwargs["env"]
         self.assertTrue(os.path.isfile(env["MO_SETUP"]), "l'installateur est téléchargé")
         self.assertIn("/RELANCER", lancer.call_args.args[0][-1])
+        self.assertFalse(lancer.call_args.kwargs["creationflags"] & 0x00000008,
+                         "DETACHED_PROCESS empêche PowerShell de démarrer")
         minuterie.assert_called_once()
         minuterie.return_value.start.assert_called_once()
         os.remove(env["MO_SETUP"])

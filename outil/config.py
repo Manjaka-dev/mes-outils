@@ -23,7 +23,7 @@ import shutil
 import sys
 import threading
 
-VERSION = "1.3.1"
+VERSION = "1.3.2"
 DEPOT = "https://github.com/rarianaAina/mes-outils"
 API_VERSIONS = "https://api.github.com/repos/rarianaAina/mes-outils/releases/latest"
 # Vrai dans le programme installé (Mes outils.exe) : pas de Python sur le PC.

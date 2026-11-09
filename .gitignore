@@ -1,0 +1,13 @@
+# Données personnelles : elles restent sur ce PC
+donnees/
+outils.json
+bulle.json
+
+# Fichiers de travail
+*.bak
+*.tmp
+*.log
+__pycache__/
+
+# Créé par l'application avec le chemin de Python de chaque PC
+outil/ssh_askpass.cmd

@@ -1,0 +1,21 @@
+{
+  "prenom": "",
+  "serveurs_odoo": {
+    "gadget": ""
+  },
+  "mail": {
+    "adresse": ""
+  },
+  "outils": [
+    {
+      "id": "whatsapp",
+      "nom": "WhatsApp",
+      "emoji": "💬",
+      "couleur": "#18b597",
+      "description": "WhatsApp Web dans sa propre fenêtre",
+      "type": "lien",
+      "cible": "https://web.whatsapp.com/",
+      "fenetre_appli": true
+    }
+  ]
+}

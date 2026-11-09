@@ -1,0 +1,141 @@
+MES OUTILS - le tableau de bord de mes outils personnels
+=======================================================
+
+LA BULLE
+--------
+Une bulle violette 🧰 flotte sur l'écran, au-dessus des autres fenêtres, sans
+bouton dans la barre des tâches. Elle démarre avec Windows (raccourci dans le
+dossier Démarrage : touche Windows + R, taper shell:startup ; supprimer
+« Mes outils » pour qu'elle ne démarre plus toute seule).
+
+  Clic              ouvre le tableau de bord (ou le ramène devant s'il est ouvert)
+  Glisser           la déplace ; elle revient au même endroit la fois suivante
+  Clic droit        accès direct : Note rapide, Mails, Agenda, Notes, vos
+                    outils, Serveurs Odoo (démarrer, arrêter, ouvrir),
+                    Masquer 15 minutes, Quitter la bulle
+  Pastille verte    nombre de serveurs Odoo en marche (en haut à droite)
+  Pastille corail   nombre de mails non lus (en haut à gauche)
+  Au repos          un peu transparente ; pleine quand la souris passe dessus
+
+Si la bulle a été quittée : raccourci « Mes outils » du Bureau, ou
+« Mes outils.bat » dans ce dossier.
+
+Le tableau de bord s'ouvre dans une fenêtre Edge sans barre d'adresse. La
+fermer (🚪 ou la croix) ne coupe rien : la bulle reste là.
+
+
+LES OUTILS
+----------
+- Clic sur une tuile : l'outil s'ouvre.
+  Une « Appli locale » est démarrée si elle ne tourne pas, puis ouverte dans
+  sa fenêtre.
+- ✏️ Modifier : les tuiles se mettent à bouger ; ✎ pour modifier, ✕ pour retirer,
+  « Ajouter un outil » pour en créer un. Types possibles :
+    Dossier, Fichier / programme (.exe, .bat…), Page web,
+    Appli locale (un outil avec son propre petit serveur : adresse, port et
+    commande de démarrage).
+- Tout est enregistré dans outils.json (modifiable aussi à la main).
+
+
+LES ONGLETS
+-----------
+🏠 Accueil   « Aujourd'hui » (rendez-vous du jour et du lendemain, notes
+             épinglées, mails non lus), vos outils, les serveurs Odoo.
+
+✉️ Mails     Votre Gmail : reçus, envoyés, recherche, lecture, répondre,
+             transférer, nouveau mail. Première fois : créer un « mot de passe
+             d'application » Google (le guide est affiché dans l'onglet) ; il
+             est rangé dans le coffre de Windows (Gestionnaire d'identification >
+             Informations d'identification Windows > « MesOutils:mail:… »).
+             Les images distantes des mails sont bloquées (elles servent à
+             savoir si vous avez ouvert le mail) : bouton « Afficher les images ».
+             Les pièces jointes sont listées ; on les ouvre depuis Gmail.
+             Bouton 🔌 : déconnecter (le mot de passe est retiré du coffre).
+
+📝 Notes     Notes en cartes colorées ou listes à cocher, épingle 📌, recherche,
+             rappel ⏰ à une date et une heure. Enregistrement automatique
+             pendant la frappe. Dans une liste : Entrée = élément suivant,
+             Retour arrière sur un élément vide = le retirer.
+
+📅 Agenda    Vue semaine (cliquer sur un créneau pour créer un rendez-vous) et
+             vue mois. Rappel par la bulle : à l'heure, 5/15/30 min, 1 h avant,
+             la veille.
+             Déplacer : glisser le rendez-vous (vue semaine : autre jour ou autre
+             heure, par pas de 15 min ; vue mois : autre jour).
+             Dupliquer : Ctrl + glisser, ou bouton « ⧉ Dupliquer » du rendez-vous
+             (la copie s'ouvre pour choisir le jour).
+
+🔐 Mots de passe
+             Coffre chiffré (AES-256-GCM, clé tirée du mot de passe maître par
+             scrypt). Le mot de passe maître n'est enregistré nulle part :
+             S'IL EST OUBLIÉ, LE COFFRE EST PERDU. Notez-le sur papier.
+             Le coffre se verrouille après 5 minutes sans utilisation (ou 🔒).
+             🔑 copie le mot de passe : il est effacé du presse-papiers après
+             30 secondes et n'entre pas dans l'historique Win + V. 👁 l'affiche
+             15 secondes. 🎲 génère un mot de passe solide. Catégories, note
+             chiffrée par entrée, recherche.
+             Fichier : donnees\coffre.json (illisible sans le mot de passe
+             maître) ; copie précédente : coffre.json.bak.
+
+🔑 SSH       Une clé par serveur, posée en un clic : « ＋ Nouveau serveur »,
+             saisir le nom, l'adresse, le port, l'utilisateur et le mot de
+             passe. L'outil crée la clé (sans phrase de passe), la dépose sur
+             le serveur avec le mot de passe, puis vérifie la connexion. Le mot
+             de passe ne sert qu'à cette fois : il n'est enregistré nulle part.
+             Ensuite, dans un terminal : « ssh <nom-court> » (affiché sur la
+             carte, clic = copie). 🧪 teste la connexion, 💻 ouvre un terminal
+             sur le serveur, 🗑️ retire la clé du serveur puis de ce PC.
+             Fichiers : clés dans %USERPROFILE%\.ssh (mesoutils_<nom-court>),
+             raccourcis dans %USERPROFILE%\.ssh\config (blocs « Mes outils »),
+             liste dans donnees\ssh.json (aucun secret).
+
+💬 WhatsApp  La tuile ouvre WhatsApp Web dans sa propre fenêtre (votre
+             WhatsApp habituel : scannez le QR code une fois avec le téléphone).
+
+
+LES RAPPELS
+-----------
+À l'heure dite, une carte apparaît à côté de la bulle (avec un son), et la
+bulle frétille : « Ouvrir » (affiche la note ou l'agenda), « Plus tard »
+(dans 10 minutes) ou « OK ». Les rappels manqués pendant que le PC était
+éteint apparaissent au démarrage (jusqu'à 2 jours de retard).
+
+
+LES SERVEURS ODOO
+-----------------
+Facultatif. Ce sont ceux d'un gadget « Serveurs Odoo » externe
+(gestion_serveurs.py), dont le chemin est donné dans outils.json, clé
+« serveurs_odoo » > « gadget ». Sans gadget, la section est simplement vide.
+Même liste, mêmes commandes, mêmes journaux que le gadget. Pastille verte = en marche, orange =
+démarrage, grise = arrêté, rouge = port pris par un autre programme.
+  ▶ Démarrer   ■ Arrêter   ↗ Ouvrir dans le navigateur   ☰ Journal
+Une base marquée « référence » demande une confirmation avant d'être
+démarrée. Pour ajouter un serveur ou voir les comptes d'une base :
+bouton « Gadget complet ».
+
+
+LES FICHIERS
+------------
+  outils.json          la liste des tuiles, votre prénom (salutation) et votre
+                       adresse Gmail ; créé depuis outils.exemple.json au premier
+                       lancement, jamais envoyé sur GitHub
+  bulle.json           la position de la bulle
+  donnees\notes.json   vos notes (copie de la version précédente : notes.json.bak)
+  donnees\agenda.json  vos rendez-vous (copie : agenda.json.bak)
+  outil\web\           les onglets Notes, Agenda et Mails (notes.js, agenda.js, mails.js)
+  outil\donnees.py     enregistrement des notes, de l'agenda et des rappels
+  outil\mail.py        la connexion Gmail (IMAP pour lire, SMTP pour envoyer)
+  outil\coffre.py      le coffre à mots de passe
+
+Sécurité : le serveur n'écoute que sur ce PC et refuse tout ordre qui ne
+vient pas de la page elle-même (une page web ouverte dans le navigateur ne
+peut pas lui parler).
+  outil\bulle.py       la bulle (elle fait aussi tourner le serveur du tableau de bord)
+  outil\hub.py         le petit serveur local (http://127.0.0.1:8760, ce PC seulement)
+  outil\hub.html       la page
+  outil\hub.log        les erreurs éventuelles
+  outil\mes_outils.ico l'icône des raccourcis
+
+« Mes outils.bat » utilise pythonw du PATH, ou le Python indiqué dans la
+variable d'environnement MES_OUTILS_PYTHON. Bibliothèques nécessaires :
+pip install -r requirements.txt

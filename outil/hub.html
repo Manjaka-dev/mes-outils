@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes outils</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='26' fill='%236c4cf5'/><text x='50' y='68' font-size='58' text-anchor='middle'>🧰</text></svg>">
+<style>
+  :root {
+    --fond: #f4f2ff; --carte: #fff; --encre: #1f1a3a; --doux: #6b6790; --ligne: #e7e3fb;
+    --violet: #6c4cf5; --violet-clair: #efeaff; --corail: #ff7a59; --menthe: #18b597;
+    --ambre: #ffb020; --rouge: #e5484d; --gris: #a7a3bd;
+    --ombre: 0 14px 34px -16px rgba(76, 52, 190, .35);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif; color: var(--encre); background: var(--fond);
+    overflow-x: hidden;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+
+  /* Fond animé ------------------------------------------------------- */
+  .bulles { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
+  .bulles span { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55; animation: derive 22s ease-in-out infinite alternate; }
+  .bulles span:nth-child(1) { width: 520px; height: 520px; background: #d9ccff; left: -120px; top: -160px; }
+  .bulles span:nth-child(2) { width: 460px; height: 460px; background: #ffd9cc; right: -140px; top: 80px; animation-delay: -7s; }
+  .bulles span:nth-child(3) { width: 420px; height: 420px; background: #c9f2e7; left: 30%; bottom: -220px; animation-delay: -13s; }
+  @keyframes derive { to { transform: translate(60px, 40px) scale(1.15); } }
+
+  .page { max-width: 1300px; margin: 0 auto; padding: 28px 28px 48px; }
+
+  /* En-tête ---------------------------------------------------------- */
+  header { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+  .avatar-hub {
+    width: 58px; height: 58px; border-radius: 19px; display: grid; place-items: center; font-size: 30px;
+    background: linear-gradient(135deg, var(--violet), #9b7bff); box-shadow: var(--ombre); transform: rotate(-6deg);
+    cursor: pointer; transition: transform .4s cubic-bezier(.3, 1.6, .5, 1);
+  }
+  .avatar-hub:hover { transform: rotate(10deg) scale(1.08); }
+  .salut h1 { margin: 0; font-size: 30px; letter-spacing: -.6px; }
+  .salut p { margin: 2px 0 0; color: var(--doux); font-weight: 500; }
+  header .espace { flex: 1; }
+  .horloge { text-align: right; margin-right: 6px; }
+  .horloge b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+  .horloge small { color: var(--doux); }
+  .btn {
+    border: 0; border-radius: 13px; padding: 10px 16px; cursor: pointer; font-weight: 650; background: rgba(255,255,255,.85);
+    box-shadow: 0 1px 0 var(--ligne), 0 6px 16px -10px rgba(0,0,0,.3); display: inline-flex; align-items: center; gap: 7px;
+    transition: transform .12s, background .2s, box-shadow .2s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(1px) scale(.97); }
+  .btn.principal { background: linear-gradient(135deg, var(--violet), #8b6cff); color: #fff; }
+  .btn.actif { background: var(--encre); color: #fff; }
+  .btn.discret { background: transparent; box-shadow: none; color: var(--doux); }
+  .btn.discret:hover { background: var(--violet-clair); color: var(--violet); }
+  .btn:disabled { opacity: .45; cursor: default; transform: none; }
+
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 1px; color: var(--doux); margin: 30px 0 14px; display: flex; align-items: center; gap: 10px; }
+  h2 .compte { background: var(--violet-clair); color: var(--violet); border-radius: 99px; padding: 1px 9px; font-size: 12px; letter-spacing: 0; }
+  h2 .espace { flex: 1; }
+
+  /* Tuiles des outils ------------------------------------------------ */
+  .tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; }
+  .tuile {
+    position: relative; border: 0; text-align: left; cursor: pointer; padding: 20px; border-radius: 22px; min-height: 168px;
+    background: var(--carte); box-shadow: var(--ombre); display: flex; flex-direction: column; gap: 6px; overflow: hidden;
+    transition: transform .25s cubic-bezier(.3, 1.5, .5, 1), box-shadow .25s; animation: apparait .45s both;
+  }
+  .tuile::before {
+    content: ""; position: absolute; right: -40px; top: -40px; width: 140px; height: 140px; border-radius: 50%;
+    background: var(--c); opacity: .12; transition: transform .4s;
+  }
+  .tuile:hover { transform: translateY(-5px) rotate(-.6deg); box-shadow: 0 22px 40px -18px rgba(76, 52, 190, .45); }
+  .tuile:hover::before { transform: scale(1.35); }
+  .tuile .emoji {
+    width: 58px; height: 58px; border-radius: 18px; display: grid; place-items: center; font-size: 30px; margin-bottom: 8px;
+    background: color-mix(in srgb, var(--c) 16%, #fff); transition: transform .35s cubic-bezier(.3, 1.8, .5, 1);
+  }
+  .tuile:hover .emoji { transform: scale(1.12) rotate(-8deg); }
+  .tuile .nom { font-weight: 800; font-size: 17px; }
+  .tuile .desc { color: var(--doux); font-size: 13.5px; line-height: 1.35; }
+  .tuile .etat { margin-top: auto; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; color: var(--doux); }
+  .tuile.lance { animation: rebond .55s cubic-bezier(.3, 1.6, .5, 1); }
+  .tuile.ajout { border: 2.5px dashed #d4ccfa; background: rgba(255,255,255,.5); box-shadow: none; align-items: center; justify-content: center; color: var(--violet); font-weight: 800; }
+  .tuile.ajout .emoji { background: var(--violet-clair); }
+  .tuile .actions-edition { position: absolute; top: 10px; right: 10px; display: none; gap: 6px; z-index: 2; }
+  .edition .tuile:not(.ajout) { animation: tremble .32s ease-in-out infinite alternate; }
+  .edition .tuile:not(.ajout):nth-child(2n) { animation-delay: -.16s; }
+  .edition .tuile .actions-edition { display: flex; }
+  .rond { width: 30px; height: 30px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; font-size: 14px; background: #fff; box-shadow: 0 4px 12px -4px rgba(0,0,0,.35); }
+  .rond.suppr { background: var(--rouge); color: #fff; }
+  @keyframes apparait { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+  @keyframes rebond { 30% { transform: scale(.94); } 60% { transform: scale(1.05) rotate(1deg); } }
+  @keyframes tremble { from { transform: rotate(-1.1deg); } to { transform: rotate(1.1deg); } }
+
+  .point { width: 9px; height: 9px; border-radius: 50%; background: var(--gris); flex: none; }
+  .point.marche { background: var(--menthe); box-shadow: 0 0 0 0 rgba(24,181,151,.6); animation: battement 2s infinite; }
+  .point.demarrage { background: var(--ambre); animation: clignote .8s infinite alternate; }
+  .point.occupe { background: var(--rouge); }
+  @keyframes battement { 70% { box-shadow: 0 0 0 7px rgba(24,181,151,0); } 100% { box-shadow: 0 0 0 0 rgba(24,181,151,0); } }
+  @keyframes clignote { to { opacity: .35; } }
+
+  /* Serveurs Odoo ---------------------------------------------------- */
+  .serveurs { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+  .serveur {
+    background: var(--carte); border-radius: 18px; box-shadow: var(--ombre); padding: 14px 16px; display: flex; align-items: center; gap: 13px;
+    animation: apparait .4s both; transition: transform .2s;
+  }
+  .serveur:hover { transform: translateY(-2px); }
+  .serveur .pastille { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; background: #f1eefc; flex: none; position: relative; }
+  .serveur .pastille .point { position: absolute; right: -2px; bottom: -2px; border: 2.5px solid #fff; width: 14px; height: 14px; }
+  .serveur .infos { flex: 1; min-width: 0; }
+  .serveur .base { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .serveur .ligne2 { font-size: 12.5px; color: var(--doux); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .etiquette { border-radius: 99px; padding: 0 8px; font-size: 11.5px; font-weight: 700; }
+  .etiquette.ref { background: #fde8e8; color: #b00020; }
+  .etiquette.conf { background: #e6f0ff; color: #1a5fb4; }
+  .serveur .boutons { display: flex; gap: 4px; }
+  .icone-btn { width: 34px; height: 34px; border-radius: 11px; border: 0; cursor: pointer; background: #f4f2fc; font-size: 15px; display: grid; place-items: center; transition: background .15s, transform .12s; }
+  .icone-btn:hover { background: var(--violet-clair); transform: translateY(-1px); }
+  .icone-btn.go:hover { background: #dcf7f0; }
+  .icone-btn.stop:hover { background: #fde8e8; }
+  .icone-btn:disabled { opacity: .35; cursor: default; transform: none; }
+  .vide { background: rgba(255,255,255,.6); border-radius: 18px; padding: 22px; color: var(--doux); text-align: center; }
+
+  /* Fenêtres, toasts --------------------------------------------------- */
+  .voile { position: fixed; inset: 0; background: rgba(31,26,58,.38); display: none; place-items: center; z-index: 40; backdrop-filter: blur(3px); }
+  .voile.visible { display: grid; }
+  .fenetre { width: min(540px, 94vw); max-height: 92vh; overflow: auto; background: #fff; border-radius: 24px; padding: 26px; box-shadow: var(--ombre); animation: pop .3s cubic-bezier(.3, 1.5, .5, 1) both; }
+  .fenetre.petite { width: min(400px, 92vw); text-align: center; }
+  .fenetre .gros { font-size: 44px; }
+  .fenetre h3 { margin: 6px 0 8px; font-size: 20px; }
+  .fenetre p { color: var(--doux); margin: 0 0 18px; }
+  .fenetre .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+  .fenetre.petite .actions { justify-content: center; }
+  @keyframes pop { from { opacity: 0; transform: scale(.9) translateY(10px); } }
+  label.champ { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--doux); margin-bottom: 14px; }
+  .champ input, .champ select, .champ textarea {
+    border: 1.5px solid var(--ligne); border-radius: 12px; padding: 10px 12px; background: #fbfaff; outline: none; font-size: 14.5px; font-weight: 500; color: var(--encre);
+  }
+  .champ input:focus, .champ textarea:focus, .champ select:focus { border-color: var(--violet); background: #fff; box-shadow: 0 0 0 4px rgba(108,76,245,.12); }
+  .champ small { font-weight: 500; color: var(--doux); }
+  .emojis { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+  .emojis button { border: 0; background: #f6f4ff; border-radius: 10px; font-size: 20px; padding: 5px 0; cursor: pointer; transition: transform .12s; }
+  .emojis button:hover { transform: scale(1.18); }
+  .emojis button.choisi { background: var(--violet); box-shadow: 0 6px 12px -6px var(--violet); }
+  .couleurs { display: flex; gap: 8px; flex-wrap: wrap; }
+  .couleurs button { width: 32px; height: 32px; border-radius: 50%; border: 3px solid #fff; cursor: pointer; box-shadow: 0 0 0 1.5px var(--ligne); transition: transform .15s; }
+  .couleurs button.choisi { transform: scale(1.18); box-shadow: 0 0 0 2.5px var(--encre); }
+  .types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .types button { border: 1.5px solid var(--ligne); background: #fbfaff; border-radius: 13px; padding: 10px 6px; cursor: pointer; font-weight: 700; font-size: 13px; }
+  .types button span { display: block; font-size: 20px; }
+  .types button.choisi { border-color: var(--violet); background: var(--violet-clair); color: var(--violet); }
+  .apercu-tuile { display: flex; justify-content: center; margin-bottom: 18px; }
+  .apercu-tuile .tuile { width: 230px; min-height: 140px; cursor: default; animation: none; }
+
+  #toasts { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 60; align-items: center; }
+  .toast { background: var(--encre); color: #fff; padding: 11px 18px; border-radius: 14px; box-shadow: var(--ombre); font-weight: 650; animation: pop .3s cubic-bezier(.3, 1.5, .5, 1) both; max-width: 560px; }
+  .toast.erreur { background: var(--rouge); }
+  .toast.succes { background: linear-gradient(135deg, #12a386, var(--menthe)); }
+  .toast.part { animation: depart .3s forwards; }
+  @keyframes depart { to { opacity: 0; transform: translateY(12px); } }
+  footer { margin-top: 36px; text-align: center; color: var(--gris); font-size: 12.5px; }
+
+  /* Onglets ------------------------------------------------------------ */
+  .onglets { display: flex; gap: 4px; background: rgba(255,255,255,.75); padding: 5px; border-radius: 15px; box-shadow: var(--ombre); }
+  .onglets button { border: 0; background: transparent; padding: 8px 8px; white-space: nowrap; border-radius: 11px; cursor: pointer; font-weight: 700; color: var(--doux); position: relative; transition: background .2s, color .2s; }
+  .onglets button:not(.actif):hover { background: var(--violet-clair); color: var(--violet); }
+  .onglets button.actif { background: var(--violet); color: #fff; box-shadow: 0 6px 14px -6px var(--violet); }
+  .compteur { background: var(--corail); color: #fff; border-radius: 99px; font-size: 11px; padding: 1px 7px; margin-left: 3px; }
+  .vue { display: none; }
+  .vue.actif { display: block; animation: apparait .35s both; }
+  header { flex-wrap: wrap; }
+  /* Fenêtre étroite (l'appli s'ouvre en 1180 px) : l'en-tête reste sur une ligne. */
+  @media (max-width: 1320px) {
+    .salut h1 { font-size: 24px; }
+    .salut p { display: none; }
+    .onglets button { padding: 7px 6px; font-size: 13.5px; }
+    .horloge b { font-size: 22px; }
+  }
+
+  /* Aujourd'hui (accueil) ----------------------------------------------- */
+  .aujourdhui { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 8px; }
+  .carte-jour { background: var(--carte); border-radius: 20px; box-shadow: var(--ombre); padding: 16px 18px; cursor: pointer; transition: transform .2s; animation: apparait .4s both; }
+  .carte-jour:hover { transform: translateY(-3px); }
+  .carte-jour h4 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--doux); display: flex; gap: 8px; align-items: center; }
+  .carte-jour .ligne-jour { display: flex; gap: 10px; align-items: center; padding: 5px 0; font-size: 14px; }
+  .carte-jour .ligne-jour .heure { font-weight: 800; min-width: 46px; font-variant-numeric: tabular-nums; }
+  .carte-jour .ligne-jour .pastille-c { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .carte-jour .rien { color: var(--gris); font-size: 14px; }
+
+  /* Éléments communs aux nouveaux onglets -------------------------------- */
+  .barre-vue { display: flex; align-items: center; gap: 10px; margin: 6px 0 18px; flex-wrap: wrap; }
+  .barre-vue h2 { margin: 0; }
+  .barre-vue .espace { flex: 1; }
+  .champ-recherche { position: relative; }
+  .champ-recherche input { border: 1.5px solid var(--ligne); border-radius: 13px; padding: 9px 12px 9px 34px; background: rgba(255,255,255,.9); outline: none; width: 260px; }
+  .champ-recherche input:focus { border-color: var(--violet); }
+  .champ-recherche span { position: absolute; left: 11px; top: 8px; opacity: .6; }
+  .puces { display: flex; gap: 6px; }
+  .puce { border: 0; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.8); color: var(--doux); cursor: pointer; font-size: 13px; font-weight: 700; }
+  .puce.actif { background: var(--encre); color: #fff; }
+</style>
+</head>
+<body>
+<div class="bulles"><span></span><span></span><span></span></div>
+<div class="page">
+  <header>
+    <div class="avatar-hub" id="avatar" title="Coucou !">🧰</div>
+    <div class="salut"><h1 id="salut">Bonjour</h1><p id="sous-titre">Que fait-on aujourd'hui ?</p></div>
+    <div class="espace"></div>
+    <nav class="onglets" id="onglets">
+      <button data-vue="accueil" class="actif">🏠 Accueil</button>
+      <button data-vue="mails">✉️ Mails <span class="compteur" id="compteur-mails" hidden></span></button>
+      <button data-vue="notes">📝 Notes</button>
+      <button data-vue="agenda">📅 Agenda</button>
+      <button data-vue="motsdepasse">🔐 Mots de passe</button>
+      <button data-vue="ssh">🔑 SSH</button>
+    </nav>
+    <div class="horloge"><b id="heure">--:--</b><small id="date"></small></div>
+    <button class="btn discret" id="btn-quitter" title="Arrêter le tableau de bord">🚪</button>
+  </header>
+
+  <section class="vue actif" id="vue-accueil">
+  <div class="aujourdhui" id="aujourdhui"></div>
+
+  <h2>Mes outils <span class="compte" id="nb-outils">0</span><span class="espace"></span>
+    <button class="btn" id="btn-edition" title="Ajouter, modifier ou retirer des outils">✏️ Modifier</button></h2>
+  <div class="tuiles" id="tuiles"></div>
+
+  <h2>Serveurs Odoo <span class="compte" id="nb-marche">…</span><span class="espace"></span>
+    <button class="btn discret" id="btn-gadget" title="Ouvrir le gadget « Serveurs Odoo » (ajouter un serveur, comptes…)">🧩 Gadget complet</button>
+  </h2>
+  <div class="serveurs" id="serveurs"><div class="vide">Lecture des serveurs…</div></div>
+  </section>
+
+  <section class="vue" id="vue-mails"></section>
+  <section class="vue" id="vue-notes"></section>
+  <section class="vue" id="vue-agenda"></section>
+  <section class="vue" id="vue-motsdepasse"></section>
+  <section class="vue" id="vue-ssh"></section>
+
+  <footer>Mes outils · tout tourne sur ce PC · <span id="maj"></span></footer>
+</div>
+
+<div class="voile" id="voile"><div class="fenetre" id="fenetre"></div></div>
+<div id="toasts"></div>
+
+<script>
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const S = { config: null, edition: false, serveurs: null };
+const EMOJIS = "🧾 📂 📱 🗂️ 🛠️ 🧪 📊 📈 💼 🧮 🗓️ ✉️ 🌐 🖥️ 🗄️ 🐘 🐍 🚀 ⚙️ 🔧 📦 🧰 📝 💡 🎯 🔒 🧠 🎨 📚 ☕".split(" ");
+const COULEURS = ["#6c4cf5", "#ff7a59", "#18b597", "#ffb020", "#e5488d", "#2f8cff", "#8b5cf6", "#0ea5a4", "#475569"];
+const TYPES = {
+  dossier: { emoji: "📂", nom: "Dossier", aide: "Chemin du dossier, ex. C:\\Users\\vous\\Documents" },
+  fichier: { emoji: "📄", nom: "Fichier / programme", aide: "Chemin d'un fichier, d'un .exe ou d'un .bat" },
+  lien: { emoji: "🌐", nom: "Page web", aide: "Adresse, ex. https://www.odoo.com" },
+  appli_web: { emoji: "🧩", nom: "Appli locale", aide: "Adresse de l'appli, ex. http://127.0.0.1:8765/" },
+};
+
+// ------------------------------------------------------------- outils
+async function api(chemin, donnees) {
+  // « X-Mes-Outils » : le serveur refuse tout ordre qui ne le porte pas (voir hub.py).
+  const r = await fetch(chemin, donnees === undefined ? { headers: { "X-Mes-Outils": "1" } } : {
+    method: "POST", headers: { "Content-Type": "application/json", "X-Mes-Outils": "1" }, body: JSON.stringify(donnees),
+  });
+  const json = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(json.erreur || "Erreur " + r.status);
+  return json;
+}
+function el(tag, attrs = {}, ...enfants) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v;
+    else if (k === "style") e.setAttribute("style", v);
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (k === "value") e.value = v;
+    else if (v !== false && v !== null && v !== undefined) e.setAttribute(k, v);
+  }
+  // flat(Infinity) : une liste d'éléments peut en contenir d'autres (bloc
+  // « Demain » de l'accueil) ; sans ça, elle s'affiche en texte brut.
+  for (const c of enfants.flat(Infinity)) if (c !== null && c !== undefined && c !== false) e.append(c);
+  return e;
+}
+function toast(message, type = "", duree = 3000) {
+  const t = el("div", { class: "toast " + type }, message);
+  $("#toasts").append(t);
+  setTimeout(() => { t.classList.add("part"); setTimeout(() => t.remove(), 300); }, duree);
+}
+function fenetre(contenu, petite = false) {
+  const f = $("#fenetre");
+  f.className = "fenetre" + (petite ? " petite" : "");
+  f.style.width = ""; f.style.background = "";  // une note ou un mail a pu les changer
+  f.replaceChildren(...contenu);
+  $("#voile").classList.add("visible");
+}
+function fermer() { $("#voile").classList.remove("visible"); }
+$("#voile").addEventListener("mousedown", e => { if (e.target.id === "voile") fermer(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") fermer(); });
+function confirmer(icone, titre, texte, oui = "Oui") {
+  return new Promise(resolve => {
+    const fin = v => { fermer(); resolve(v); };
+    fenetre([el("div", { class: "gros" }, icone), el("h3", {}, titre), el("p", {}, texte),
+      el("div", { class: "actions" },
+        el("button", { class: "btn", onclick: () => fin(false) }, "Annuler"),
+        el("button", { class: "btn principal", onclick: () => fin(true) }, oui))], true);
+  });
+}
+
+// ------------------------------------------------------- en-tête vivant
+const PHRASES = [
+  "Que fait-on aujourd'hui ?", "Tout est prêt, à vous de jouer ✨", "Une facture à envoyer ? 🧾",
+  "Les serveurs vous attendent 🐘", "Un café, et c'est parti ☕", "Belle journée de code ! 🚀",
+];
+function horloge() {
+  const d = new Date();
+  $("#heure").textContent = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const date = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  $("#date").textContent = date.charAt(0).toUpperCase() + date.slice(1);
+  const h = d.getHours();
+  const salut = h < 5 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir";
+  const prenom = S.config?.prenom ? " " + S.config.prenom : "";
+  $("#salut").textContent = `${salut}${prenom} 👋`;
+}
+$("#avatar").addEventListener("click", () => {
+  $("#sous-titre").textContent = PHRASES[Math.floor(Math.random() * PHRASES.length)];
+  const a = $("#avatar"); a.style.transform = "rotate(380deg) scale(1.1)";
+  setTimeout(() => (a.style.transform = ""), 500);
+});
+
+// -------------------------------------------------------------- tuiles
+async function chargerOutils() {
+  const config = await api("/api/outils");
+  // Ne redessiner que si quelque chose a changé : un clic en cours ne doit
+  // pas tomber sur une tuile qui vient d'être remplacée.
+  const empreinte = JSON.stringify(config);
+  if (empreinte === S.empreinte) return;
+  S.empreinte = empreinte;
+  S.config = config;
+  horloge();
+  afficherTuiles();
+}
+function tuile(outil, apercu = false) {
+  const statut = outil.type === "appli_web"
+    ? el("div", { class: "etat" }, el("span", { class: "point" + (outil.en_marche ? " marche" : "") }), outil.en_marche ? "En marche" : "Prêt à lancer")
+    : outil.introuvable ? el("div", { class: "etat", style: "color:var(--rouge)" }, "⚠️ Introuvable")
+    : el("div", { class: "etat" }, (TYPES[outil.type]?.emoji || "") + " " + (TYPES[outil.type]?.nom || ""));
+  const t = el("button", { class: "tuile", style: `--c:${outil.couleur || "#6c4cf5"}` },
+    el("div", { class: "emoji" }, outil.emoji || "🧩"),
+    el("div", { class: "nom" }, outil.nom || "Sans nom"),
+    el("div", { class: "desc" }, outil.description || ""),
+    statut);
+  if (!apercu) {
+    t.append(el("div", { class: "actions-edition" },
+      el("span", { class: "rond", title: "Modifier", onclick: e => { e.stopPropagation(); editer(outil); } }, "✎"),
+      el("span", { class: "rond suppr", title: "Retirer", onclick: e => { e.stopPropagation(); retirer(outil); } }, "✕")));
+    t.addEventListener("click", () => S.edition ? editer(outil) : lancer(outil, t));
+  }
+  return t;
+}
+function afficherTuiles() {
+  const box = $("#tuiles");
+  const outils = S.config.outils;
+  box.classList.toggle("edition", S.edition);
+  box.replaceChildren(...outils.map((o, i) => { const t = tuile(o); t.style.animationDelay = `${i * 60}ms`; return t; }));
+  if (S.edition || !outils.length) {
+    box.append(el("button", { class: "tuile ajout", onclick: () => editer(null) },
+      el("div", { class: "emoji" }, "➕"), "Ajouter un outil"));
+  }
+  $("#nb-outils").textContent = outils.length;
+}
+async function lancer(outil, t) {
+  t.classList.remove("lance"); void t.offsetWidth; t.classList.add("lance");
+  try {
+    await api("/api/lancer", { id: outil.id });
+    toast(`${outil.emoji || "🚀"} ${outil.nom} : c'est parti !`, "succes");
+    setTimeout(chargerOutils, 1500);
+  } catch (e) { toast("😕 " + e.message, "erreur", 5500); }
+}
+$("#btn-edition").onclick = () => {
+  S.edition = !S.edition;
+  $("#btn-edition").classList.toggle("actif", S.edition);
+  $("#btn-edition").textContent = S.edition ? "✅ Terminé" : "✏️ Modifier";
+  if (S.config) afficherTuiles();
+};
+
+async function enregistrer() {
+  const outils = S.config.outils.map(({ en_marche, introuvable, ...o }) => o);
+  await api("/api/enregistrer", { outils });
+  await chargerOutils();
+}
+async function retirer(outil) {
+  if (!(await confirmer("👋", `Retirer « ${outil.nom} » ?`, "La tuile disparaît du tableau de bord. Le dossier ou le programme n'est pas touché.", "Retirer"))) return;
+  S.config.outils = S.config.outils.filter(o => o.id !== outil.id);
+  await enregistrer();
+  toast("Tuile retirée");
+}
+
+// -------------------------------------------------- ajouter / modifier
+function editer(outil) {
+  const brouillon = outil ? structuredClone(outil) : { nom: "", emoji: "🧩", couleur: COULEURS[0], type: "dossier", cible: "", description: "" };
+  delete brouillon.en_marche; delete brouillon.introuvable;
+  const apercu = el("div", { class: "apercu-tuile" });
+  const majApercu = () => apercu.replaceChildren(tuile(brouillon, true));
+
+  const emojis = el("div", { class: "emojis" }, EMOJIS.map(em =>
+    el("button", { type: "button", class: em === brouillon.emoji ? "choisi" : "", onclick: e => {
+      brouillon.emoji = em; [...emojis.children].forEach(b => b.classList.toggle("choisi", b === e.currentTarget)); majApercu();
+    } }, em)));
+  const couleurs = el("div", { class: "couleurs" }, COULEURS.map(c =>
+    el("button", { type: "button", style: `background:${c}`, class: c === brouillon.couleur ? "choisi" : "", onclick: e => {
+      brouillon.couleur = c; [...couleurs.children].forEach(b => b.classList.toggle("choisi", b === e.currentTarget)); majApercu();
+    } })));
+  const zoneCible = el("div");
+  const dessinerCible = () => {
+    const t = TYPES[brouillon.type] || TYPES.dossier;
+    const enfants = [el("label", { class: "champ" }, brouillon.type === "lien" || brouillon.type === "appli_web" ? "Adresse" : "Chemin",
+      el("input", { value: brouillon.cible || "", placeholder: t.aide, oninput: e => { brouillon.cible = e.target.value.trim(); } }))];
+    if (brouillon.type === "lien") {
+      enfants.push(el("label", { class: "champ", style: "flex-direction:row;align-items:center;gap:8px" },
+        el("input", { type: "checkbox", checked: brouillon.fenetre_appli ? "" : null, style: "width:18px;height:18px;accent-color:var(--violet)",
+          onchange: e => { brouillon.fenetre_appli = e.target.checked; } }),
+        "Ouvrir dans sa propre fenêtre (sans barre d'adresse), comme une application"));
+    }
+    if (brouillon.type === "appli_web") {
+      enfants.push(
+        el("label", { class: "champ" }, "Port de l'appli",
+          el("input", { type: "number", value: brouillon.port ?? "", placeholder: "ex. 8765", oninput: e => { brouillon.port = e.target.value ? Number(e.target.value) : undefined; } })),
+        el("label", { class: "champ" }, "Commande de démarrage (un élément par ligne)",
+          el("textarea", { rows: 3, value: (brouillon.commande || []).join("\n"), placeholder: "C:\\…\\pythonw.exe\nC:\\…\\serveur.py",
+            oninput: e => { brouillon.commande = e.target.value.split("\n").map(x => x.trim()).filter(Boolean); } }),
+          el("small", {}, "Lancée seulement si rien ne répond sur le port.")));
+    }
+    zoneCible.replaceChildren(...enfants);
+  };
+  const types = el("div", { class: "types" }, Object.entries(TYPES).map(([cle, t]) =>
+    el("button", { type: "button", class: cle === brouillon.type ? "choisi" : "", onclick: e => {
+      brouillon.type = cle; [...types.children].forEach(b => b.classList.toggle("choisi", b === e.currentTarget)); dessinerCible(); majApercu();
+    } }, el("span", {}, t.emoji), t.nom)));
+
+  fenetre([
+    el("h3", {}, outil ? "✏️ Modifier l'outil" : "✨ Nouvel outil"),
+    apercu,
+    el("label", { class: "champ" }, "Nom", el("input", { value: brouillon.nom, placeholder: "ex. Comptes rendus", oninput: e => { brouillon.nom = e.target.value; majApercu(); } })),
+    el("label", { class: "champ" }, "Petite description", el("input", { value: brouillon.description || "", placeholder: "ex. Mes notes de réunion", oninput: e => { brouillon.description = e.target.value; majApercu(); } })),
+    el("label", { class: "champ" }, "Emoji", emojis),
+    el("label", { class: "champ" }, "Couleur", couleurs),
+    el("label", { class: "champ" }, "Ce qu'il ouvre", types),
+    zoneCible,
+    el("div", { class: "actions" },
+      el("button", { class: "btn", onclick: fermer }, "Annuler"),
+      el("button", { class: "btn principal", onclick: async () => {
+        if (!brouillon.nom.trim()) { toast("Donnez-lui un nom 😉", "erreur"); return; }
+        if (!brouillon.cible) { toast("Indiquez ce qu'il faut ouvrir", "erreur"); return; }
+        if (outil) {
+          S.config.outils = S.config.outils.map(o => o.id === outil.id ? brouillon : o);
+        } else {
+          brouillon.id = brouillon.nom.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36);
+          S.config.outils.push(brouillon);
+        }
+        try { await enregistrer(); fermer(); toast(outil ? "✏️ Outil modifié" : "🎉 Nouvel outil ajouté !", "succes"); }
+        catch (e) { toast("😕 " + e.message, "erreur"); }
+      } }, outil ? "Enregistrer" : "Ajouter"))]);
+  dessinerCible(); majApercu();
+}
+
+// ------------------------------------------------------ serveurs Odoo
+const CLASSE_ETAT = { "En marche": "marche", "Démarrage…": "demarrage", "Arrêté": "", "Port occupé (autre programme)": "occupe" };
+async function chargerServeurs() {
+  try {
+    S.serveurs = await api("/api/serveurs");
+    afficherServeurs();
+    $("#maj").textContent = "serveurs vérifiés à " + new Date().toLocaleTimeString("fr-FR");
+  } catch (e) {
+    $("#serveurs").replaceChildren(el("div", { class: "vide" }, "😕 Impossible de lire les serveurs : " + e.message));
+  }
+}
+function afficherServeurs() {
+  const box = $("#serveurs");
+  const empreinte = JSON.stringify(S.serveurs);
+  if (empreinte === S.empreinteServeurs) return;
+  S.empreinteServeurs = empreinte;
+  if (!S.serveurs.disponible) {
+    box.replaceChildren(el("div", { class: "vide" }, "🧩 Gadget « Serveurs Odoo » introuvable (chemin dans outils.json)."));
+    $("#nb-marche").textContent = "—";
+    return;
+  }
+  const liste = S.serveurs.serveurs;
+  if (!liste.length) { box.replaceChildren(el("div", { class: "vide" }, "Aucun serveur : ajoutez-en depuis le gadget complet.")); return; }
+  const marche = liste.filter(s => s.etat === "En marche").length;
+  $("#nb-marche").textContent = `${marche} / ${liste.length} en marche`;
+  box.replaceChildren(...liste.map((s, i) => {
+    const classe = CLASSE_ETAT[s.etat] ?? "";
+    const enRoute = s.etat === "En marche" || s.etat === "Démarrage…";
+    return el("div", { class: "serveur", style: `animation-delay:${i * 50}ms` },
+      el("div", { class: "pastille", title: s.etat }, s.reference ? "🛡️" : "🐘", el("span", { class: "point " + classe })),
+      el("div", { class: "infos" },
+        el("div", { class: "base", title: s.base }, s.base),
+        el("div", { class: "ligne2" }, `${s.etat} · port ${s.port}`,
+          s.reference ? el("span", { class: "etiquette ref" }, "référence") : null,
+          s.conf ? el("span", { class: "etiquette conf", title: "Fichier de configuration" }, s.conf) : null)),
+      el("div", { class: "boutons" },
+        el("button", { class: "icone-btn go", title: "Démarrer", disabled: enRoute || s.etat.startsWith("Port") ? "" : null, onclick: () => serveur("demarrer", s) }, "▶"),
+        el("button", { class: "icone-btn stop", title: "Arrêter", disabled: !enRoute ? "" : null, onclick: () => serveur("arreter", s) }, "■"),
+        el("button", { class: "icone-btn", title: "Ouvrir dans le navigateur", onclick: () => serveur("ouvrir", s) }, "↗"),
+        el("button", { class: "icone-btn", title: "Journal", onclick: () => serveur("journal", s) }, "☰")));
+  }));
+}
+async function serveur(action, s) {
+  if (action === "demarrer" && s.reference &&
+      !(await confirmer("🛡️", "Base de référence", `« ${s.base} » ne doit pas être modifiée. Démarrer quand même son serveur ?`, "Démarrer"))) return;
+  if (action === "arreter" && !(await confirmer("✋", `Arrêter ${s.base} ?`, `Seul le serveur Odoo du port ${s.port} est arrêté.`, "Arrêter"))) return;
+  if (action === "ouvrir" && s.etat !== "En marche" &&
+      !(await confirmer("🤔", "Serveur pas prêt", "Il ne répond pas encore. Ouvrir quand même ?", "Ouvrir"))) return;
+  try {
+    await api("/api/serveur", { action, port: s.port });
+    if (action === "demarrer") toast(`🚀 ${s.base} démarre…`, "succes");
+    if (action === "arreter") toast(`😴 ${s.base} arrêté`);
+    setTimeout(chargerServeurs, 600);
+  } catch (e) { toast("😕 " + e.message, "erreur", 5500); }
+}
+$("#btn-gadget").onclick = () => api("/api/gadget", {}).catch(e => toast("😕 " + e.message, "erreur"));
+$("#btn-quitter").onclick = async () => {
+  // Avec la bulle, le tableau de bord reste disponible : on ferme juste la fenêtre.
+  if (S.config?.bulle) { window.close(); return; }
+  if (!(await confirmer("🚪", "Fermer le tableau de bord ?", "Les serveurs Odoo et les outils déjà lancés continuent de tourner.", "Fermer"))) return;
+  await api("/api/quitter", {}).catch(() => {});
+  document.body.replaceChildren(el("div", { style: "height:100vh;display:grid;place-items:center;text-align:center;font-family:Segoe UI" },
+    el("div", {}, el("div", { style: "font-size:70px" }, "👋"), el("h2", {}, "À bientôt !"), el("p", { style: "color:#6b6790" }, "Vous pouvez fermer cette fenêtre."))));
+  setTimeout(() => window.close(), 1200);
+};
+
+// ------------------------------------------------------------ onglets
+// Chaque onglet (notes.js, agenda.js, mails.js) s'enregistre ici avec une
+// fonction afficher(), appelée à chaque fois qu'on l'ouvre.
+window.VUES = window.VUES || {};
+function montrerVue(nom) {
+  if (!$("#vue-" + nom)) return;
+  document.querySelectorAll(".vue").forEach(v => v.classList.toggle("actif", v.id === "vue-" + nom));
+  document.querySelectorAll("#onglets button").forEach(b => b.classList.toggle("actif", b.dataset.vue === nom));
+  S.vue = nom;
+  if (nom === "accueil") afficherAujourdhui();
+  else VUES[nom]?.afficher();
+  history.replaceState(null, "", "#" + nom);
+}
+document.querySelectorAll("#onglets button").forEach(b => b.addEventListener("click", () => montrerVue(b.dataset.vue)));
+window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (v && v !== S.vue) montrerVue(v); });
+
+// La bulle peut demander un onglet (rappel, note rapide…).
+setInterval(async () => {
+  try { const { onglet } = await api("/api/onglet"); if (onglet) montrerVue(onglet); } catch {}
+}, 2000);
+
+// ----------------------------------------------------- aujourd'hui
+function dateLocale(iso) { return iso ? new Date(iso) : null; }
+function memeJour(a, b) { return a && b && a.toDateString() === b.toDateString(); }
+async function afficherAujourdhui() {
+  let agenda = [], notes = [];
+  try { [agenda, notes] = await Promise.all([api("/api/agenda"), api("/api/notes")]); } catch { return; }
+  const auj = new Date(), demain = new Date(Date.now() + 864e5);
+  const duJour = agenda.filter(e => memeJour(dateLocale(e.debut), auj)).sort((a, b) => a.debut.localeCompare(b.debut));
+  const deDemain = agenda.filter(e => memeJour(dateLocale(e.debut), demain)).sort((a, b) => a.debut.localeCompare(b.debut));
+  const epinglees = notes.filter(n => n.epinglee).slice(0, 4);
+  const ligneRdv = e => el("div", { class: "ligne-jour" },
+    el("span", { class: "heure" }, e.journee ? "Jour" : e.debut.slice(11, 16)),
+    el("span", { class: "pastille-c", style: `background:${e.couleur || "#6c4cf5"}` }), e.titre || "Rendez-vous");
+  const cartes = [
+    el("div", { class: "carte-jour", onclick: () => montrerVue("agenda") },
+      el("h4", {}, "📅 Aujourd'hui"),
+      duJour.length ? duJour.map(ligneRdv) : el("div", { class: "rien" }, "Rien de prévu, profitez-en 🌴"),
+      deDemain.length ? [el("h4", { style: "margin-top:12px" }, "Demain"), deDemain.slice(0, 3).map(ligneRdv)] : null),
+    el("div", { class: "carte-jour", onclick: () => montrerVue("notes") },
+      el("h4", {}, "📌 Notes épinglées"),
+      epinglees.length ? epinglees.map(n => el("div", { class: "ligne-jour" },
+        el("span", { class: "pastille-c", style: `background:${n.couleur || "#ffb020"}` }), n.titre || (n.texte || "").slice(0, 50) || "Note"))
+        : el("div", { class: "rien" }, "Épinglez une note pour la retrouver ici")),
+  ];
+  if (S.mailsNonLus !== undefined && S.mailsNonLus !== null) {
+    cartes.push(el("div", { class: "carte-jour", onclick: () => montrerVue("mails") },
+      el("h4", {}, "✉️ Mails"),
+      el("div", { class: "ligne-jour" }, el("span", { class: "heure", style: "font-size:26px" }, String(S.mailsNonLus)),
+        S.mailsNonLus === 1 ? "mail non lu" : "mails non lus")));
+  }
+  $("#aujourdhui").replaceChildren(...cartes);
+}
+
+async function compterMails() {
+  try {
+    const { non_lus } = await api("/api/mail/non_lus");
+    S.mailsNonLus = non_lus;
+    const c = $("#compteur-mails");
+    c.hidden = !non_lus; c.textContent = non_lus || "";
+  } catch { S.mailsNonLus = null; }
+}
+
+// -------------------------------------------------------------- départ
+compterMails().then(() => { if (S.vue === "accueil") afficherAujourdhui(); });
+setInterval(compterMails, 120000);
+// Après le chargement de notes.js, agenda.js et mails.js (placés plus bas).
+document.addEventListener("DOMContentLoaded", () => montrerVue((location.hash || "#accueil").slice(1) || "accueil"));
+horloge();
+setInterval(horloge, 10000);
+chargerOutils().catch(e => toast("😕 " + e.message, "erreur", 8000));
+chargerServeurs();
+setInterval(chargerServeurs, 5000);
+setInterval(() => chargerOutils().catch(() => {}), 15000);
+</script>
+<script src="/js/notes.js"></script>
+<script src="/js/agenda.js"></script>
+<script src="/js/mails.js"></script>
+<script src="/js/motsdepasse.js"></script>
+<script src="/js/ssh.js"></script>
+</body>
+</html>

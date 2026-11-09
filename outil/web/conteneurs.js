@@ -91,7 +91,7 @@
     .dk-groupes { display: flex; flex-direction: column; gap: 14px; }
     .dk-groupe { background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 12px 14px; animation: apparait .3s both; }
     .dk-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
-    .dk-tete .titre { font-weight: 800; font-size: 15.5px; color: var(--encre); }
+    .dk-tete .titre { font-weight: 600; font-size: 15.5px; color: var(--encre); }
     .dk-tete .compte-dk { font-size: 12.5px; color: var(--doux); font-weight: 600; }
     .dk-tete .espace { flex: 1; }
     .dk-tete .btn { padding: 6px 12px; font-size: 13px; }

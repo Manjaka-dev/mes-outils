@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mes outils</title>
 <script src="/js/i18n.js"></script>
+<script src="/js/icones.js"></script>
 <script>
   // Thème appliqué avant le premier affichage (pas d'éclair blanc).
   (() => { let c = "auto"; try { c = localStorage.getItem("mes-outils-theme") || "auto"; } catch {}
@@ -12,106 +13,96 @@
     const sombre = f ? f === "sombre" : c === "sombre" || (c === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.dataset.theme = sombre ? "sombre" : "clair"; })();
 </script>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='26' fill='%236c4cf5'/><text x='50' y='68' font-size='58' text-anchor='middle'>🧰</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%235b5bd6'/><g fill='none' stroke='white' stroke-width='2'><rect x='6' y='6' width='5' height='5' rx='1'/><rect x='13' y='6' width='5' height='5' rx='1'/><rect x='6' y='13' width='5' height='5' rx='1'/><rect x='13' y='13' width='5' height='5' rx='1'/></g></svg>">
 <style>
-  /* Couleurs : thème clair par défaut, thème sombre avec data-theme="sombre"
-     (« auto » suit Windows). Les onglets n'utilisent QUE ces variables. */
+  /* Couleurs : gris neutres et un seul accent. Thème sombre avec
+     data-theme="sombre" (« auto » suit Windows). Les onglets n'utilisent QUE
+     ces variables. */
   :root {
     color-scheme: light;
-    --fond: #f4f2ff; --carte: #fff; --surface: #f7f5fe; --champ: #fbfaff; --champ-focus: #fff;
-    --encre: #1f1a3a; --doux: #6b6790; --gris: #a7a3bd; --ligne: #e7e3fb;
-    --violet: #6c4cf5; --violet-2: #8b6cff; --violet-clair: #efeaff; --sur-violet: #fff;
-    --corail: #ff7a59; --menthe: #18b597; --ambre: #ffb020; --rouge: #e5484d;
-    --vert-clair: #e7f7f1; --vert-texte: #12795f; --rouge-clair: #fdecef; --rouge-texte: #b4234a;
-    --ambre-clair: #fff4dc; --ambre-texte: #9a6200; --bleu-clair: #e6f0ff; --bleu-texte: #1a5fb4;
-    --code: #f5f3fc; --code-texte: #2b2550; --verre: rgba(255,255,255,.72); --voile: rgba(31,26,58,.38);
-    --ombre: 0 1px 2px rgba(76,52,190,.06), 0 14px 34px -18px rgba(76, 52, 190, .38);
-    --ombre-forte: 0 2px 4px rgba(76,52,190,.08), 0 24px 44px -18px rgba(76, 52, 190, .5);
-    --bord: rgba(108, 76, 245, .08);
-    --bulle-1: #d9ccff; --bulle-2: #ffd9cc; --bulle-3: #c9f2e7;
-    --rayon: 20px; --mono: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
-    --ressort: cubic-bezier(.3, 1.5, .5, 1);
+    --fond: #f6f6f7; --carte: #ffffff; --surface: #f2f2f4; --champ: #ffffff; --champ-focus: #ffffff;
+    --encre: #18181b; --doux: #5f5f68; --gris: #93939c; --ligne: #e3e3e7; --ligne-forte: #d1d1d6;
+    --violet: #5b5bd6; --violet-2: #4c4cc4; --violet-clair: #eeeefc; --sur-violet: #ffffff;
+    --corail: #e5603e; --menthe: #12a37a; --ambre: #d99a0b; --rouge: #d93636;
+    --vert-clair: #e7f6ef; --vert-texte: #157a52; --rouge-clair: #fdeeee; --rouge-texte: #b42323;
+    --ambre-clair: #fdf4e3; --ambre-texte: #8a5b00; --bleu-clair: #e9f0fd; --bleu-texte: #1d4fc4;
+    --code: #f4f4f6; --code-texte: #27272a; --verre: #ffffff; --voile: rgba(9, 9, 11, .4);
+    --ombre: 0 1px 2px rgba(16, 16, 24, .05);
+    --ombre-forte: 0 12px 32px -12px rgba(16, 16, 24, .22), 0 1px 3px rgba(16, 16, 24, .06);
+    --bord: var(--ligne);
+    --rayon: 10px; --mono: "Cascadia Code", "Cascadia Mono", Consolas, monospace;
+    --ressort: cubic-bezier(.2, .8, .2, 1);
   }
   :root[data-theme="sombre"] {
     color-scheme: dark;
-    --fond: #110f1e; --carte: #1b1830; --surface: #231f3a; --champ: #1f1b34; --champ-focus: #262143;
-    --encre: #ece9ff; --doux: #a7a2ca; --gris: #6f6a93; --ligne: #312c50;
-    --violet: #8b6cff; --violet-2: #a58cff; --violet-clair: #2b2452; --sur-violet: #fff;
-    --vert-clair: #12352d; --vert-texte: #5fd9b6; --rouge-clair: #3d1a27; --rouge-texte: #ff8fa8;
-    --ambre-clair: #3a2c10; --ambre-texte: #ffc95c; --bleu-clair: #172a48; --bleu-texte: #8ab8ff;
-    --code: #141127; --code-texte: #dcd6ff; --verre: rgba(27,24,48,.78); --voile: rgba(5,4,12,.62);
-    --ombre: 0 1px 2px rgba(0,0,0,.3), 0 14px 34px -18px rgba(0, 0, 0, .75);
-    --ombre-forte: 0 2px 4px rgba(0,0,0,.35), 0 24px 44px -18px rgba(0, 0, 0, .9);
-    --bord: rgba(255, 255, 255, .06);
-    --bulle-1: #2c2063; --bulle-2: #47203a; --bulle-3: #123a37;
+    --fond: #0f0f11; --carte: #17171a; --surface: #1f1f23; --champ: #121215; --champ-focus: #141417;
+    --encre: #ededf0; --doux: #a3a3ad; --gris: #6f6f79; --ligne: #29292f; --ligne-forte: #393941;
+    --violet: #9496f7; --violet-2: #a9abfa; --violet-clair: #22233a; --sur-violet: #0d0d18;
+    --corail: #f08060; --menthe: #3ccf98; --ambre: #f0b43a; --rouge: #f06464;
+    --vert-clair: #102a20; --vert-texte: #62d6a2; --rouge-clair: #301619; --rouge-texte: #ff8b8b;
+    --ambre-clair: #2c2210; --ambre-texte: #f3c25e; --bleu-clair: #13213a; --bleu-texte: #8fb6ff;
+    --code: #121215; --code-texte: #e4e4e8; --verre: #17171a; --voile: rgba(0, 0, 0, .62);
+    --ombre: 0 1px 2px rgba(0, 0, 0, .5);
+    --ombre-forte: 0 16px 40px -12px rgba(0, 0, 0, .8), 0 0 0 1px rgba(255, 255, 255, .04);
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body { margin: 0; min-height: 100%; }
   body {
-    font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; color: var(--encre); background: var(--fond);
-    overflow-x: hidden; -webkit-font-smoothing: antialiased; transition: background .3s, color .3s;
+    font: 14px/1.45 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; color: var(--encre); background: var(--fond);
+    overflow-x: hidden; -webkit-font-smoothing: antialiased;
   }
   button, input, select, textarea { font: inherit; color: inherit; }
-  ::selection { background: color-mix(in srgb, var(--violet) 30%, transparent); }
-  :focus-visible { outline: 2.5px solid color-mix(in srgb, var(--violet) 70%, transparent); outline-offset: 2px; border-radius: 10px; }
-  * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--doux) 35%, transparent) transparent; }
+  ::selection { background: color-mix(in srgb, var(--violet) 28%, transparent); }
+  :focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; border-radius: 6px; }
+  * { scrollbar-width: thin; scrollbar-color: var(--ligne-forte) transparent; }
   code, kbd, pre, .mono { font-family: var(--mono); }
-  kbd { background: var(--surface); border: 1px solid var(--ligne); border-bottom-width: 2px; border-radius: 6px; padding: 0 5px; font-size: 11.5px; color: var(--doux); }
+  kbd { background: var(--surface); border: 1px solid var(--ligne); border-radius: 4px; padding: 0 5px; font-size: 11px; color: var(--doux); }
   a { color: var(--violet); }
+  /* Icônes au trait (web/icones.js) */
+  svg.ico { width: 1.1em; height: 1.1em; flex: none; vertical-align: -.18em; stroke-width: 1.9; }
+  svg.ico.av { margin-right: .42em; }
 
-  /* Fond animé ------------------------------------------------------- */
-  .bulles { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
-  .bulles span { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55; animation: derive 24s ease-in-out infinite alternate; transition: background .6s; }
-  .bulles span:nth-child(1) { width: 520px; height: 520px; background: var(--bulle-1); left: -120px; top: -160px; }
-  .bulles span:nth-child(2) { width: 460px; height: 460px; background: var(--bulle-2); right: -140px; top: 80px; animation-delay: -7s; }
-  .bulles span:nth-child(3) { width: 420px; height: 420px; background: var(--bulle-3); left: 30%; bottom: -220px; animation-delay: -13s; }
-  @keyframes derive { to { transform: translate(60px, 40px) scale(1.15); } }
-
-  /* Mise en page : en-tête en haut sur toute la largeur, menu en « dock »
-     collé au bord gauche sur toute la hauteur, contenu à droite. */
-  :root { --entete: 74px; }
-  .page { padding: 0 22px 0 0; }
-  .corps { display: flex; gap: 24px; align-items: flex-start; min-height: calc(100vh - var(--entete)); }
-  main { flex: 1; min-width: 0; padding: 14px 0 24px; max-width: 1500px; }
+  /* Mise en page : en-tête sur toute la largeur, menu en « dock » collé au
+     bord gauche sur toute la hauteur, contenu à droite. */
+  :root { --entete: 56px; }
+  .page { padding: 0 24px 0 0; }
+  .corps { display: flex; gap: 28px; align-items: flex-start; min-height: calc(100vh - var(--entete)); }
+  main { flex: 1; min-width: 0; padding: 20px 0 24px; max-width: 1440px; }
 
   /* Menu (dock) ----------------------------------------------------------- */
-  .menu { position: sticky; top: var(--entete); height: calc(100vh - var(--entete)); width: 212px; flex: none;
-    display: flex; flex-direction: column; gap: 2px; overflow: hidden;
-    background: var(--verre); backdrop-filter: blur(14px) saturate(1.4); border: 1px solid var(--bord); border-left: 0; border-bottom: 0;
-    padding: 12px 10px 14px; border-radius: 0 24px 0 0; box-shadow: var(--ombre); }
+  .menu { position: sticky; top: var(--entete); height: calc(100vh - var(--entete)); width: 216px; flex: none;
+    display: flex; flex-direction: column; gap: 1px; overflow: hidden;
+    background: var(--carte); border-right: 1px solid var(--ligne); padding: 12px 10px; }
   .menu .groupe.bas { margin-top: auto; }
-  .menu .groupe { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.1px; color: var(--gris); font-weight: 800; margin: 10px 12px 3px; }
-  .menu .groupe:first-child { margin-top: 4px; }
-  .menu button { border: 0; background: transparent; padding: 6px 10px; border-radius: 12px; font-size: 14.5px; cursor: pointer; font-weight: 650; color: var(--doux);
-    display: flex; align-items: center; gap: 10px; text-align: left; white-space: nowrap; position: relative;
-    transition: background .18s, color .18s, transform .18s; }
-  .menu button .ic { width: 24px; height: 24px; display: grid; place-items: center; font-size: 16px; flex: none; border-radius: 8px; transition: transform .3s var(--ressort); }
+  .menu .groupe { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); font-weight: 600; margin: 14px 10px 4px; }
+  .menu .groupe:first-child { margin-top: 2px; }
+  .menu button { border: 0; background: transparent; height: 32px; padding: 0 10px; border-radius: 6px; font-size: 13.5px; cursor: pointer; font-weight: 500; color: var(--doux);
+    display: flex; align-items: center; gap: 10px; text-align: left; white-space: nowrap; position: relative; flex: none; transition: background .12s, color .12s; }
+  .menu button .ic { width: 18px; display: grid; place-items: center; flex: none; font-size: 16px; }
+  .menu button .ic svg.ico { width: 17px; height: 17px; margin: 0; }
   .menu button .lib { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-  .menu button:not(.actif):hover { background: var(--violet-clair); color: var(--violet); }
-  .menu button:not(.actif):hover .ic { transform: scale(1.15) rotate(-6deg); }
-  .menu button.actif { background: linear-gradient(135deg, var(--violet), var(--violet-2)); color: var(--sur-violet); box-shadow: 0 8px 18px -8px var(--violet); }
+  .menu button:not(.actif):hover { background: var(--surface); color: var(--encre); }
+  .menu button.actif { background: var(--violet-clair); color: var(--violet); font-weight: 600; }
   @media (max-width: 1100px) {
-    .menu { width: 60px; padding: 8px 7px; }
+    .menu { width: 56px; padding: 10px 7px; }
     .menu .groupe { display: none; }
-    .menu .groupe + button { margin-top: 6px; }
-    .menu button { justify-content: center; padding: 9px 0; }
+    .menu .groupe + button { margin-top: 8px; }
+    .menu button { justify-content: center; padding: 0; }
     .menu button .lib { display: none; }
     .menu .compteur { position: absolute; top: 1px; right: 1px; margin: 0; }
   }
   /* Le menu reste toujours fixe et entier, jamais de barre de défilement :
      ajusterMenu() le resserre par étapes selon la hauteur de la fenêtre. */
-  @media (max-height: 860px) { header { padding-top: 8px; padding-bottom: 8px; } }
-  .menu.serre { padding: 6px 7px; gap: 0; }
-  .menu.serre .groupe { margin: 6px 12px 1px; font-size: 10px; }
+  .menu.serre { padding: 8px 8px; }
+  .menu.serre .groupe { margin: 8px 10px 2px; font-size: 10.5px; }
   .menu.serre .groupe:first-child { margin-top: 2px; }
-  .menu.serre button { padding: 3px 10px; font-size: 13.5px; line-height: 1.25; }
-  .menu.serre button .ic { width: 22px; height: 22px; font-size: 15px; }
+  .menu.serre button { height: 28px; font-size: 13px; }
   .menu.tres-serre .groupe { display: none; }
-  .menu.tres-serre .groupe + button { margin-top: 5px; }
-  .menu.tres-serre button { padding: 2px 10px; }
-  .menu.icones { width: 60px; }
-  .menu.icones button { justify-content: center; padding: 2px 0; }
+  .menu.tres-serre .groupe + button { margin-top: 6px; }
+  .menu.tres-serre button { height: 26px; }
+  .menu.icones { width: 56px; }
+  .menu.icones button { justify-content: center; padding: 0; }
   .menu.icones button .lib { display: none; }
   .menu.icones .compteur { position: absolute; top: 0; right: 0; margin: 0; }
   .menu.serre .groupe.bas { margin-top: auto; }
@@ -120,215 +111,211 @@
   @media (max-width: 1100px) { .menu .groupe.bas { display: block; visibility: hidden; height: 0; margin: auto 0 0; } }
 
   /* En-tête ---------------------------------------------------------- */
-  header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 12px; margin: 0 -22px 0 0; padding: 12px 22px; min-height: var(--entete);
-    background: color-mix(in srgb, var(--fond) 70%, transparent); backdrop-filter: blur(16px) saturate(1.4); border-bottom: 1px solid transparent; transition: border-color .3s, box-shadow .3s; }
-  header.colle { border-bottom-color: var(--ligne); box-shadow: 0 10px 24px -22px rgba(0,0,0,.5); }
-  .avatar-hub {
-    width: 50px; height: 50px; border-radius: 17px; display: grid; place-items: center; font-size: 26px; flex: none;
-    background: linear-gradient(135deg, var(--violet), #9b7bff); box-shadow: 0 10px 22px -10px var(--violet); transform: rotate(-6deg);
-    cursor: pointer; transition: transform .4s var(--ressort);
-  }
-  .avatar-hub:hover { transform: rotate(10deg) scale(1.08); }
-  .salut { min-width: 0; }
-  .salut h1 { margin: 0; font-size: 25px; letter-spacing: -.6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .salut p { margin: 1px 0 0; color: var(--doux); font-weight: 500; font-size: 13.5px; }
+  header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; margin: 0 -24px 0 0; padding: 0 16px;
+    height: var(--entete); background: var(--carte); border-bottom: 1px solid var(--ligne); }
   header .espace { flex: 1; }
-  .recherche-globale { display: flex; align-items: center; gap: 10px; min-width: 250px; border: 1px solid var(--ligne); background: var(--carte); color: var(--gris);
-    border-radius: 14px; padding: 9px 12px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: var(--ombre); transition: border-color .2s, transform .15s; }
-  .recherche-globale:hover { border-color: var(--violet); color: var(--doux); transform: translateY(-1px); }
+  .marque { display: flex; align-items: center; gap: 10px; width: 190px; font-weight: 600; font-size: 14.5px; letter-spacing: -.01em; }
+  .marque .logo { width: 28px; height: 28px; border-radius: 7px; background: var(--violet); color: var(--sur-violet); display: grid; place-items: center; }
+  .marque .logo svg.ico { width: 16px; height: 16px; margin: 0; }
+  .recherche-globale { display: flex; align-items: center; gap: 8px; width: min(420px, 40vw); height: 34px; border: 1px solid var(--ligne); background: var(--surface); color: var(--gris);
+    border-radius: 8px; padding: 0 10px; cursor: pointer; font-size: 13.5px; transition: border-color .12s; }
+  .recherche-globale:hover { border-color: var(--ligne-forte); color: var(--doux); }
   .recherche-globale .t { flex: 1; text-align: left; }
-  .horloge { text-align: right; margin: 0 4px 0 8px; line-height: 1.15; }
-  .horloge b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
-  .horloge small { color: var(--doux); font-size: 12.5px; }
-  @media (max-width: 1100px) { .recherche-globale { min-width: 0; } .recherche-globale .t, .recherche-globale kbd { display: none; } .salut p { display: none; } }
+  .horloge { color: var(--doux); font-variant-numeric: tabular-nums; font-size: 13.5px; margin: 0 6px; }
+  @media (max-width: 1100px) { .marque { width: auto; } .marque b { display: none; } .recherche-globale .t, .recherche-globale kbd { display: none; } .recherche-globale { width: auto; } }
+
+  /* Titre de l'accueil */
+  .titre-accueil { margin: 4px 0 20px; }
+  .titre-accueil h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -.02em; }
+  .titre-accueil p { margin: 2px 0 0; color: var(--doux); }
 
   /* Boutons ---------------------------------------------------------- */
   .btn {
-    border: 1px solid var(--bord); border-radius: 13px; padding: 9px 15px; cursor: pointer; font-weight: 650; background: var(--carte);
-    box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 16px -12px rgba(0,0,0,.35); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
-    transition: transform .12s, background .2s, box-shadow .2s, border-color .2s;
+    border: 1px solid var(--ligne); border-radius: 7px; height: 32px; padding: 0 12px; cursor: pointer; font-weight: 500; font-size: 13.5px; background: var(--carte);
+    box-shadow: var(--ombre); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--encre);
+    transition: background .12s, border-color .12s, color .12s;
   }
-  .btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--violet) 30%, transparent); }
-  .btn:active { transform: translateY(1px) scale(.97); }
-  .btn.principal { background: linear-gradient(135deg, var(--violet), var(--violet-2)); color: var(--sur-violet); border-color: transparent; box-shadow: 0 10px 20px -10px var(--violet); }
-  .btn.principal:hover { box-shadow: 0 14px 26px -10px var(--violet); }
-  .btn.danger { background: var(--rouge); color: #fff; border-color: transparent; }
-  .btn.actif { background: var(--encre); color: var(--fond); border-color: transparent; }
+  .btn svg.ico.av { margin-right: 0; }
+  .btn:hover { background: var(--surface); border-color: var(--ligne-forte); }
+  .btn:active { background: var(--ligne); }
+  .btn.principal { background: var(--violet); color: var(--sur-violet); border-color: var(--violet); }
+  .btn.principal:hover { background: var(--violet-2); border-color: var(--violet-2); }
+  .btn.danger { background: var(--rouge); color: #fff; border-color: var(--rouge); }
+  .btn.actif { background: var(--violet-clair); color: var(--violet); border-color: color-mix(in srgb, var(--violet) 40%, transparent); }
   .btn.discret { background: transparent; box-shadow: none; border-color: transparent; color: var(--doux); }
-  .btn.discret:hover { background: var(--violet-clair); color: var(--violet); }
-  .btn.petit { padding: 6px 11px; font-size: 13px; border-radius: 11px; }
-  .btn:disabled { opacity: .45; cursor: default; transform: none; }
-  .icone-btn { width: 34px; height: 34px; border-radius: 11px; border: 0; cursor: pointer; background: var(--surface); color: var(--encre); font-size: 15px;
-    display: grid; place-items: center; flex: none; transition: background .15s, transform .12s; }
-  .icone-btn:hover { background: var(--violet-clair); transform: translateY(-1px); }
-  .icone-btn.go:hover { background: var(--vert-clair); }
-  .icone-btn.stop:hover, .icone-btn.danger:hover { background: var(--rouge-clair); }
-  .icone-btn:disabled { opacity: .35; cursor: default; transform: none; }
+  .btn.discret:hover { background: var(--surface); color: var(--encre); }
+  .btn.petit { height: 28px; padding: 0 9px; font-size: 12.5px; border-radius: 6px; }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .icone-btn { width: 30px; height: 30px; border-radius: 7px; border: 1px solid transparent; cursor: pointer; background: transparent; color: var(--doux); font-size: 15px;
+    display: grid; place-items: center; flex: none; transition: background .12s, color .12s; }
+  .icone-btn svg.ico { margin: 0; width: 16px; height: 16px; }
+  .icone-btn:hover { background: var(--surface); color: var(--encre); }
+  .icone-btn.go:hover { background: var(--vert-clair); color: var(--vert-texte); }
+  .icone-btn.stop:hover, .icone-btn.danger:hover { background: var(--rouge-clair); color: var(--rouge-texte); }
+  .icone-btn:disabled { opacity: .35; cursor: default; background: transparent; }
 
   /* Champs de saisie : même apparence dans tous les onglets ------------- */
   main input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),
   main select, main textarea, .fenetre input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),
   .fenetre select, .fenetre textarea {
-    border: 1.5px solid var(--ligne); border-radius: 12px; padding: 9px 12px; background: var(--champ); outline: none; color: var(--encre);
-    transition: border-color .15s, box-shadow .15s, background .15s;
+    border: 1px solid var(--ligne); border-radius: 7px; padding: 7px 10px; background: var(--champ); outline: none; color: var(--encre);
+    transition: border-color .12s, box-shadow .12s;
   }
   main input:focus, main select:focus, main textarea:focus, .fenetre input:focus, .fenetre select:focus, .fenetre textarea:focus {
-    border-color: var(--violet); background: var(--champ-focus); box-shadow: 0 0 0 4px color-mix(in srgb, var(--violet) 14%, transparent);
+    border-color: var(--violet); background: var(--champ-focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--violet) 18%, transparent);
   }
   input[type=checkbox], input[type=radio], input[type=range] { accent-color: var(--violet); }
   ::placeholder { color: var(--gris); }
 
-  h2 { font-size: 13.5px; text-transform: uppercase; letter-spacing: 1.1px; color: var(--doux); margin: 30px 0 14px; display: flex; align-items: center; gap: 10px; }
-  h2 .compte { background: var(--violet-clair); color: var(--violet); border-radius: 99px; padding: 1px 9px; font-size: 12px; letter-spacing: 0; }
+  h2 { font-size: 15px; font-weight: 600; color: var(--encre); margin: 28px 0 12px; display: flex; align-items: center; gap: 8px; letter-spacing: -.01em; }
+  h2 .compte { background: var(--surface); color: var(--doux); border-radius: 99px; padding: 0 8px; font-size: 12px; font-weight: 500; }
   h2 .espace { flex: 1; }
 
   /* Tuiles des outils ------------------------------------------------ */
-  .tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(205px, 1fr)); gap: 16px; }
+  .tuiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
   .tuile {
-    position: relative; border: 1px solid var(--bord); text-align: left; cursor: pointer; padding: 18px; border-radius: 22px; min-height: 160px; color: var(--encre);
-    background: var(--carte); box-shadow: var(--ombre); display: flex; flex-direction: column; gap: 6px; overflow: hidden;
-    transition: transform .25s var(--ressort), box-shadow .25s; animation: apparait .45s both;
+    position: relative; border: 1px solid var(--ligne); text-align: left; cursor: pointer; padding: 14px; border-radius: var(--rayon); min-height: 124px; color: var(--encre);
+    background: var(--carte); box-shadow: var(--ombre); display: flex; flex-direction: column; gap: 4px; transition: border-color .12s, box-shadow .12s;
   }
-  .tuile::before {
-    content: ""; position: absolute; right: -40px; top: -40px; width: 140px; height: 140px; border-radius: 50%;
-    background: var(--c); opacity: .13; transition: transform .4s;
-  }
-  .tuile:hover { transform: translateY(-5px) rotate(-.6deg); box-shadow: var(--ombre-forte); }
-  .tuile:hover::before { transform: scale(1.35); }
+  .tuile:hover { border-color: var(--ligne-forte); box-shadow: var(--ombre-forte); }
   .tuile .emoji {
-    width: 54px; height: 54px; border-radius: 17px; display: grid; place-items: center; font-size: 28px; margin-bottom: 8px;
-    background: color-mix(in srgb, var(--c) 18%, var(--carte)); transition: transform .35s cubic-bezier(.3, 1.8, .5, 1);
+    width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; margin-bottom: 8px;
+    background: color-mix(in srgb, var(--c) 14%, var(--carte)); color: var(--c);
   }
-  .tuile:hover .emoji { transform: scale(1.12) rotate(-8deg); }
-  .tuile .nom { font-weight: 800; font-size: 16.5px; }
-  .tuile .desc { color: var(--doux); font-size: 13.5px; line-height: 1.35; }
-  .tuile .etat { margin-top: auto; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; color: var(--doux); }
-  .tuile.lance { animation: rebond .55s var(--ressort); }
-  .tuile.ajout { border: 2px dashed color-mix(in srgb, var(--violet) 35%, transparent); background: color-mix(in srgb, var(--carte) 50%, transparent); box-shadow: none; align-items: center; justify-content: center; color: var(--violet); font-weight: 800; }
-  .tuile.ajout .emoji { background: var(--violet-clair); }
-  .tuile .actions-edition { position: absolute; top: 10px; right: 10px; display: none; gap: 6px; z-index: 2; }
-  .edition .tuile:not(.ajout) { animation: tremble .32s ease-in-out infinite alternate; }
-  .edition .tuile:not(.ajout):nth-child(2n) { animation-delay: -.16s; }
+  .tuile .emoji svg.ico { width: 18px; height: 18px; margin: 0; }
+  .tuile .nom { font-weight: 600; font-size: 14px; }
+  .tuile .desc { color: var(--doux); font-size: 13px; line-height: 1.35; }
+  .tuile .etat { margin-top: auto; padding-top: 6px; font-size: 12px; display: flex; align-items: center; gap: 6px; color: var(--gris); }
+  .tuile.ajout { border: 1px dashed var(--ligne-forte); background: transparent; box-shadow: none; align-items: center; justify-content: center; color: var(--doux); font-weight: 500; }
+  .tuile.ajout .emoji { background: var(--surface); color: var(--doux); }
+  .tuile .actions-edition { position: absolute; top: 8px; right: 8px; display: none; gap: 4px; z-index: 2; }
+  .edition .tuile:not(.ajout) { outline: 1px dashed var(--violet); outline-offset: 2px; }
   .edition .tuile .actions-edition { display: flex; }
-  .rond { width: 30px; height: 30px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; font-size: 14px; background: var(--carte); color: var(--encre); box-shadow: 0 4px 12px -4px rgba(0,0,0,.35); }
-  .rond.suppr { background: var(--rouge); color: #fff; }
-  @keyframes apparait { from { opacity: 0; transform: translateY(12px) scale(.97); } }
-  @keyframes rebond { 30% { transform: scale(.94); } 60% { transform: scale(1.05) rotate(1deg); } }
-  @keyframes tremble { from { transform: rotate(-1.1deg); } to { transform: rotate(1.1deg); } }
+  .rond { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--ligne); cursor: pointer; display: grid; place-items: center; background: var(--carte); color: var(--doux); }
+  .rond svg.ico { margin: 0; width: 14px; height: 14px; }
+  .rond.suppr:hover { background: var(--rouge-clair); color: var(--rouge-texte); }
+  @keyframes apparait { from { opacity: 0; } }
 
-  .point { width: 9px; height: 9px; border-radius: 50%; background: var(--gris); flex: none; display: inline-block; }
-  .point.marche { background: var(--menthe); box-shadow: 0 0 0 0 rgba(24,181,151,.6); animation: battement 2s infinite; }
-  .point.demarrage { background: var(--ambre); animation: clignote .8s infinite alternate; }
+  .point { width: 8px; height: 8px; border-radius: 50%; background: var(--gris); flex: none; display: inline-block; }
+  .point.marche { background: var(--menthe); }
+  .point.demarrage { background: var(--ambre); animation: clignote 1s infinite alternate; }
   .point.occupe, .point.erreur { background: var(--rouge); }
-  @keyframes battement { 70% { box-shadow: 0 0 0 7px rgba(24,181,151,0); } 100% { box-shadow: 0 0 0 0 rgba(24,181,151,0); } }
   @keyframes clignote { to { opacity: .35; } }
 
   /* Serveurs ------------------------------------------------------------ */
-  .serveurs { display: grid; grid-template-columns: repeat(auto-fill, minmax(370px, 1fr)); gap: 12px; }
+  .serveurs { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 10px; }
   .serveur {
-    background: var(--carte); border: 1px solid var(--bord); border-radius: 18px; box-shadow: var(--ombre); padding: 12px 14px; display: flex; align-items: center; gap: 12px;
-    animation: apparait .4s both; transition: transform .2s, box-shadow .2s;
+    background: var(--carte); border: 1px solid var(--ligne); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 10px 12px; display: flex; align-items: center; gap: 12px;
   }
-  .serveur:hover { transform: translateY(-2px); box-shadow: var(--ombre-forte); }
-  .serveur .pastille { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; font-size: 21px; background: var(--surface); flex: none; position: relative; }
-  .serveur .pastille .point { position: absolute; right: -2px; bottom: -2px; border: 2.5px solid var(--carte); width: 14px; height: 14px; }
+  .serveur .pastille { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: var(--surface); color: var(--doux); flex: none; position: relative; font-size: 17px; }
+  .serveur .pastille svg.ico { margin: 0; width: 17px; height: 17px; }
+  .serveur .pastille .point { position: absolute; right: -2px; bottom: -2px; border: 2px solid var(--carte); width: 12px; height: 12px; }
   .serveur .infos { flex: 1; min-width: 0; }
-  .serveur .base { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .serveur .base { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .serveur .ligne2 { font-size: 12.5px; color: var(--doux); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .serveur .boutons { display: flex; gap: 4px; }
-  .etiquette { border-radius: 99px; padding: 1px 8px; font-size: 11.5px; font-weight: 700; background: var(--surface); color: var(--doux); white-space: nowrap; }
+  .serveur .boutons { display: flex; gap: 2px; }
+  .etiquette { border-radius: 5px; padding: 0 6px; font-size: 11.5px; font-weight: 500; background: var(--surface); color: var(--doux); white-space: nowrap; }
   .etiquette.ref, .etiquette.rouge { background: var(--rouge-clair); color: var(--rouge-texte); }
   .etiquette.conf, .etiquette.bleu { background: var(--bleu-clair); color: var(--bleu-texte); }
   .etiquette.vert { background: var(--vert-clair); color: var(--vert-texte); }
   .etiquette.ambre { background: var(--ambre-clair); color: var(--ambre-texte); }
   .etiquette.violet { background: var(--violet-clair); color: var(--violet); }
-  .vide { background: color-mix(in srgb, var(--carte) 65%, transparent); border: 1px dashed var(--ligne); border-radius: 18px; padding: 26px; color: var(--doux); text-align: center; }
-  .carte { background: var(--carte); border: 1px solid var(--bord); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 16px 18px; }
-  .squelette { border-radius: 14px; min-height: 60px; background: linear-gradient(90deg, var(--surface) 25%, var(--champ-focus) 50%, var(--surface) 75%); background-size: 200% 100%; animation: miroite 1.2s infinite; }
+  .vide { background: transparent; border: 1px dashed var(--ligne-forte); border-radius: var(--rayon); padding: 28px; color: var(--doux); text-align: center; }
+  .vide svg.ico { width: 22px; height: 22px; display: block; margin: 0 auto 8px; color: var(--gris); }
+  .carte { background: var(--carte); border: 1px solid var(--ligne); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 16px; }
+  .squelette { border-radius: 8px; min-height: 60px; background: linear-gradient(90deg, var(--surface) 25%, var(--ligne) 50%, var(--surface) 75%); background-size: 200% 100%; animation: miroite 1.2s infinite; }
   @keyframes miroite { to { background-position: -200% 0; } }
 
-  /* Fenêtres, toasts --------------------------------------------------- */
-  .voile { position: fixed; inset: 0; background: var(--voile); display: none; place-items: center; z-index: 40; backdrop-filter: blur(4px); }
-  .voile.visible { display: grid; animation: fondu .2s both; }
+  /* Fenêtres, messages ------------------------------------------------- */
+  .voile { position: fixed; inset: 0; background: var(--voile); display: none; place-items: center; z-index: 40; }
+  .voile.visible { display: grid; animation: fondu .12s both; }
   @keyframes fondu { from { opacity: 0; } }
-  .fenetre { width: min(540px, 94vw); max-height: 92vh; overflow: auto; background: var(--carte); color: var(--encre); border: 1px solid var(--bord); border-radius: 24px; padding: 24px; box-shadow: var(--ombre-forte); animation: pop .3s var(--ressort) both; }
-  .fenetre.petite { width: min(400px, 92vw); text-align: center; }
-  .fenetre .gros { font-size: 44px; }
-  .fenetre h3 { margin: 6px 0 8px; font-size: 20px; }
-  .fenetre p { color: var(--doux); margin: 0 0 18px; }
+  .fenetre { width: min(540px, 94vw); max-height: 92vh; overflow: auto; background: var(--carte); color: var(--encre); border: 1px solid var(--ligne); border-radius: 12px; padding: 22px; box-shadow: var(--ombre-forte); animation: pop .14s ease-out both; }
+  .fenetre.petite { width: min(420px, 92vw); }
+  .fenetre .gros { width: 38px; height: 38px; border-radius: 9px; background: var(--surface); color: var(--doux); display: grid; place-items: center; font-size: 20px; margin-bottom: 4px; }
+  .fenetre .gros:empty { display: none; }
+  .fenetre .gros svg.ico { margin: 0; width: 20px; height: 20px; }
+  .fenetre h3 { margin: 8px 0 6px; font-size: 16px; font-weight: 600; }
+  .fenetre p { color: var(--doux); margin: 0 0 16px; }
   .fenetre .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
-  .fenetre.petite .actions { justify-content: center; }
-  @keyframes pop { from { opacity: 0; transform: scale(.92) translateY(10px); } }
-  label.champ { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--doux); margin-bottom: 14px; }
-  .champ input, .champ select, .champ textarea { font-size: 14.5px; font-weight: 500; }
-  .champ small { font-weight: 500; color: var(--doux); }
+  @keyframes pop { from { opacity: 0; transform: scale(.985); } }
+  label.champ { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--doux); margin-bottom: 14px; }
+  .champ input, .champ select, .champ textarea { font-size: 14px; }
+  .champ small { font-weight: 400; color: var(--gris); }
   .emojis { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
-  .emojis button { border: 0; background: var(--surface); border-radius: 10px; font-size: 20px; padding: 5px 0; cursor: pointer; transition: transform .12s; }
-  .emojis button:hover { transform: scale(1.18); }
-  .emojis button.choisi { background: var(--violet); box-shadow: 0 6px 12px -6px var(--violet); }
+  .emojis button { border: 1px solid transparent; background: var(--surface); color: var(--doux); border-radius: 7px; height: 32px; padding: 0; cursor: pointer; display: grid; place-items: center; }
+  .emojis button svg.ico { margin: 0; width: 17px; height: 17px; }
+  .emojis button:hover { color: var(--encre); border-color: var(--ligne-forte); }
+  .emojis button.choisi { background: var(--violet-clair); color: var(--violet); border-color: var(--violet); }
   .couleurs { display: flex; gap: 8px; flex-wrap: wrap; }
-  .couleurs button { width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--carte); cursor: pointer; box-shadow: 0 0 0 1.5px var(--ligne); transition: transform .15s; }
-  .couleurs button.choisi { transform: scale(1.18); box-shadow: 0 0 0 2.5px var(--encre); }
-  .types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .types button { border: 1.5px solid var(--ligne); background: var(--champ); border-radius: 13px; padding: 10px 6px; cursor: pointer; font-weight: 700; font-size: 13px; }
-  .types button span { display: block; font-size: 20px; }
+  .couleurs button { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--carte); cursor: pointer; box-shadow: 0 0 0 1px var(--ligne); }
+  .couleurs button.choisi { box-shadow: 0 0 0 2px var(--encre); }
+  .types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .types button { border: 1px solid var(--ligne); background: var(--champ); border-radius: 8px; padding: 10px 6px; cursor: pointer; font-weight: 500; font-size: 12.5px; color: var(--doux); }
+  .types button span { display: block; font-size: 18px; margin-bottom: 2px; }
+  .types button span svg.ico { margin: 0 auto; }
   .types button.choisi { border-color: var(--violet); background: var(--violet-clair); color: var(--violet); }
   .apercu-tuile { display: flex; justify-content: center; margin-bottom: 18px; }
-  .apercu-tuile .tuile { width: 230px; min-height: 140px; cursor: default; animation: none; }
+  .apercu-tuile .tuile { width: 240px; min-height: 120px; cursor: default; }
 
-  #toasts { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 60; align-items: center; pointer-events: none; }
-  .toast { background: #1f1a3a; color: #fff; padding: 11px 18px; border-radius: 14px; box-shadow: 0 16px 30px -12px rgba(0,0,0,.45); font-weight: 650; animation: pop .3s var(--ressort) both; max-width: 560px; }
-  :root[data-theme="sombre"] .toast { background: #2e2850; }
-  .toast.erreur { background: var(--rouge); }
-  .toast.succes { background: linear-gradient(135deg, #12a386, var(--menthe)); }
-  .toast.part { animation: depart .3s forwards; }
-  @keyframes depart { to { opacity: 0; transform: translateY(12px); } }
-  footer { margin-top: 36px; text-align: center; color: var(--gris); font-size: 12.5px; }
+  #toasts { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 60; align-items: center; pointer-events: none; }
+  .toast { background: var(--encre); color: var(--fond); padding: 9px 14px; border-radius: 8px; box-shadow: var(--ombre-forte); font-weight: 500; font-size: 13.5px;
+    display: flex; align-items: center; gap: 8px; animation: pop .14s ease-out both; max-width: 560px; }
+  .toast svg.ico { margin: 0; }
+  .toast.erreur svg.ico { color: var(--rouge); }
+  .toast.succes svg.ico { color: var(--menthe); }
+  .toast.part { animation: depart .2s forwards; }
+  @keyframes depart { to { opacity: 0; } }
+  footer { margin-top: 36px; text-align: center; color: var(--gris); font-size: 12px; }
 
-  .compteur { background: var(--corail); color: #fff; border-radius: 99px; font-size: 11px; padding: 1px 7px; margin-left: 3px; font-weight: 800; }
+  .compteur { background: var(--surface); color: var(--doux); border-radius: 99px; font-size: 11px; padding: 0 6px; margin-left: 3px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .menu button.actif .compteur { background: var(--carte); color: var(--violet); }
   .vue { display: none; }
-  .vue.actif { display: block; animation: apparait .35s both; }
+  .vue.actif { display: block; animation: apparait .15s ease-out both; }
 
   /* Aujourd'hui (accueil) ----------------------------------------------- */
-  .aujourdhui { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 8px; }
-  .carte-jour { background: var(--carte); border: 1px solid var(--bord); border-radius: 20px; box-shadow: var(--ombre); padding: 16px 18px; cursor: pointer; transition: transform .2s, box-shadow .2s; animation: apparait .4s both; position: relative; overflow: hidden; }
-  .carte-jour::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--accent, var(--violet)); opacity: .8; }
-  .carte-jour:hover { transform: translateY(-3px); box-shadow: var(--ombre-forte); }
-  .carte-jour h4 { margin: 0 0 10px; font-size: 12.5px; text-transform: uppercase; letter-spacing: .9px; color: var(--doux); display: flex; gap: 8px; align-items: center; }
-  .carte-jour .ligne-jour { display: flex; gap: 10px; align-items: center; padding: 5px 0; font-size: 14px; }
-  .carte-jour .ligne-jour .heure { font-weight: 800; min-width: 46px; font-variant-numeric: tabular-nums; }
-  .carte-jour .ligne-jour .pastille-c { width: 9px; height: 9px; border-radius: 50%; flex: none; }
-  .carte-jour .grand { font-size: 30px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
-  .carte-jour .rien { color: var(--gris); font-size: 14px; }
+  .aujourdhui { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 8px; }
+  .carte-jour { background: var(--carte); border: 1px solid var(--ligne); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 14px 16px; cursor: pointer; transition: border-color .12s; }
+  .carte-jour:hover { border-color: var(--ligne-forte); }
+  .carte-jour h4 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--doux); display: flex; gap: 7px; align-items: center; }
+  .carte-jour h4 svg.ico { color: var(--accent, var(--doux)); margin: 0; }
+  .carte-jour .ligne-jour { display: flex; gap: 10px; align-items: center; padding: 4px 0; font-size: 13.5px; }
+  .carte-jour .ligne-jour .heure { font-weight: 600; min-width: 46px; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 4px; }
+  .carte-jour .ligne-jour .pastille-c { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .carte-jour .grand { font-size: 26px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .carte-jour .rien { color: var(--gris); font-size: 13.5px; }
 
   /* Éléments communs aux onglets ---------------------------------------- */
-  .barre-vue { display: flex; align-items: center; gap: 10px; margin: 2px 0 18px; flex-wrap: wrap; }
-  .barre-vue h2 { margin: 0; font-size: 15px; color: var(--encre); letter-spacing: .8px; }
+  .barre-vue { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; flex-wrap: wrap; }
+  .barre-vue h2 { margin: 0; font-size: 18px; color: var(--encre); }
+  .barre-vue h2 svg.ico { color: var(--doux); }
   .barre-vue .espace { flex: 1; }
   .champ-recherche { position: relative; }
-  .champ-recherche input { padding-left: 34px !important; width: 260px; }
-  .champ-recherche span { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); opacity: .6; pointer-events: none; }
-  .puces { display: flex; gap: 4px; flex-wrap: wrap; background: var(--verre); border: 1px solid var(--bord); padding: 4px; border-radius: 999px; }
-  .puce { border: 0; padding: 6px 13px; border-radius: 999px; background: transparent; color: var(--doux); cursor: pointer; font-size: 13px; font-weight: 700; transition: background .15s, color .15s; white-space: nowrap; }
-  .puce:not(.actif):hover { background: var(--violet-clair); color: var(--violet); }
-  .puce.actif { background: var(--encre); color: var(--fond); }
+  .champ-recherche input { padding-left: 32px !important; width: 260px; }
+  .champ-recherche span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--gris); pointer-events: none; display: flex; }
+  .champ-recherche span svg.ico { margin: 0; }
+  .puces { display: inline-flex; gap: 2px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--ligne); padding: 2px; border-radius: 8px; }
+  .puce { border: 0; height: 28px; padding: 0 11px; border-radius: 6px; background: transparent; color: var(--doux); cursor: pointer; font-size: 13px; font-weight: 500; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+  .puce:not(.actif):hover { color: var(--encre); }
+  .puce.actif { background: var(--carte); color: var(--encre); box-shadow: var(--ombre); }
 
   /* Palette de commandes (Ctrl + K) ------------------------------------- */
-  .palette-voile { position: fixed; inset: 0; z-index: 50; background: var(--voile); backdrop-filter: blur(4px); display: none; justify-content: center; align-items: flex-start; padding-top: 12vh; }
-  .palette-voile.visible { display: flex; animation: fondu .15s both; }
-  .palette { width: min(640px, 92vw); background: var(--carte); border: 1px solid var(--bord); border-radius: 22px; box-shadow: var(--ombre-forte); overflow: hidden; animation: pop .25s var(--ressort) both; }
-  .palette .saisie { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--ligne); }
-  .palette .saisie input { flex: 1; border: 0 !important; background: transparent !important; box-shadow: none !important; font-size: 17px; padding: 4px 0 !important; outline: none; color: var(--encre); }
+  .palette-voile { position: fixed; inset: 0; z-index: 50; background: var(--voile); display: none; justify-content: center; align-items: flex-start; padding-top: 12vh; }
+  .palette-voile.visible { display: flex; animation: fondu .1s both; }
+  .palette { width: min(620px, 92vw); background: var(--carte); border: 1px solid var(--ligne); border-radius: 12px; box-shadow: var(--ombre-forte); overflow: hidden; animation: pop .14s ease-out both; }
+  .palette .saisie { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--ligne); color: var(--gris); }
+  .palette .saisie input { flex: 1; border: 0 !important; background: transparent !important; box-shadow: none !important; font-size: 16px; padding: 4px 0 !important; outline: none; color: var(--encre); }
   .palette .resultats { max-height: 52vh; overflow-y: auto; padding: 6px; }
-  .palette .section-p { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--gris); font-weight: 800; padding: 10px 12px 4px; }
-  .palette .item { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 12px; cursor: pointer; }
-  .palette .item .ic { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: var(--surface); flex: none; }
+  .palette .section-p { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); font-weight: 600; padding: 10px 10px 4px; }
+  .palette .item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 7px; cursor: pointer; }
+  .palette .item .ic { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; background: var(--surface); color: var(--doux); flex: none; }
+  .palette .item .ic svg.ico { margin: 0; }
   .palette .item .tx { flex: 1; min-width: 0; }
-  .palette .item .tx b { display: block; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .palette .item .tx b { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .palette .item .tx small { color: var(--doux); }
-  .palette .item.choisi { background: var(--violet-clair); }
-  .palette .item.choisi .ic { background: var(--violet); }
-  .palette .pied { display: flex; gap: 14px; padding: 9px 16px; border-top: 1px solid var(--ligne); color: var(--gris); font-size: 12px; }
+  .palette .item.choisi { background: var(--surface); }
+  .palette .item.choisi .ic { background: var(--violet); color: var(--sur-violet); }
+  .palette .pied { display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid var(--ligne); color: var(--gris); font-size: 12px; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -336,22 +323,22 @@
 </style>
 </head>
 <body>
-<div class="bulles"><span></span><span></span><span></span></div>
 <div class="page">
   <header>
-    <div class="avatar-hub" id="avatar" title="Coucou !">🧰</div>
-    <div class="salut"><h1 id="salut">Bonjour</h1><p id="sous-titre">Que fait-on aujourd'hui ?</p></div>
+    <div class="marque"><span class="logo">🧰</span><b translate="no">Mes outils</b></div>
     <div class="espace"></div>
     <button class="recherche-globale" id="btn-palette" title="Rechercher un onglet, un outil, une action (Ctrl + K)"><span>🔎</span><span class="t">Rechercher…</span><kbd>Ctrl K</kbd></button>
-    <div class="horloge"><b id="heure">--:--</b><small id="date"></small></div>
-    <button class="btn discret" id="btn-theme" title="Thème clair ou sombre">🌙</button>
-    <button class="btn discret" id="btn-quitter" title="Arrêter le tableau de bord">🚪</button>
+    <div class="espace"></div>
+    <span class="horloge" id="heure">--:--</span>
+    <button class="icone-btn" id="btn-theme" title="Thème clair ou sombre">🌙</button>
+    <button class="icone-btn" id="btn-quitter" title="Arrêter le tableau de bord">🚪</button>
   </header>
 
   <div class="corps">
   <nav class="menu" id="onglets"></nav>
   <main id="vues">
   <section class="vue actif" id="vue-accueil">
+  <div class="titre-accueil"><h1 id="salut">Bonjour</h1><p id="date"></p></div>
   <div class="aujourdhui" id="aujourdhui"></div>
 
   <h2>Mes outils <span class="compte" id="nb-outils">0</span><span class="espace"></span>
@@ -403,9 +390,110 @@ for (const proto of [Element.prototype, DocumentFragment.prototype]) {
   }
 }
 const $ = (s, el = document) => el.querySelector(s);
+
+// -------------------------------------------------------------- icônes
+// Icônes au trait (web/icones.js). Les emojis écrits par les onglets sont
+// remplacés partout par l'icône correspondante, ou retirés s'ils n'étaient
+// que décoratifs : un seul style d'icônes dans toute l'interface.
+const SVG = "http://www.w3.org/2000/svg";
+function icone(nom, classe = "") {
+  const svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("class", ("ico " + classe).trim());
+  svg.innerHTML = ICONES[nom] || ICONES["app-window"];  // données fixes de icones.js
+  return svg;
+}
+const RE_EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2300}-\u{23FF}\u{25A0}-\u{25FF}\u{2190}-\u{21FF}]\uFE0F?(?:\u200D[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]\uFE0F?)*/gu;
+const cleEmoji = e => e.replace(/\uFE0F/g, "");
+const estConnu = e => Object.prototype.hasOwnProperty.call(EMOJI_ICONE, cleEmoji(e));
+/** Le texte sans les emojis de l'interface (pour title, placeholder, option). */
+function sansEmoji(texte) {
+  return String(texte).replace(RE_EMOJI, e => (estConnu(e) ? "" : e)).replace(/^\s+/, "").replace(/\s{2,}/g, " ");
+}
+const EXCLUS = "svg, script, style, textarea, input, pre, code, [contenteditable=''], [contenteditable='true'], .sans-icone";
+function remplacerEmojis(noeud) {
+  const texte = noeud.nodeValue;
+  RE_EMOJI.lastIndex = 0;
+  if (!texte || !RE_EMOJI.test(texte)) return;
+  const parent = noeud.parentElement;
+  if (!parent || parent.closest(EXCLUS)) return;
+  if (parent.tagName === "OPTION" || parent.tagName === "TITLE") { noeud.nodeValue = sansEmoji(texte); return; }
+  const morceaux = [];
+  let reste = texte, change = false;
+  RE_EMOJI.lastIndex = 0;
+  let dernier = 0;
+  for (const m of texte.matchAll(RE_EMOJI)) {
+    if (!estConnu(m[0])) continue;
+    change = true;
+    morceaux.push(texte.slice(dernier, m.index));
+    dernier = m.index + m[0].length;
+    const nom = EMOJI_ICONE[cleEmoji(m[0])];
+    if (nom) morceaux.push({ nom });
+    else if (texte[dernier] === " ") dernier += 1;  // emoji décoratif retiré, avec son espace
+  }
+  if (!change) return;
+  morceaux.push(texte.slice(dernier));
+  const fragment = document.createDocumentFragment();
+  morceaux.forEach((m, i) => {
+    if (typeof m === "string") {
+      // Après une icône, l'espace est remplacé par une marge.
+      const precedent = morceaux[i - 1];
+      const txt = precedent && typeof precedent === "object" ? m.replace(/^ /, "") : m;
+      if (txt) fragment.append(document.createTextNode(txt));
+    } else {
+      const suivant = morceaux.slice(i + 1).find(x => typeof x === "string") || "";
+      fragment.append(icone(m.nom, suivant.trim() ? "av" : ""));
+    }
+  });
+  noeud.replaceWith(fragment);
+}
+function traiterEmojis(racine) {
+  if (racine.nodeType === 3) return remplacerEmojis(racine);
+  if (racine.nodeType !== 1 || racine.closest?.(EXCLUS)) return;
+  const marcheur = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT);
+  const noeuds = [];
+  while (marcheur.nextNode()) noeuds.push(marcheur.currentNode);
+  noeuds.forEach(remplacerEmojis);
+  for (const e of [racine, ...racine.querySelectorAll("[title],[placeholder]")]) {
+    for (const a of ["title", "placeholder"]) if (e.hasAttribute?.(a)) {
+      const v = e.getAttribute(a), propre = sansEmoji(v);
+      if (propre !== v) e.setAttribute(a, propre);
+    }
+  }
+}
+new MutationObserver(mutations => {
+  for (const m of mutations) {
+    if (m.type === "characterData") remplacerEmojis(m.target);
+    else m.addedNodes.forEach(traiterEmojis);
+  }
+}).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+document.addEventListener("DOMContentLoaded", () => traiterEmojis(document.body));
 const S = { config: null, edition: false, serveurs: null };
-const EMOJIS = "🧾 📂 📱 🗂️ 🛠️ 🧪 📊 📈 💼 🧮 🗓️ ✉️ 🌐 🖥️ 🗄️ 🐘 🐍 🚀 ⚙️ 🔧 📦 🧰 📝 💡 🎯 🔒 🧠 🎨 📚 ☕".split(" ");
-const COULEURS = ["#6c4cf5", "#ff7a59", "#18b597", "#ffb020", "#e5488d", "#2f8cff", "#8b5cf6", "#0ea5a4", "#475569"];
+// Icônes proposées pour les tuiles (web/icones.js).
+const ICONES_TUILES = ["app-window", "folder", "folder-open", "file", "files", "file-code", "code", "terminal", "globe", "link",
+  "receipt", "calculator", "briefcase", "chart-column", "trending-up", "calendar", "mail", "message-square", "notebook-pen", "book-open",
+  "database", "server", "monitor", "laptop", "smartphone", "package", "container", "wrench", "settings", "rocket",
+  "kanban", "target", "lightbulb", "palette", "image", "video", "music", "camera", "shopping-cart", "cloud",
+  "lock", "key-round", "shield", "users", "user", "graduation-cap", "heart", "coffee", "gamepad-2", "printer"];
+/** L'icône d'un onglet : un <svg> (copié, il peut servir à plusieurs endroits),
+    un nom d'icône, ou un ancien emoji. */
+function iconeOnglet(i) {
+  if (i && typeof i === "object") return i.cloneNode(true);
+  if (typeof i === "string" && ICONES[i]) return icone(i);
+  return i || icone("app-window");
+}
+/** L'icône d'une tuile : son choix (icone), sinon celle de son ancien emoji. */
+function iconeOutil(o) {
+  if (o.icone && ICONES[o.icone]) return o.icone;
+  const d = o.emoji ? EMOJI_ICONE[cleEmoji(o.emoji)] : null;
+  return d || "app-window";
+}
+const COULEURS = ["#5b5bd6", "#e5603e", "#12a37a", "#d99a0b", "#d6457a", "#2f7ae5", "#8b5cf6", "#0e9aa7", "#64748b"];
 const TYPES = {
   dossier: { emoji: "📂", nom: "Dossier", aide: "Chemin du dossier, ex. C:\\Users\\vous\\Documents" },
   fichier: { emoji: "📄", nom: "Fichier / programme", aide: "Chemin d'un fichier, d'un .exe ou d'un .bat" },
@@ -442,7 +530,9 @@ function el(tag, attrs = {}, ...enfants) {
   return e;
 }
 function toast(message, type = "", duree = 3000) {
-  const bloc = el("div", { class: "toast " + type }, I18N.traduire(String(message)));
+  const texte = sansEmoji(I18N.traduire(String(message))).replace(/[\p{Extended_Pictographic}]\uFE0F?/gu, "").trim();
+  const bloc = el("div", { class: "toast " + type },
+    icone(type === "succes" ? "circle-check" : type === "erreur" ? "circle-alert" : "info"), el("span", { class: "sans-icone" }, texte));
   $("#toasts").append(bloc);
   setTimeout(() => { bloc.classList.add("part"); setTimeout(() => bloc.remove(), 300); }, duree);
 }
@@ -477,11 +567,7 @@ async function copier(texte, message = "📋 Copié") {
   catch { toast("😕 Copie impossible", "erreur"); }
 }
 
-// ------------------------------------------------------- en-tête vivant
-const PHRASES = [
-  "Que fait-on aujourd'hui ?", "Tout est prêt, à vous de jouer ✨", "Une facture à envoyer ? 🧾",
-  "Les serveurs vous attendent 🐘", "Un café, et c'est parti ☕", "Belle journée de code ! 🚀",
-];
+// ------------------------------------------------------- en-tête, accueil
 function horloge() {
   const d = new Date();
   $("#heure").textContent = d.toLocaleTimeString(I18N.locale(), { hour: "2-digit", minute: "2-digit" });
@@ -489,14 +575,8 @@ function horloge() {
   $("#date").textContent = date.charAt(0).toUpperCase() + date.slice(1);
   const h = d.getHours();
   const salut = t(h < 5 ? "Bonne nuit" : h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir");
-  const prenom = S.config?.prenom ? " " + S.config.prenom : "";
-  $("#salut").textContent = `${salut}${prenom} 👋`;
+  $("#salut").textContent = S.config?.prenom ? `${salut}, ${S.config.prenom}` : salut;
 }
-$("#avatar").addEventListener("click", () => {
-  $("#sous-titre").textContent = t(PHRASES[Math.floor(Math.random() * PHRASES.length)]);
-  const a = $("#avatar"); a.style.transform = "rotate(380deg) scale(1.1)";
-  setTimeout(() => (a.style.transform = ""), 500);
-});
 
 // -------------------------------------------------------------- tuiles
 async function chargerOutils() {
@@ -516,7 +596,7 @@ function tuile(outil, apercu = false) {
     : outil.introuvable ? el("div", { class: "etat", style: "color:var(--rouge)" }, "⚠️ Introuvable")
     : el("div", { class: "etat" }, (TYPES[outil.type]?.emoji || "") + " " + (TYPES[outil.type]?.nom || ""));
   const t = el("button", { class: "tuile", style: `--c:${outil.couleur || "#6c4cf5"}` },
-    el("div", { class: "emoji" }, outil.emoji || "🧩"),
+    el("div", { class: "emoji" }, icone(iconeOutil(outil))),
     el("div", { class: "nom" }, outil.nom ? document.createTextNode(outil.nom) : "Sans nom"),
     el("div", { class: "desc" }, document.createTextNode(outil.description || "")),
     statut);
@@ -568,15 +648,17 @@ async function retirer(outil) {
 
 // -------------------------------------------------- ajouter / modifier
 function editer(outil) {
-  const brouillon = outil ? structuredClone(outil) : { nom: "", emoji: "🧩", couleur: COULEURS[0], type: "dossier", cible: "", description: "" };
+  const brouillon = outil ? structuredClone(outil) : { nom: "", icone: "app-window", couleur: COULEURS[0], type: "dossier", cible: "", description: "" };
+  brouillon.icone = iconeOutil(brouillon);
   delete brouillon.en_marche; delete brouillon.introuvable;
   const apercu = el("div", { class: "apercu-tuile" });
   const majApercu = () => apercu.replaceChildren(tuile(brouillon, true));
 
-  const emojis = el("div", { class: "emojis" }, EMOJIS.map(em =>
-    el("button", { type: "button", class: em === brouillon.emoji ? "choisi" : "", onclick: e => {
-      brouillon.emoji = em; [...emojis.children].forEach(b => b.classList.toggle("choisi", b === e.currentTarget)); majApercu();
-    } }, em)));
+  const emojis = el("div", { class: "emojis" }, ICONES_TUILES.map(nom =>
+    el("button", { type: "button", title: nom, class: nom === brouillon.icone ? "choisi" : "", onclick: e => {
+      brouillon.icone = nom; delete brouillon.emoji;
+      [...emojis.children].forEach(b => b.classList.toggle("choisi", b === e.currentTarget)); majApercu();
+    } }, icone(nom))));
   const couleurs = el("div", { class: "couleurs" }, COULEURS.map(c =>
     el("button", { type: "button", style: `background:${c}`, class: c === brouillon.couleur ? "choisi" : "", onclick: e => {
       brouillon.couleur = c; [...couleurs.children].forEach(b => b.classList.toggle("choisi", b === e.currentTarget)); majApercu();
@@ -613,7 +695,7 @@ function editer(outil) {
     apercu,
     el("label", { class: "champ" }, "Nom", el("input", { value: brouillon.nom, placeholder: "ex. Comptes rendus", oninput: e => { brouillon.nom = e.target.value; majApercu(); } })),
     el("label", { class: "champ" }, "Petite description", el("input", { value: brouillon.description || "", placeholder: "ex. Mes notes de réunion", oninput: e => { brouillon.description = e.target.value; majApercu(); } })),
-    el("label", { class: "champ" }, "Emoji", emojis),
+    el("label", { class: "champ" }, "Icône", emojis),
     el("label", { class: "champ" }, "Couleur", couleurs),
     el("label", { class: "champ" }, "Ce qu'il ouvre", types),
     zoneCible,
@@ -743,7 +825,7 @@ function construireMenu() {
     for (const o of liste) {
       const titre = I18N.traduire(o.titre);
       nav.append(el("button", { "data-vue": o.nom, title: titre, onclick: () => montrerVue(o.nom) },
-        el("span", { class: "ic" }, o.icone || "🧩"), el("span", { class: "lib" }, titre),
+        el("span", { class: "ic" }, iconeOnglet(o.icone)), el("span", { class: "lib" }, titre),
         o.nom === "mails" ? el("span", { class: "compteur", id: "compteur-mails", hidden: "" }) : null));
     }
   }
@@ -991,13 +1073,13 @@ const sansAccents = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLo
 function elementsPalette() {
   const items = [];
   for (const o of listeOnglets()) {
-    items.push({ section: "Onglets", icone: o.icone || "🧩", titre: I18N.traduire(o.titre), detail: I18N.traduire(GROUPES[o.groupe] || ""), action: () => montrerVue(o.nom) });
+    items.push({ section: "Onglets", icone: iconeOnglet(o.icone), titre: I18N.traduire(o.titre), detail: I18N.traduire(GROUPES[o.groupe] || ""), action: () => montrerVue(o.nom) });
   }
   for (const o of S.config?.outils || []) {
-    items.push({ section: "Mes outils", icone: o.emoji || "🧩", titre: o.nom, detail: o.description || "", action: () => lancer(o, document.createElement("div")) });
+    items.push({ section: "Mes outils", icone: icone(iconeOutil(o)), titre: o.nom, detail: o.description || "", action: () => lancer(o, document.createElement("div")) });
   }
   for (const n of Object.keys(VUES)) {
-    try { for (const c of VUES[n].commandes?.() || []) items.push({ section: "Actions", icone: "⚡", ...c, titre: I18N.traduire(c.titre), detail: I18N.traduire(c.detail || "") }); }
+    try { for (const c of VUES[n].commandes?.() || []) items.push({ section: "Actions", icone: "▶", ...c, titre: I18N.traduire(c.titre), detail: I18N.traduire(c.detail || "") }); }
     catch (e) { console.error(e); }
   }
   items.push(
@@ -1010,7 +1092,7 @@ function elementsPalette() {
 }
 function filtrerPalette(texte) {
   const mots = sansAccents(texte).split(/\s+/).filter(Boolean);
-  if (!mots.length) return P.items.filter(i => i.section !== "Actions" || i.icone !== "⚡").slice(0, 60);
+  if (!mots.length) return P.items.filter(i => i.section !== "Actions" || i.icone !== "▶").slice(0, 60);
   return P.items.map(i => {
     const titre = sansAccents(i.titre), tout = titre + " " + sansAccents(i.detail) + " " + sansAccents(i.section);
     if (!mots.every(m => tout.includes(m))) return null;
@@ -1027,7 +1109,7 @@ function dessinerPalette() {
     if (it.section !== section) { section = it.section; box.append(el("div", { class: "section-p" }, section)); }
     const ligne = el("div", { class: "item" + (n === P.choix ? " choisi" : ""), onmousemove: () => { if (P.choix !== n) { P.choix = n; dessinerPalette(); } },
       onclick: () => executerPalette(n) },
-      el("span", { class: "ic" }, it.icone || "•"),
+      el("span", { class: "ic" }, iconeOnglet(it.icone)),
       el("span", { class: "tx" }, el("b", {}, it.titre), it.detail ? el("small", {}, it.detail) : null));
     box.append(ligne);
     if (n === P.choix) requestAnimationFrame(() => ligne.scrollIntoView({ block: "nearest" }));

@@ -79,9 +79,9 @@
   const style = document.createElement("style");
   style.textContent = `
     .tp-haut { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: center; padding: 20px 24px; margin-bottom: 22px; }
-    .tp-projet { font-size: 20px; font-weight: 800; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tp-projet { font-size: 20px; font-weight: 600; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tp-note { color: var(--doux); font-size: 14px; margin-top: 2px; min-height: 18px; }
-    .tp-chrono { font-size: 56px; font-weight: 800; letter-spacing: -1.5px; font-variant-numeric: tabular-nums; line-height: 1.1; margin: 8px 0 4px; }
+    .tp-chrono { font-size: 56px; font-weight: 600; letter-spacing: -1.5px; font-variant-numeric: tabular-nums; line-height: 1.1; margin: 8px 0 4px; }
     .tp-chrono.arrete { color: var(--gris); }
     .tp-depuis { color: var(--doux); font-size: 13px; font-weight: 600; }
     .tp-boutons { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
@@ -98,7 +98,7 @@
     .tp-anneau .fond { fill: none; stroke: var(--surface); stroke-width: 12; }
     .tp-anneau .jauge { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset .9s linear, stroke .3s; }
     .tp-anneau .centre { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
-    .tp-anneau .reste { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .tp-anneau .reste { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
     .tp-anneau .phase { font-size: 12px; font-weight: 700; color: var(--doux); text-transform: uppercase; letter-spacing: .6px; }
     .tp-anneau.repos .reste { color: var(--gris); }
     .tp-nav { display: flex; align-items: center; gap: 6px; }
@@ -106,14 +106,14 @@
     .tp-corps { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 18px; align-items: start; }
     @media (max-width: 1000px) { .tp-corps { grid-template-columns: 1fr; } .tp-haut { grid-template-columns: 1fr; } }
     .tp-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    .tp-table th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .7px; color: var(--gris); padding: 0 8px 8px; font-weight: 800; }
+    .tp-table th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .7px; color: var(--gris); padding: 0 8px 8px; font-weight: 600; }
     .tp-table td { padding: 8px; border-top: 1px solid var(--ligne); vertical-align: middle; }
-    .tp-table td.duree { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+    .tp-table td.duree { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
     .tp-table td.heures { font-variant-numeric: tabular-nums; color: var(--doux); white-space: nowrap; }
     .tp-table td.tp-cel-note { color: var(--doux); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .tp-table td.actions { white-space: nowrap; text-align: right; width: 1%; }
     .tp-table td.actions .icone-btn { width: 28px; height: 28px; font-size: 12.5px; display: inline-grid; }
-    .tp-table tr.total td { font-weight: 800; border-top: 2px solid var(--ligne); }
+    .tp-table tr.total td { font-weight: 600; border-top: 2px solid var(--ligne); }
     .tp-pastille { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; vertical-align: 1px; }
     .tp-totaux h3 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--doux); }
     .tp-barre { margin-bottom: 12px; }

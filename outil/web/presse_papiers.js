@@ -43,7 +43,7 @@
     .pp-liste { display: flex; flex-direction: column; gap: 10px; }
     .pp-element { display: flex; gap: 14px; align-items: flex-start; padding: 12px 14px; animation: apparait .3s both; }
     .pp-element.epingle { border-color: color-mix(in srgb, var(--ambre) 55%, transparent); }
-    .pp-heure { flex: none; width: 58px; font-weight: 800; font-variant-numeric: tabular-nums; font-size: 14px; padding-top: 2px; }
+    .pp-heure { flex: none; width: 58px; font-weight: 600; font-variant-numeric: tabular-nums; font-size: 14px; padding-top: 2px; }
     .pp-heure small { display: block; color: var(--gris); font-weight: 600; font-size: 11.5px; }
     .pp-corps { flex: 1; min-width: 0; cursor: copy; }
     .pp-apercu { margin: 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.5; color: var(--encre); white-space: pre-wrap;

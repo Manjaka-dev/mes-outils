@@ -95,7 +95,7 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    .coffre-ecran { max-width: 520px; margin: 20px auto; background: var(--carte); border-radius: 26px; box-shadow: var(--ombre); padding: 30px; text-align: center; animation: apparait .35s both; }
+    .coffre-ecran { max-width: 520px; margin: 20px auto; background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 30px; text-align: center; animation: apparait .35s both; }
     .coffre-ecran .cadenas { font-size: 64px; animation: balance 2.6s ease-in-out infinite; display: inline-block; }
     @keyframes balance { 25% { transform: rotate(-8deg); } 75% { transform: rotate(8deg); } }
     .coffre-ecran h3 { margin: 8px 0 6px; font-size: 22px; }
@@ -106,10 +106,10 @@
     .jauge div { height: 100%; border-radius: 9px; transition: width .3s, background .3s; }
     .jauge-texte { font-size: 12px; font-weight: 700; margin-top: 4px; }
     .liste-mdp { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 12px; }
-    .mdp { background: var(--carte); border-radius: 18px; box-shadow: var(--ombre); padding: 12px 14px; display: flex; gap: 12px; align-items: center; animation: apparait .3s both; }
-    .mdp .av { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 17px; flex: none; }
+    .mdp { background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 12px 14px; display: flex; gap: 12px; align-items: center; animation: apparait .3s both; }
+    .mdp .av { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; color: #fff; font-weight: 600; font-size: 17px; flex: none; }
     .mdp .infos { flex: 1; min-width: 0; }
-    .mdp .t { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mdp .t { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mdp .u { font-size: 13px; color: var(--doux); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mdp .secret { font-family: var(--mono); font-size: 13.5px; background: var(--code); color: var(--code-texte); border-radius: 8px; padding: 2px 7px; margin-top: 4px; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .mdp .actions-mdp { display: flex; gap: 4px; }

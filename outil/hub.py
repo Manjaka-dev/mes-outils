@@ -92,7 +92,8 @@ def routes_module(nom):
 def onglets_web():
     """Les fichiers des onglets (outil/web/*.js), chargés par la page."""
     dossier = os.path.join(ICI, "web")
-    return sorted(n for n in os.listdir(dossier) if n.endswith(".js") and n != "i18n.js")
+    # i18n.js et icones.js sont chargés à part, en premier (hub.html).
+    return sorted(n for n in os.listdir(dossier) if n.endswith(".js") and n not in ("i18n.js", "icones.js"))
 
 
 # ---------------------------------------------------------------------------

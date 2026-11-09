@@ -66,18 +66,18 @@ La section `<section id="vue-<nom>">` est créée pour lui.
   async function afficher() {
     const r = await api("/api/<nom>/liste", {});
     $("#vue-<nom>").replaceChildren(
-      el("div", { class: "barre-vue" }, el("h2", {}, "🧩 " + t("Mes projets"))),
+      el("div", { class: "barre-vue" }, el("h2", {}, "" + t("Mes projets"))),
       ...);
   }
 
-  VUES.<nom> = { afficher, titre: "Mes projets", icone: "🧩", groupe: "dev", ordre: 30 };
+  VUES.<nom> = { afficher, titre: "Mes projets", icone: icone("package"), groupe: "dev", ordre: 30 };
 })();
 ```
 
 - `groupe` : `quotidien`, `dev`, `outils` ou `systeme`. `afficher()` est
   appelée à chaque ouverture de l'onglet.
 - Palette de commandes (Ctrl + K) : un onglet peut y proposer des actions,
-  `commandes: () => [{ icone: "▶", titre: "Démarrer le projet X", detail: "…", action: () => … }]`.
+  `commandes: () => [{ icone: icone("play"), titre: "Démarrer le projet X", detail: "…", action: () => … }]`.
 - **Couleurs : uniquement les variables** (thème clair et thème sombre) :
   `--carte` (fond de carte), `--surface` (fond discret), `--champ`,
   `--ligne`, `--encre`, `--doux`, `--gris`, `--violet`, `--violet-2`,
@@ -105,7 +105,12 @@ La section `<section id="vue-<nom>">` est créée pour lui.
   `t("Port {port} libéré", { port })`, et la clé `"Port {port} libéré"` dans le
   dictionnaire. Messages d'erreur du serveur : les ajouter aussi au
   dictionnaire (`I18N.motifs([[/^…$/, "…"]])` pour les messages variables).
-- Emojis : seulement ceux que Windows 10 affiche (pas de drapeaux, pas de 🪟).
+- **Pas d'emoji dans l'interface.** Icônes au trait seulement : `icone("folder")`
+  renvoie un `<svg>` (taille du texte, couleur du texte). Les noms sont ceux de
+  [Lucide](https://lucide.dev/icons) présents dans `outil/web/icones.js` ; pour
+  en ajouter, compléter `packaging/generer_icones.py` et régénérer le fichier.
+  (Un emoji oublié dans le code est remplacé à l'affichage par l'icône
+  équivalente, ou retiré, mais il vaut mieux écrire l'icône directement.)
 - Échapper : `el()` crée du texte, jamais du HTML. Ne pas utiliser `innerHTML`
   avec une donnée.
 

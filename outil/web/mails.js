@@ -135,18 +135,18 @@
   const style = document.createElement("style");
   style.textContent = `
     .boite { display: grid; grid-template-columns: 380px 1fr; gap: 16px; height: max(420px, calc(100vh - var(--entete, 74px) - 96px)); }
-    .boite .colonne-liste, .boite .lecture { background: var(--carte); border-radius: 22px; box-shadow: var(--ombre); overflow: hidden; display: flex; flex-direction: column; animation: apparait .35s both; }
+    .boite .colonne-liste, .boite .lecture { background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); overflow: hidden; display: flex; flex-direction: column; animation: apparait .35s both; }
     .liste-mails { overflow-y: auto; flex: 1; }
     .mail { padding: 11px 16px; border-bottom: 1px solid var(--ligne); cursor: pointer; display: flex; gap: 11px; transition: background .15s; }
     .mail:hover { background: var(--surface); }
     .mail.actif { background: var(--violet-clair); }
-    .mail .av { width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center; color: #fff; font-weight: 800; flex: none; font-size: 14px; }
+    .mail .av { width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center; color: #fff; font-weight: 600; flex: none; font-size: 14px; }
     .mail .contenu { min-width: 0; flex: 1; }
     .mail .l1 { display: flex; gap: 8px; align-items: baseline; }
     .mail .qui { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
     .mail .quand { font-size: 12px; color: var(--doux); white-space: nowrap; }
     .mail .objet { font-size: 13.5px; color: var(--doux); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .mail.non-lu .qui, .mail.non-lu .objet { font-weight: 800; color: var(--encre); }
+    .mail.non-lu .qui, .mail.non-lu .objet { font-weight: 600; color: var(--encre); }
     .point-nonlu { width: 8px; height: 8px; border-radius: 50%; background: var(--corail); flex: none; margin-top: 6px; }
     .entete-liste { padding: 12px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--ligne); flex-wrap: wrap; }
     .entete-liste input { flex: 1 1 100%; min-width: 0; border: 1.5px solid var(--ligne); border-radius: 12px; padding: 8px 11px; outline: none; background: var(--champ); color: var(--encre); }
@@ -160,13 +160,13 @@
     .lecture .vide-lecture { flex: 1; display: grid; place-items: center; color: var(--doux); text-align: center; }
     .lecture .vide-lecture div div { font-size: 58px; }
     .pieces { padding: 8px 22px; font-size: 12.5px; color: var(--doux); border-top: 1px solid var(--ligne); }
-    .connexion { max-width: 640px; margin: 10px auto; background: var(--carte); border-radius: 24px; box-shadow: var(--ombre); padding: 28px; animation: apparait .35s both; }
+    .connexion { max-width: 640px; margin: 10px auto; background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 28px; animation: apparait .35s both; }
     .connexion h3 { margin: 0 0 6px; font-size: 22px; }
     .connexion ol { padding-left: 20px; line-height: 1.7; color: var(--encre); }
     .connexion a { color: var(--violet); font-weight: 700; }
-    .connexion .guide { background: var(--surface); border-radius: 16px; padding: 4px 16px; margin: 0 0 16px; color: var(--encre); font-size: 14px; }
+    .connexion .guide { background: var(--surface); border-radius: var(--rayon); padding: 4px 16px; margin: 0 0 16px; color: var(--encre); font-size: 14px; }
     .connexion .guide p { margin: 10px 0; }
-    .connexion .alerte-ms { background: var(--ambre-clair); color: var(--ambre-texte); border-radius: 16px; padding: 12px 16px; margin: 0 0 16px; font-size: 14px; }
+    .connexion .alerte-ms { background: var(--ambre-clair); color: var(--ambre-texte); border-radius: var(--rayon); padding: 12px 16px; margin: 0 0 16px; font-size: 14px; }
     .connexion .alerte-ms b { display: block; margin-bottom: 4px; }
     .grille-mail { display: grid; grid-template-columns: 1fr 110px; gap: 0 12px; }
     .chargement-mails { padding: 30px; text-align: center; color: var(--doux); }
@@ -391,7 +391,7 @@
       el("div", { class: "tete" },
         el("h3", {}, brut(sujet(m.sujet))),
         el("div", { class: "meta" },
-          el("span", { class: "av", style: `background:${couleur(m.de.adresse)};width:30px;height:30px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:800` }, brut(initiale(m.de.nom))),
+          el("span", { class: "av", style: `background:${couleur(m.de.adresse)};width:30px;height:30px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight: 600` }, brut(initiale(m.de.nom))),
           el("b", { style: "color:var(--encre)" }, brut(m.de.nom)), el("span", {}, brut(`<${m.de.adresse}>`)),
           el("span", {}, "· " + dateLongue(m.date))),
         el("div", { class: "meta", style: "margin-top:4px" }, brut(t("À : ") + (m.a || "") + (m.cc ? " · Cc : " + m.cc : ""))),

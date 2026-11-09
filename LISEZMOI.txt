@@ -3,7 +3,7 @@ MES OUTILS - le tableau de bord de mes outils personnels
 
 LA BULLE
 --------
-Une bulle violette 🧰 flotte sur l'écran, au-dessus des autres fenêtres, sans
+Une bulle violette flotte sur l'écran, au-dessus des autres fenêtres, sans
 bouton dans la barre des tâches. Elle démarre avec Windows (raccourci dans le
 dossier Démarrage : touche Windows + R, taper shell:startup ; supprimer
 « Mes outils » pour qu'elle ne démarre plus toute seule).
@@ -23,11 +23,11 @@ Si la bulle a été quittée : raccourci « Mes outils » du Bureau, ou
 Pastille rouge (en bas)  tests GitHub (Actions) en échec
 
 Le tableau de bord s'ouvre dans une fenêtre Edge sans barre d'adresse. La
-fermer (🚪 ou la croix) ne coupe rien : la bulle reste là.
+fermer (ou la croix) ne coupe rien : la bulle reste là.
 
 Menu à gauche : les onglets, rangés en « Au quotidien », « Développement »,
 « Petits outils ». Ctrl + K (ou « Rechercher… » en haut) : aller à un onglet,
-lancer un outil ou une action au clavier. 🌗 : thème clair, sombre ou
+lancer un outil ou une action au clavier. : thème clair, sombre ou
 automatique (comme Windows).
 
 
@@ -36,7 +36,7 @@ LES OUTILS
 - Clic sur une tuile : l'outil s'ouvre.
   Une « Appli locale » est démarrée si elle ne tourne pas, puis ouverte dans
   sa fenêtre.
-- ✏️ Modifier : les tuiles se mettent à bouger ; ✎ pour modifier, ✕ pour retirer,
+- Modifier : les tuiles se mettent à bouger ; pour modifier, pour retirer,
   « Ajouter un outil » pour en créer un. Types possibles :
     Dossier, Fichier / programme (.exe, .bat…), Page web,
     Appli locale (un outil avec son propre petit serveur : adresse, port et
@@ -46,10 +46,10 @@ LES OUTILS
 
 LES ONGLETS
 -----------
-🏠 Accueil   « Aujourd'hui » (rendez-vous du jour et du lendemain, notes
+Accueil   « Aujourd'hui » (rendez-vous du jour et du lendemain, notes
              épinglées, mails non lus), vos outils, les serveurs Odoo.
 
-✉️ Mails     Votre boîte mail : Gmail, Yahoo, iCloud, Zoho, Fastmail, GMX,
+Mails     Votre boîte mail : Gmail, Yahoo, iCloud, Zoho, Fastmail, GMX,
              OVH, Orange, Free, La Poste, ou « Autre » (serveurs IMAP/SMTP
              saisis à la main). Outlook/Hotmail : pas encore (Microsoft exige
              une autre méthode de connexion). Reçus, envoyés, recherche,
@@ -61,14 +61,14 @@ LES ONGLETS
              Les images distantes des mails sont bloquées (elles servent à
              savoir si vous avez ouvert le mail) : bouton « Afficher les images ».
              Les pièces jointes sont listées ; on les ouvre depuis le webmail.
-             Bouton 🔌 : déconnecter (le mot de passe est retiré du coffre).
+             Bouton : déconnecter (le mot de passe est retiré du coffre).
 
-📝 Notes     Notes en cartes colorées ou listes à cocher, épingle 📌, recherche,
-             rappel ⏰ à une date et une heure. Enregistrement automatique
+Notes     Notes en cartes colorées ou listes à cocher, épingle , recherche,
+             rappel à une date et une heure. Enregistrement automatique
              pendant la frappe. Dans une liste : Entrée = élément suivant,
              Retour arrière sur un élément vide = le retirer.
 
-📅 Agenda    Vue semaine (cliquer sur un créneau pour créer un rendez-vous) et
+Agenda    Vue semaine (cliquer sur un créneau pour créer un rendez-vous) et
              vue mois. Rappel par la bulle : à l'heure, 5/15/30 min, 1 h avant,
              la veille.
              Déplacer : glisser le rendez-vous (vue semaine : autre jour ou autre
@@ -76,94 +76,94 @@ LES ONGLETS
              Dupliquer : Ctrl + glisser, ou bouton « ⧉ Dupliquer » du rendez-vous
              (la copie s'ouvre pour choisir le jour).
 
-🔐 Mots de passe
+Mots de passe
              Coffre chiffré (AES-256-GCM, clé tirée du mot de passe maître par
              scrypt). Le mot de passe maître n'est enregistré nulle part :
              S'IL EST OUBLIÉ, LE COFFRE EST PERDU. Notez-le sur papier.
-             Le coffre se verrouille après 5 minutes sans utilisation (ou 🔒).
-             🔑 copie le mot de passe : il est effacé du presse-papiers après
-             30 secondes et n'entre pas dans l'historique Win + V. 👁 l'affiche
-             15 secondes. 🎲 génère un mot de passe solide. Catégories, note
+             Le coffre se verrouille après 5 minutes sans utilisation (ou ).
+             copie le mot de passe : il est effacé du presse-papiers après
+             30 secondes et n'entre pas dans l'historique Win + V. l'affiche
+             15 secondes. génère un mot de passe solide. Catégories, note
              chiffrée par entrée, recherche.
              Fichier : donnees\coffre.json (illisible sans le mot de passe
              maître) ; copie précédente : coffre.json.bak.
 
-🔑 SSH       Une clé par serveur, posée en un clic : « ＋ Nouveau serveur »,
+SSH       Une clé par serveur, posée en un clic : « ＋ Nouveau serveur »,
              saisir le nom, l'adresse, le port, l'utilisateur et le mot de
              passe. L'outil crée la clé (sans phrase de passe), la dépose sur
              le serveur avec le mot de passe, puis vérifie la connexion. Le mot
              de passe ne sert qu'à cette fois : il n'est enregistré nulle part.
              Ensuite, dans un terminal : « ssh <nom-court> » (affiché sur la
-             carte, clic = copie). 🧪 teste la connexion, 💻 ouvre un terminal
-             sur le serveur, 🗑️ retire la clé du serveur puis de ce PC.
+             carte, clic = copie). teste la connexion, ouvre un terminal
+             sur le serveur, retire la clé du serveur puis de ce PC.
              Fichiers : clés dans %USERPROFILE%\.ssh (mesoutils_<nom-court>),
              raccourcis dans %USERPROFILE%\.ssh\config (blocs « Mes outils »),
              liste dans donnees\ssh.json (aucun secret).
 
-🐙 GitHub    Tous vos dépôts (publics, privés, ceux de vos organisations),
+GitHub    Tous vos dépôts (publics, privés, ceux de vos organisations),
              avec recherche et filtre (privés, publics, sur ce PC ou non).
              Connexion une seule fois : « Connecter GitHub » affiche un code
              de 8 caractères (déjà copié) et ouvre github.com/login/device ;
              collez-le, cliquez sur Authorize, c'est fini. L'accès est rangé
-             dans le coffre de Windows (« MesOutils:github ») ; 🔌 le retire.
-             📁 Dossiers de projets : l'outil y repère les dépôts déjà sur ce
+             dans le coffre de Windows (« MesOutils:github ») ; le retire.
+             Dossiers de projets : l'outil y repère les dépôts déjà sur ce
              PC (le dossier et ses sous-dossiers directs) et y clone les
-             nouveaux. Pour chaque dépôt : 🌐 GitHub, puis 📂 Dossier et
-             💻 VS Code s'il est sur ce PC, sinon ⬇️ Cloner.
+             nouveaux. Pour chaque dépôt : GitHub, puis Dossier et
+             VS Code s'il est sur ce PC, sinon Cloner.
              ＋ Nouveau dépôt : choisir un dossier, « Vérifier le contenu »
              (nombre de fichiers, .gitignore respecté, fichiers sensibles
              comme .env ou clés signalés, fichiers de plus de 100 Mo
              refusés), puis « Créer et envoyer » (privé par défaut).
 
-📦 Projets   Les projets trouvés dans vos dossiers de projets (Réglages), avec
+Projets   Les projets trouvés dans vos dossiers de projets (Réglages), avec
              leur type (Node, Python, Django, Docker, Odoo…). Pour chacun :
-             📂 dossier, 💻 VS Code, terminal, site local.
+             dossier, VS Code, terminal, site local.
              Commandes (serveurs de dev) : proposées d'après le projet
              (npm run dev, manage.py runserver, docker compose up…),
-             modifiables ; ▶ démarrer, ■ arrêter (seulement ce que Mes outils a
-             lancé), ☰ journal (donnees\journaux).
-             Git : ⬆️ à envoyer, ⬇️ à récupérer, ✏️ modifié ; « Tout vérifier »
+             modifiables ; démarrer, arrêter (seulement ce que Mes outils a
+             lancé), journal (donnees\journaux).
+             Git : à envoyer, à récupérer, modifié ; « Tout vérifier »
              fait un git fetch de tous les projets.
              .env : sauvegardé dans le coffre chiffré (catégorie « env »),
              restauré en un clic (le coffre doit être ouvert).
 
-🐙 GitHub    (suite) Pull requests (les vôtres, celles où votre relecture est
+GitHub    (suite) Pull requests (les vôtres, celles où votre relecture est
              demandée), issues qui vous sont assignées, état des GitHub
              Actions des dépôts récents et de ceux de ce PC.
 
-🔌 Ports     Les ports en écoute et le programme qui les occupe ; recherche
+Ports     Les ports en écoute et le programme qui les occupe ; recherche
              d'un port ; « Arrêter » après confirmation (les processus système
              et Mes outils lui-même sont protégés).
 
-🐳 Docker    Conteneurs groupés par projet compose : démarrer, arrêter,
+Docker    Conteneurs groupés par projet compose : démarrer, arrêter,
              redémarrer, supprimer, journal, ports cliquables.
 
-📡 Testeur d'API
+Testeur d'API
              Méthode, adresse, en-têtes, corps, authentification ; réponse
              mise en forme ; historique (les secrets n'y sont jamais
              enregistrés), requêtes enregistrées, copie en cURL.
 
-🧪 Boîte à outils
+Boîte à outils
              JWT, Base64, JSON, horodatage, UUID, expressions régulières,
              encodage URL, empreintes SHA, couleurs. Rien ne quitte la page.
 
-✂️ Extraits  Vos commandes et bouts de code favoris : un clic = copié (aussi
+Extraits  Vos commandes et bouts de code favoris : un clic = copié (aussi
              depuis le clic droit sur la bulle).
 
-📋 Presse-papiers
+Presse-papiers
              Les 50 derniers textes copiés, gardés EN MÉMOIRE seulement
              (effacés à la fermeture). Les mots de passe copiés depuis le
              coffre n'y entrent pas. Pause possible.
 
-⏱️ Temps     Chrono par projet (un seul à la fois), Pomodoro (la bulle
+Temps     Chrono par projet (un seul à la fois), Pomodoro (la bulle
              prévient à la fin de chaque période), sessions par jour, semaine
              ou mois, totaux par projet, export CSV pour Excel.
 
-⚙️ Réglages  Prénom, langue (français / anglais), thème, onglets affichés,
+Réglages  Prénom, langue (français / anglais), thème, onglets affichés,
              dossiers de projets, démarrage avec Windows, raccourci sur le
              Bureau, mise à jour (si installé avec git clone).
 
-💬 WhatsApp  La tuile ouvre WhatsApp Web dans sa propre fenêtre (votre
+WhatsApp  La tuile ouvre WhatsApp Web dans sa propre fenêtre (votre
              WhatsApp habituel : scannez le QR code une fois avec le téléphone).
 
 
@@ -182,7 +182,7 @@ Facultatif. Ce sont ceux d'un gadget « Serveurs Odoo » externe
 « serveurs_odoo » > « gadget ». Sans gadget, la section est simplement vide.
 Même liste, mêmes commandes, mêmes journaux que le gadget. Pastille verte = en marche, orange =
 démarrage, grise = arrêté, rouge = port pris par un autre programme.
-  ▶ Démarrer   ■ Arrêter   ↗ Ouvrir dans le navigateur   ☰ Journal
+  Démarrer   Arrêter   ↗ Ouvrir dans le navigateur   Journal
 Une base marquée « référence » demande une confirmation avant d'être
 démarrée. Pour ajouter un serveur ou voir les comptes d'une base :
 bouton « Gadget complet ».

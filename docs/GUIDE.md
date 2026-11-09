@@ -3,7 +3,7 @@
 **Français** · [English](GUIDE.en.md)
 
 Mes outils est un tableau de bord personnel pour Windows, pensé pour les
-développeurs. Une petite bulle 🧰 flotte sur l'écran ; un clic ouvre vos projets,
+développeurs. Une petite bulle flotte sur l'écran ; un clic ouvre vos projets,
 vos serveurs de dev, GitHub, vos mails, notes, agenda, mots de passe et une
 boîte à outils. Tout tourne sur votre PC, sans compte ni service en ligne.
 
@@ -14,12 +14,12 @@ boîte à outils. Tout tourne sur votre PC, sans compte ni service en ligne.
 - [Installation](#installation)
 - [La bulle](#la-bulle)
 - [Se déplacer](#se-déplacer)
-- Les onglets : [Accueil](#-accueil) · [Serveurs](#️-serveurs) · [Projets](#-projets) · [GitHub](#-github) ·
-  [Ports](#-ports) · [Docker](#-docker) · [Testeur d'API](#-testeur-dapi) ·
-  [SSH](#-ssh) · [Mails](#️-mails) · [Notes](#-notes) · [Agenda](#-agenda) ·
-  [Mots de passe](#-mots-de-passe) · [Boîte à outils](#-boîte-à-outils) ·
-  [Extraits](#️-extraits) · [Presse-papiers](#-presse-papiers) ·
-  [Temps](#️-temps) · [Réglages](#️-réglages)
+- Les onglets : [Accueil](#accueil) · [Serveurs](#serveurs) · [Projets](#projets) · [GitHub](#github) ·
+  [Ports](#ports) · [Docker](#docker) · [Testeur d'API](#testeur-dapi) ·
+  [SSH](#ssh) · [Mails](#mails) · [Notes](#notes) · [Agenda](#agenda) ·
+  [Mots de passe](#mots-de-passe) · [Boîte à outils](#boîte-à-outils) ·
+  [Extraits](#extraits) · [Presse-papiers](#presse-papiers) ·
+  [Temps](#temps) · [Réglages](#réglages)
 - [Sécurité et vie privée](#sécurité-et-vie-privée)
 - [Questions fréquentes](#questions-fréquentes)
 - [Ajouter un onglet](#ajouter-un-onglet)
@@ -34,7 +34,7 @@ boîte à outils. Tout tourne sur votre PC, sans compte ni service en ligne.
    l'installateur n'est pas signé (c'est payant). Cliquez sur
    **Informations complémentaires**, puis **Exécuter quand même**.
 3. Choisissez les options (raccourci sur le Bureau, démarrage avec Windows),
-   puis **Installer**. La bulle 🧰 apparaît.
+   puis **Installer**. La bulle apparaît.
 
 Pas besoin de droits administrateur ni de Python : tout est inclus. Le
 programme s'installe dans `%LOCALAPPDATA%\Programs\Mes outils` ; vos
@@ -63,7 +63,7 @@ automatiquement au premier lancement (ils sont copiés, l'original reste).
 
 ## La bulle
 
-Une bulle violette 🧰 flotte au-dessus des autres fenêtres, sans bouton dans la
+Une bulle violette flotte au-dessus des autres fenêtres, sans bouton dans la
 barre des tâches. Elle démarre avec Windows.
 
 | Geste | Effet |
@@ -74,9 +74,9 @@ barre des tâches. Elle démarre avec Windows.
 
 Les pastilles autour de la bulle :
 
-- 🟢 **verte** (en haut à droite) : nombre de serveurs de dev en marche ;
-- 🟠 **corail** (en haut à gauche) : nombre de mails non lus ;
-- 🔴 **rouge** (en bas) : tests GitHub Actions en échec.
+- **verte** (en haut à droite) : nombre de serveurs de dev en marche ;
+- **corail** (en haut à gauche) : nombre de mails non lus ;
+- **rouge** (en bas) : tests GitHub Actions en échec.
 
 Au repos, la bulle est un peu transparente ; elle redevient pleine quand la
 souris passe dessus. À l'heure d'un rappel (note, rendez-vous, Pomodoro), une
@@ -93,7 +93,7 @@ relancez-la avec le raccourci « Mes outils » du Bureau.
 - **Ctrl + K** (ou « Rechercher… » en haut) : la palette de commandes. Tapez
   quelques lettres pour aller à un onglet, lancer un de vos outils ou changer
   de thème, puis Entrée.
-- **🌗 Thème** : clair, sombre ou automatique (comme Windows).
+- **Thème** : clair, sombre ou automatique (comme Windows).
 - **Langue** : français ou anglais, dans les Réglages.
 
 ![Palette de commandes (Ctrl + K)](images/fr/palette.webp)
@@ -104,7 +104,7 @@ Le même tableau de bord en thème sombre :
 
 ## Les onglets
 
-### 🏠 Accueil
+### Accueil
 
 La page d'arrivée (voir la capture en haut de ce guide).
 
@@ -112,45 +112,45 @@ La page d'arrivée (voir la capture en haut de ce guide).
 - **Notes épinglées**, **mails non lus**, **chrono en cours**.
 - **Code** : projets à envoyer, modifiés, en retard, tests GitHub en échec.
 - **Mes outils** : vos tuiles (dossier, fichier, programme, page web ou appli
-  locale). « ✏️ Modifier » pour en ajouter, modifier ou retirer.
+  locale). « Modifier » pour en ajouter, modifier ou retirer.
 
-### 🖥️ Serveurs
+### Serveurs
 
 ![Onglet Serveurs : serveurs Odoo et serveurs de dev des projets](images/fr/serveurs.webp)
 
 Tous vos serveurs au même endroit : les serveurs de dev de vos projets (les
-commandes définies dans 📦 Projets) et, si vous l'utilisez, les serveurs Odoo
+commandes définies dans Projets) et, si vous l'utilisez, les serveurs Odoo
 d'un gadget externe (`gestion_serveurs.py`, chemin dans `outils.json`, clé
 `serveurs_odoo` › `gadget`).
 
-- ▶ démarrer, ■ arrêter, ↗ ouvrir dans le navigateur, ☰ journal ;
+- démarrer, arrêter, ↗ ouvrir dans le navigateur, journal ;
 - pastille verte = en marche, orange = démarrage, rouge = port pris par un
   autre programme ;
 - une base Odoo marquée « référence » demande une confirmation avant d'être
   démarrée.
 
-### 📦 Projets
+### Projets
 
 Les projets trouvés dans vos dossiers de projets, avec leur type (Node,
 Next.js, Vite, Python, Django, Docker, Odoo…).
 
 ![Onglet Projets](images/fr/projets.webp)
 
-- Ouvrir un projet en un clic : **📂 Dossier**, **💻 VS Code**, **⌨️ Terminal**.
-- Voir l'**état Git** : ⬆️ à envoyer, ⬇️ à récupérer, ✏️ modifié ; « Tout
+- Ouvrir un projet en un clic : **Dossier**, **VS Code**, **Terminal**.
+- Voir l'**état Git** : à envoyer, à récupérer, modifié ; « Tout
   vérifier » fait un `git fetch` de tous les projets.
-- Configurer les **commandes de dev** (⚙️) : l'outil en propose d'après le
+- Configurer les **commandes de dev** () : l'outil en propose d'après le
   projet (`npm run dev`, `manage.py runserver`, `docker compose up`…).
-- **▶ Démarrer** et **⏹ Arrêter** un serveur de dev, **🌐** ouvrir le site,
-  **📜** lire son journal en direct.
-- Sauvegarder les fichiers **.env** dans le coffre chiffré (🔐) et les
+- **Démarrer** et **Arrêter** un serveur de dev, **** ouvrir le site,
+  **** lire son journal en direct.
+- Sauvegarder les fichiers **.env** dans le coffre chiffré () et les
   restaurer en un clic.
 
 ![Commandes d'un projet](images/fr/projets-commandes.webp)
 
 ![Journal d'un serveur de dev](images/fr/projets-journal.webp)
 
-### 🐙 GitHub
+### GitHub
 
 Tous vos dépôts (publics, privés, ceux de vos organisations). La connexion se
 fait une seule fois avec un code à valider sur github.com, sans mot de passe.
@@ -158,7 +158,7 @@ fait une seule fois avec un code à valider sur github.com, sans mot de passe.
 ![Onglet GitHub : dépôts](images/fr/github.webp)
 
 - Chercher et filtrer vos dépôts (privés, publics, sur ce PC ou non).
-- **⬇️ Cloner** un dépôt, ou l'ouvrir dans son dossier ou dans VS Code s'il est
+- **Cloner** un dépôt, ou l'ouvrir dans son dossier ou dans VS Code s'il est
   déjà sur ce PC.
 - **+ Nouveau dépôt** à partir d'un dossier : le contenu est vérifié avant
   l'envoi (`.gitignore` respecté, fichiers sensibles comme `.env` signalés,
@@ -170,7 +170,7 @@ fait une seule fois avec un code à valider sur github.com, sans mot de passe.
 
 ![Sous-onglet Actions (thème sombre)](images/fr/github-actions-sombre.webp)
 
-### 🔌 Ports
+### Ports
 
 Quel programme occupe le port 3000 ? La réponse en un coup d'œil.
 
@@ -179,11 +179,11 @@ Quel programme occupe le port 3000 ? La réponse en un coup d'œil.
 - Voir tous les ports en écoute, avec le programme, sa ligne de commande et sa
   mémoire.
 - Chercher un port ou un programme ; filtre « Développement ».
-- Ouvrir un port web dans le navigateur (🌐).
+- Ouvrir un port web dans le navigateur ().
 - **Arrêter** un programme après confirmation. Les processus système et Mes
-  outils lui-même sont protégés (🔒).
+  outils lui-même sont protégés ().
 
-### 🐳 Docker
+### Docker
 
 Vos conteneurs, groupés par projet compose.
 
@@ -195,7 +195,7 @@ Vos conteneurs, groupés par projet compose.
 - Ouvrir les ports publiés en un clic.
 - « Images et espace disque » : la place occupée par Docker.
 
-### 📡 Testeur d'API
+### Testeur d'API
 
 Un mini Postman, directement dans le tableau de bord.
 
@@ -209,7 +209,7 @@ Un mini Postman, directement dans le tableau de bord.
   requêtes enregistrées.
 - Copier une requête en commande **cURL**.
 
-### 🔑 SSH
+### SSH
 
 Une clé par serveur, posée en un clic.
 
@@ -219,10 +219,10 @@ Une clé par serveur, posée en un clic.
   L'outil crée la clé, la dépose sur le serveur, puis vérifie la connexion.
 - Le mot de passe ne sert qu'à cette fois : il n'est enregistré nulle part.
 - Ensuite, dans un terminal : `ssh <nom-court>` (clic sur la carte = copie).
-- 🧪 tester la connexion, 💻 ouvrir un terminal sur le serveur, 🗑️ retirer la
+- tester la connexion, ouvrir un terminal sur le serveur, retirer la
   clé du serveur puis de ce PC.
 
-### ✉️ Mails
+### Mails
 
 Votre boîte mail : Gmail, Yahoo, iCloud, Zoho, Fastmail, GMX, OVH, Orange,
 Free, La Poste ou tout serveur IMAP/SMTP.
@@ -234,19 +234,19 @@ Free, La Poste ou tout serveur IMAP/SMTP.
 - Les images distantes sont bloquées (elles servent à savoir si vous avez lu
   le mail) : bouton « Afficher les images ».
 - Le guide du fournisseur s'affiche à la première connexion ; le mot de passe
-  est rangé dans le coffre de Windows. 🔌 pour se déconnecter.
+  est rangé dans le coffre de Windows. pour se déconnecter.
 
-### 📝 Notes
+### Notes
 
 ![Onglet Notes](images/fr/notes.webp)
 
 - Notes en cartes colorées ou **listes à cocher**.
-- **📌 Épingler** une note (elle apparaît sur l'Accueil).
-- **⏰ Rappel** à une date et une heure : la bulle vous prévient.
+- **Épingler** une note (elle apparaît sur l'Accueil).
+- **Rappel** à une date et une heure : la bulle vous prévient.
 - Recherche et filtres (listes, avec rappel).
 - Enregistrement automatique pendant la frappe.
 
-### 📅 Agenda
+### Agenda
 
 ![Onglet Agenda](images/fr/agenda.webp)
 
@@ -257,23 +257,23 @@ Free, La Poste ou tout serveur IMAP/SMTP.
 - Rappel par la bulle : à l'heure, 5, 15, 30 minutes ou 1 heure avant, ou la
   veille.
 
-### 🔐 Mots de passe
+### Mots de passe
 
 Un coffre chiffré, ouvert avec un mot de passe maître.
 
 ![Onglet Mots de passe](images/fr/motsdepasse.webp)
 
 - Ranger vos identifiants par catégorie, avec une note chiffrée.
-- **🔑 Copier** un mot de passe : il est effacé du presse-papiers après
+- **Copier** un mot de passe : il est effacé du presse-papiers après
   30 secondes et n'entre pas dans l'historique Windows (Win + V).
-- **👁 Afficher** un mot de passe pendant 15 secondes.
-- **🎲 Générateur** de mots de passe solides.
-- Le coffre se verrouille seul après 5 minutes sans utilisation (ou 🔒).
+- **Afficher** un mot de passe pendant 15 secondes.
+- **Générateur** de mots de passe solides.
+- Le coffre se verrouille seul après 5 minutes sans utilisation (ou ).
 
-> ⚠️ Le mot de passe maître n'est enregistré nulle part : s'il est oublié, le
+> Le mot de passe maître n'est enregistré nulle part : s'il est oublié, le
 > coffre est perdu. Notez-le sur papier.
 
-### 🧪 Boîte à outils
+### Boîte à outils
 
 Les petits outils de tous les jours. Rien ne quitte la page.
 
@@ -285,7 +285,7 @@ Les petits outils de tous les jours. Rien ne quitte la page.
 - **Expressions régulières** testées en direct.
 - **Hachage** (SHA) d'un texte ou d'un fichier, **couleurs**.
 
-### ✂️ Extraits
+### Extraits
 
 Vos commandes et bouts de code favoris.
 
@@ -296,7 +296,7 @@ Vos commandes et bouts de code favoris.
 - Trier par usage, par titre ou par date.
 - Aussi disponibles depuis le clic droit sur la bulle.
 
-### 📋 Presse-papiers
+### Presse-papiers
 
 Les 50 derniers textes copiés.
 
@@ -309,7 +309,7 @@ Les 50 derniers textes copiés.
 - L'historique est gardé **en mémoire seulement** et effacé à la fermeture ;
   les mots de passe copiés depuis le coffre n'y entrent pas.
 
-### ⏱️ Temps
+### Temps
 
 Le temps passé sur chaque projet.
 
@@ -321,7 +321,7 @@ Le temps passé sur chaque projet.
 - Ajouter une **session oubliée**, modifier ou supprimer une session.
 - **Export CSV** pour Excel et la facturation.
 
-### ⚙️ Réglages
+### Réglages
 
 ![Réglages](images/fr/reglages.webp)
 
@@ -330,7 +330,7 @@ Le temps passé sur chaque projet.
 - **Dossiers de projets** : là où les onglets Projets et GitHub cherchent vos
   projets.
 - Démarrage avec Windows, raccourci sur le Bureau.
-- **À propos** : « 🔄 Rechercher une mise à jour ».
+- **À propos** : « Rechercher une mise à jour ».
 
 ## Sécurité et vie privée
 
@@ -364,7 +364,7 @@ Installez Docker Desktop et démarrez-le ; l'onglet propose de le télécharger 
 Sans Docker, le reste de l'outil fonctionne normalement.
 
 **Comment mettre à jour Mes outils ?**
-Réglages › À propos › « 🔄 Rechercher une mise à jour ». Avec l'installateur,
+Réglages › À propos › « Rechercher une mise à jour ». Avec l'installateur,
 cliquez sur **Installer** : la nouvelle version se télécharge, s'installe et
 Mes outils redémarre tout seul (vos réglages et données sont gardés). Avec une
 installation faite avec `git clone`, la mise à jour fait un `git pull` ;
@@ -381,7 +381,7 @@ dossier et ses sous-dossiers directs ; un projet ailleurs s'ajoute avec
 « + Ajouter un projet ».
 
 **Un serveur de dev ne s'arrête pas.**
-« ⏹ Arrêter » n'arrête que ce que Mes outils a lancé. Pour un autre
+« Arrêter » n'arrête que ce que Mes outils a lancé. Pour un autre
 programme, passez par l'onglet Ports.
 
 **Où sont mes données ?**
@@ -392,3 +392,7 @@ Dans le dossier de Mes outils : `outils.json` (réglages et tuiles) et
 
 Un onglet = un fichier Python et un fichier JavaScript, sans toucher au reste.
 Tout est expliqué dans [MODULES.md](MODULES.md).
+
+---
+
+Anciennes versions de ce guide : [version 1.3](archives/v1.3/GUIDE.md).

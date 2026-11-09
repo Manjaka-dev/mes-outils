@@ -70,7 +70,7 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    .agenda-carte { background: var(--carte); border-radius: 22px; box-shadow: var(--ombre); overflow: hidden; animation: apparait .35s both; }
+    .agenda-carte { background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); overflow: hidden; animation: apparait .35s both; }
     .semaine { display: flex; flex-direction: column; }
     .entete-semaine { display: grid; grid-template-columns: 54px repeat(7, minmax(0, 1fr)); padding-right: 8px; }
     .entete-semaine .tete-jour { text-align: center; padding: 10px 4px; border-bottom: 1px solid var(--ligne); font-size: 13px; color: var(--doux); font-weight: 700; }
@@ -83,7 +83,7 @@
     .defilement::-webkit-scrollbar { width: 8px; }
     .defilement::-webkit-scrollbar-thumb { background: var(--ligne); border-radius: 8px; }
     .corps-semaine { display: grid; grid-template-columns: 54px repeat(7, minmax(0, 1fr)); position: relative; }
-    .heures div { height: ${PX}px; font-size: 11px; color: var(--gris); text-align: right; padding-right: 6px; transform: translateY(-7px); }
+    .heures div { height: ${PX}px; font-size: 11px; color: var(--gris); text-align: right; padding-right: 6px; transform: none; }
     .colonne { position: relative; border-left: 1px solid var(--ligne); background-image: repeating-linear-gradient(to bottom, transparent 0, transparent ${PX - 1}px, var(--ligne) ${PX - 1}px, var(--ligne) ${PX}px); cursor: copy; }
     .colonne.auj { background-color: var(--surface); }
     .rdv { position: absolute; left: 3px; right: 3px; border-radius: 10px; padding: 4px 7px; font-size: 12.5px; color: #fff; overflow: hidden; cursor: pointer;
@@ -99,11 +99,11 @@
     .mois .jour { min-height: 98px; border-left: 1px solid var(--ligne); border-bottom: 1px solid var(--ligne); padding: 6px; cursor: pointer; transition: background .15s; }
     .mois .jour:hover { background: var(--violet-clair); }
     .mois .jour.autre { background: var(--surface); color: var(--gris); }
-    .mois .jour .num { font-weight: 800; font-size: 13px; margin-bottom: 4px; display: inline-block; min-width: 24px; text-align: center; border-radius: 8px; }
+    .mois .jour .num { font-weight: 600; font-size: 13px; margin-bottom: 4px; display: inline-block; min-width: 24px; text-align: center; border-radius: 8px; }
     .mois .jour.auj .num { background: var(--violet); color: var(--sur-violet); }
     .puce-rdv { font-size: 11.5px; border-radius: 7px; padding: 2px 6px; color: #fff; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .plus-rdv { font-size: 11.5px; color: var(--doux); font-weight: 700; }
-    .titre-periode { font-size: 19px; font-weight: 800; margin: 0 6px; min-width: 250px; }
+    .titre-periode { font-size: 19px; font-weight: 600; margin: 0 6px; min-width: 250px; }
     .grille-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
     .rdv, .puce-rdv { cursor: grab; user-select: none; }
     .rdv.glisse { cursor: grabbing; opacity: .9; z-index: 10; transform: scale(1.03); box-shadow: 0 16px 30px -10px rgba(31,26,58,.55); transition: none; }

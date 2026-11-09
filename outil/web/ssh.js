@@ -81,10 +81,10 @@
   const style = document.createElement("style");
   style.textContent = `
     .liste-ssh { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 12px; }
-    .srv { background: var(--carte); border-radius: 18px; box-shadow: var(--ombre); padding: 14px 16px; display: flex; gap: 12px; align-items: center; animation: apparait .3s both; }
+    .srv { background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 14px 16px; display: flex; gap: 12px; align-items: center; animation: apparait .3s both; }
     .srv .av { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; font-size: 22px; flex: none; color: #fff; }
     .srv .infos { flex: 1; min-width: 0; }
-    .srv .t { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .srv .t { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .srv .u { font-size: 13px; color: var(--doux); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .srv .cmd { font-family: var(--mono); font-size: 13px; background: var(--code); color: var(--code-texte); border-radius: 8px; padding: 2px 8px; margin-top: 5px; display: inline-block; cursor: pointer; }
     .srv .cmd:hover { background: var(--violet-clair); color: var(--violet); }

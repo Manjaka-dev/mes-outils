@@ -151,7 +151,7 @@
     .liste-gh { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 12px; }
     .depot { background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; animation: apparait .3s both; min-width: 0; }
     .depot .l1 { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .depot .t { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .depot .t { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
     .badge-gh { font-size: 11.5px; font-weight: 700; border-radius: 999px; padding: 2px 9px; white-space: nowrap; flex: none; }
     .badge-gh.prive, .badge-gh.rouge { background: var(--rouge-clair); color: var(--rouge-texte); }
     .badge-gh.public, .badge-gh.vert { background: var(--vert-clair); color: var(--vert-texte); }
@@ -169,7 +169,7 @@
     .outils-gh input, .outils-gh select { border: 1.5px solid var(--ligne); border-radius: 12px; padding: 8px 11px; outline: none; background: var(--champ); color: var(--encre); font: inherit; }
     .outils-gh input { width: 240px; }
     .outils-gh input:focus, .outils-gh select:focus { border-color: var(--violet); background: var(--champ-focus); }
-    .code-gh { font-family: var(--mono); font-size: 34px; font-weight: 800; letter-spacing: 4px; background: var(--violet-clair); color: var(--violet); border-radius: 16px; padding: 14px; margin: 6px 0 14px; user-select: all; }
+    .code-gh { font-family: var(--mono); font-size: 34px; font-weight: 600; letter-spacing: 4px; background: var(--violet-clair); color: var(--violet); border-radius: var(--rayon); padding: 14px; margin: 6px 0 14px; user-select: all; }
     .dossiers-gh { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 12px; }
     .dossiers-gh div { display: flex; align-items: center; gap: 8px; background: var(--surface); border-radius: 12px; padding: 7px 10px; font-size: 14px; }
     .dossiers-gh div span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -191,7 +191,7 @@
     .puce.alerte-gh:not(.actif) { box-shadow: 0 0 0 2px var(--rouge) inset; color: var(--rouge-texte); }
 
     .lignes-gh { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
-    .ligne-gh { background: var(--carte); border-radius: 16px; box-shadow: var(--ombre); padding: 11px 14px; display: flex; align-items: center; gap: 12px; animation: apparait .3s both; min-width: 0; }
+    .ligne-gh { background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 11px 14px; display: flex; align-items: center; gap: 12px; animation: apparait .3s both; min-width: 0; }
     .ligne-gh .ic-gh { font-size: 20px; width: 26px; text-align: center; flex: none; }
     .ligne-gh .corps-gh { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
     .ligne-gh .t-gh { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -200,21 +200,21 @@
     .ligne-gh.brouillon .titre-gh { color: var(--doux); }
     .ligne-gh img.av-gh { width: 18px; height: 18px; border-radius: 50%; vertical-align: -4px; margin-right: 4px; }
     .etiq-gh { font-size: 11px; font-weight: 700; border-radius: 99px; padding: 1px 8px; white-space: nowrap; flex: none; }
-    .section-gh { font-size: 13px; font-weight: 800; color: var(--doux); text-transform: uppercase; letter-spacing: .6px; margin: 4px 2px 8px; display: flex; gap: 8px; align-items: center; }
+    .section-gh { font-size: 13px; font-weight: 600; color: var(--doux); text-transform: uppercase; letter-spacing: .6px; margin: 4px 2px 8px; display: flex; gap: 8px; align-items: center; }
 
     .run-gh { background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 13px 16px; display: flex; flex-direction: column; gap: 6px; border-left: 5px solid var(--ligne); animation: apparait .3s both; min-width: 0; }
     .run-gh.succes { border-left-color: var(--menthe); }
-    .run-gh.echec { border-left-color: var(--rouge); background: linear-gradient(90deg, var(--rouge-clair), var(--carte) 75%); }
+    .run-gh.echec { border-left-color: var(--rouge); background: var(--carte); }
     .run-gh.en_cours { border-left-color: var(--ambre); }
     .run-gh.action { border-left-color: var(--bleu-texte); }
     .run-gh .l1 { display: flex; align-items: center; gap: 8px; min-width: 0; }
     .run-gh .ic-run { font-size: 18px; flex: none; }
-    .run-gh .t { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .run-gh .t { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
     .run-gh .wf { font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .run-gh .commit { font-size: 13px; color: var(--doux); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .run-gh .autres { display: flex; gap: 6px; flex-wrap: wrap; }
     .run-gh .autres button { border: 1px solid var(--ligne); background: var(--surface); color: var(--encre); border-radius: 99px; font-size: 11.5px; padding: 1px 8px; cursor: pointer; }
-    .alerte-ci { border-radius: 16px; padding: 12px 16px; font-weight: 700; margin-bottom: 12px; }
+    .alerte-ci { border-radius: var(--rayon); padding: 12px 16px; font-weight: 700; margin-bottom: 12px; }
     .alerte-ci.echec { background: var(--rouge-clair); color: var(--rouge-texte); box-shadow: 0 0 0 2px var(--rouge) inset; }
     .alerte-ci.en_cours { background: var(--ambre-clair); color: var(--ambre-texte); }
     .alerte-ci.succes { background: var(--vert-clair); color: var(--vert-texte); }

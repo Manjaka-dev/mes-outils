@@ -102,7 +102,7 @@
       outline: none; font-size: 14px; min-width: 0; }
     .rq-saisie:focus, .rq-carte select:focus, .rq-carte textarea:focus { border-color: var(--violet); background: var(--champ-focus); }
     .rq-mono { font-family: var(--mono); font-size: 13px; }
-    .rq-methode { font-weight: 800; font-family: var(--mono); }
+    .rq-methode { font-weight: 600; font-family: var(--mono); }
     .rq-m-vert { color: var(--vert-texte); } .rq-m-ambre { color: var(--ambre-texte); } .rq-m-bleu { color: var(--bleu-texte); }
     .rq-m-violet { color: var(--violet); } .rq-m-rouge { color: var(--rouge-texte); } .rq-m-gris { color: var(--doux); }
     .rq-puces { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 12px 0 10px; }
@@ -124,7 +124,7 @@
     .rq-champs label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; font-weight: 700; color: var(--doux); }
     .rq-coche { display: flex; gap: 8px; align-items: center; font-size: 14px; margin: 8px 0; cursor: pointer; }
     .rq-coche input { width: 17px; height: 17px; accent-color: var(--violet); }
-    .rq-statut { font-weight: 800; border-radius: 999px; padding: 3px 12px; font-family: var(--mono); font-size: 13.5px; }
+    .rq-statut { font-weight: 600; border-radius: 999px; padding: 3px 12px; font-family: var(--mono); font-size: 13.5px; }
     .rq-s2 { background: var(--vert-clair); color: var(--vert-texte); }
     .rq-s3 { background: var(--ambre-clair); color: var(--ambre-texte); }
     .rq-s4, .rq-s5 { background: var(--rouge-clair); color: var(--rouge-texte); }
@@ -145,10 +145,10 @@
     .rq-elt .rq-methode { font-size: 10.5px; width: 50px; flex: none; }
     .rq-elt .rq-texte { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .rq-elt .rq-texte small { display: block; color: var(--gris); font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
-    .rq-elt .rq-mini { font-size: 11px; font-weight: 800; border-radius: 99px; padding: 0 6px; flex: none; }
+    .rq-elt .rq-mini { font-size: 11px; font-weight: 600; border-radius: 99px; padding: 0 6px; flex: none; }
     .rq-elt .icone-btn { width: 24px; height: 24px; font-size: 11px; opacity: 0; background: transparent; }
     .rq-elt:hover .icone-btn { opacity: 1; }
-    .rq-groupe { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; font-weight: 800; color: var(--gris); margin: 10px 8px 2px; }
+    .rq-groupe { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; font-weight: 600; color: var(--gris); margin: 10px 8px 2px; }
     .rq-tete { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .rq-tete .espace { flex: 1; }
     .rq-vide { color: var(--doux); text-align: center; padding: 26px 10px; font-size: 14px; }

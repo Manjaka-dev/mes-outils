@@ -188,12 +188,12 @@
     .pj-l1 { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .pj-ic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; font-size: 21px; background: var(--violet-clair); flex: none; }
     .pj-titre { flex: 1; min-width: 0; }
-    .pj-nom { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pj-nom { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pj-chemin { font-size: 12px; color: var(--doux); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; direction: rtl; text-align: left; }
     .pj-types { display: flex; gap: 4px; flex-wrap: wrap; }
     .pj-type { font-size: 11px; font-weight: 700; border-radius: 99px; padding: 1px 8px; background: var(--surface); color: var(--doux); }
     .pj-badges { display: flex; gap: 4px; flex: none; }
-    .pj-badge { font-size: 12px; font-weight: 800; border-radius: 99px; padding: 3px 9px; white-space: nowrap; }
+    .pj-badge { font-size: 12px; font-weight: 600; border-radius: 99px; padding: 3px 9px; white-space: nowrap; }
     .pj-badge.ok { background: var(--vert-clair); color: var(--vert-texte); }
     .pj-badge.envoi { background: var(--ambre-clair); color: var(--ambre-texte); }
     .pj-badge.retard { background: var(--bleu-clair); color: var(--bleu-texte); }

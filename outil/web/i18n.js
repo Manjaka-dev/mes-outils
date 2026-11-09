@@ -65,7 +65,8 @@ window.I18N = (() => {
       while (marcheur.nextNode()) noeuds.push(marcheur.currentNode);
       for (const n of noeuds) {
         const brut = n.nodeValue, coupe = brut.trim();
-        if (!coupe || n.parentElement?.closest("script,style")) continue;
+        // translate="no" : un nom propre (le nom de l'application) ne se traduit pas.
+        if (!coupe || n.parentElement?.closest("script,style,[translate='no']")) continue;
         const tr = traduire(coupe);
         if (tr !== coupe) n.nodeValue = brut.replace(coupe, tr);
       }

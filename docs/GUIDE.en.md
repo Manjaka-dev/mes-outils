@@ -3,7 +3,7 @@
 [Français](GUIDE.md) · **English**
 
 Mes outils ("my tools") is a personal dashboard for Windows, made for
-developers. A small 🧰 bubble floats on the screen; one click opens your
+developers. A small bubble floats on the screen; one click opens your
 projects, dev servers, GitHub, mail, notes, calendar, passwords and a toolbox.
 Everything runs on your PC, with no account and no online service.
 
@@ -14,11 +14,11 @@ Everything runs on your PC, with no account and no online service.
 - [Installation](#installation)
 - [The bubble](#the-bubble)
 - [Getting around](#getting-around)
-- The tabs: [Home](#-home) · [Servers](#️-servers) · [Projects](#-projects) · [GitHub](#-github) ·
-  [Ports](#-ports) · [Docker](#-docker) · [API tester](#-api-tester) ·
-  [SSH](#-ssh) · [Mail](#️-mail) · [Notes](#-notes) · [Calendar](#-calendar) ·
-  [Passwords](#-passwords) · [Toolbox](#-toolbox) · [Snippets](#️-snippets) ·
-  [Clipboard](#-clipboard) · [Time](#️-time) · [Settings](#️-settings)
+- The tabs: [Home](#home) · [Servers](#servers) · [Projects](#projects) · [GitHub](#github) ·
+  [Ports](#ports) · [Docker](#docker) · [API tester](#api-tester) ·
+  [SSH](#ssh) · [Mail](#mail) · [Notes](#notes) · [Calendar](#calendar) ·
+  [Passwords](#passwords) · [Toolbox](#toolbox) · [Snippets](#snippets) ·
+  [Clipboard](#clipboard) · [Time](#time) · [Settings](#settings)
 - [Security and privacy](#security-and-privacy)
 - [FAQ](#faq)
 - [Adding a tab](#adding-a-tab)
@@ -31,7 +31,7 @@ Everything runs on your PC, with no account and no online service.
 2. Run it. Windows may show "Windows protected your PC": the installer is not
    signed (signing costs money). Click **More info**, then **Run anyway**.
 3. Pick the options (Desktop shortcut, start with Windows), then **Install**.
-   The 🧰 bubble appears.
+   The bubble appears.
 
 No administrator rights and no Python needed: everything is included. The
 program goes to `%LOCALAPPDATA%\Programs\Mes outils`; your settings and data
@@ -59,7 +59,7 @@ installer, your settings and data are picked up automatically on first launch
 
 ## The bubble
 
-A purple 🧰 bubble floats above the other windows, with no taskbar button. It
+A purple bubble floats above the other windows, with no taskbar button. It
 starts with Windows.
 
 | Action | Result |
@@ -70,9 +70,9 @@ starts with Windows.
 
 The badges around the bubble:
 
-- 🟢 **green** (top right): number of dev servers running;
-- 🟠 **coral** (top left): number of unread emails;
-- 🔴 **red** (bottom): failing GitHub Actions tests.
+- **green** (top right): number of dev servers running;
+- **coral** (top left): number of unread emails;
+- **red** (bottom): failing GitHub Actions tests.
 
 When idle, the bubble is slightly transparent; it becomes solid when the mouse
 moves over it. When a reminder is due (note, appointment, Pomodoro), a card
@@ -89,7 +89,7 @@ nothing: the bubble stays. If you quit the bubble, start it again with the
 - **Ctrl + K** (or "Search…" at the top): the command palette. Type a few
   letters to go to a tab, launch one of your tools or switch theme, then
   press Enter.
-- **🌗 Theme**: light, dark or automatic (follows Windows).
+- **Theme**: light, dark or automatic (follows Windows).
 - **Language**: French or English, in the Settings.
 
 ![Command palette (Ctrl + K)](images/en/palette.webp)
@@ -100,7 +100,7 @@ The same dashboard with the dark theme:
 
 ## The tabs
 
-### 🏠 Home
+### Home
 
 The landing page (see the screenshot at the top of this guide).
 
@@ -108,43 +108,43 @@ The landing page (see the screenshot at the top of this guide).
 - **Pinned notes**, **unread emails**, **timer running**.
 - **Code**: projects to push, modified, behind, failing GitHub tests.
 - **My tools**: your tiles (folder, file, program, web page or local app).
-  "✏️ Edit" to add, change or remove them.
+  "Edit" to add, change or remove them.
 
-### 🖥️ Servers
+### Servers
 
 ![Servers tab: Odoo servers and project dev servers](images/en/serveurs.webp)
 
 All your servers in one place: your projects' dev servers (the commands set
-in 📦 Projects) and, if you use it, the Odoo servers of an external gadget
+in Projects) and, if you use it, the Odoo servers of an external gadget
 (`gestion_serveurs.py`, path in `outils.json`, key `serveurs_odoo` › `gadget`).
 
-- ▶ start, ■ stop, ↗ open in the browser, ☰ log;
+- start, stop, ↗ open in the browser, log;
 - green dot = running, orange = starting, red = port taken by another
   program;
 - an Odoo database marked "reference" asks for confirmation before starting.
 
-### 📦 Projects
+### Projects
 
 The projects found in your project folders, with their type (Node, Next.js,
 Vite, Python, Django, Docker, Odoo…).
 
 ![Projects tab](images/en/projets.webp)
 
-- Open a project in one click: **📂 Folder**, **💻 VS Code**, **⌨️ Terminal**.
-- See the **Git status**: ⬆️ to push, ⬇️ to pull, ✏️ modified; "Check all"
+- Open a project in one click: **Folder**, **VS Code**, **Terminal**.
+- See the **Git status**: to push, to pull, modified; "Check all"
   runs a `git fetch` on every project.
-- Set up the **dev commands** (⚙️): the tool suggests some from the project
+- Set up the **dev commands** (): the tool suggests some from the project
   (`npm run dev`, `manage.py runserver`, `docker compose up`…).
-- **▶ Start** and **⏹ Stop** a dev server, **🌐** open the site, **📜** read
+- **Start** and **Stop** a dev server, **** open the site, **** read
   its live log.
-- Back up **.env** files to the encrypted vault (🔐) and restore them in one
+- Back up **.env** files to the encrypted vault () and restore them in one
   click.
 
 ![A project's commands](images/en/projets-commandes.webp)
 
 ![A dev server's log](images/en/projets-journal.webp)
 
-### 🐙 GitHub
+### GitHub
 
 All your repositories (public, private, your organizations'). You sign in once
 with a code to confirm on github.com, without a password.
@@ -152,7 +152,7 @@ with a code to confirm on github.com, without a password.
 ![GitHub tab: repositories](images/en/github.webp)
 
 - Search and filter your repositories (private, public, on this PC or not).
-- **⬇️ Clone** a repository, or open its folder or VS Code if it is already on
+- **Clone** a repository, or open its folder or VS Code if it is already on
   this PC.
 - **+ New repository** from a folder: the content is checked before sending
   (`.gitignore` respected, sensitive files such as `.env` flagged, files over
@@ -164,7 +164,7 @@ with a code to confirm on github.com, without a password.
 
 ![Actions sub-tab (dark theme)](images/en/github-actions-sombre.webp)
 
-### 🔌 Ports
+### Ports
 
 Which program is using port 3000? The answer at a glance.
 
@@ -173,11 +173,11 @@ Which program is using port 3000? The answer at a glance.
 - See every listening port, with the program, its command line and its
   memory.
 - Search for a port or a program; "Development" filter.
-- Open a web port in the browser (🌐).
+- Open a web port in the browser ().
 - **Stop** a program after confirmation. System processes and Mes outils
-  itself are protected (🔒).
+  itself are protected ().
 
-### 🐳 Docker
+### Docker
 
 Your containers, grouped by compose project.
 
@@ -189,7 +189,7 @@ Your containers, grouped by compose project.
 - Open the published ports in one click.
 - "Images and disk space": how much room Docker takes.
 
-### 📡 API tester
+### API tester
 
 A mini Postman, right in the dashboard.
 
@@ -203,7 +203,7 @@ A mini Postman, right in the dashboard.
   requests.
 - Copy a request as a **cURL** command.
 
-### 🔑 SSH
+### SSH
 
 One key per server, set up in one click.
 
@@ -213,10 +213,10 @@ One key per server, set up in one click.
   the key, installs it on the server, then checks the connection.
 - The password is only used that once: it is not stored anywhere.
 - Then, in a terminal: `ssh <short-name>` (click the card to copy it).
-- 🧪 test the connection, 💻 open a terminal on the server, 🗑️ remove the key
+- test the connection, open a terminal on the server, remove the key
   from the server, then from this PC.
 
-### ✉️ Mail
+### Mail
 
 Your mailbox: Gmail, Yahoo, iCloud, Zoho, Fastmail, GMX, OVH, Orange, Free,
 La Poste or any IMAP/SMTP server.
@@ -228,19 +228,19 @@ La Poste or any IMAP/SMTP server.
 - Remote images are blocked (they tell the sender you opened the email):
   "Show images" button.
 - The provider's guide is shown the first time you connect; the password is
-  stored in the Windows credential vault. 🔌 to disconnect.
+  stored in the Windows credential vault. to disconnect.
 
-### 📝 Notes
+### Notes
 
 ![Notes tab](images/en/notes.webp)
 
 - Notes as colored cards or **checklists**.
-- **📌 Pin** a note (it shows on the Home page).
-- **⏰ Reminder** at a date and time: the bubble lets you know.
+- **Pin** a note (it shows on the Home page).
+- **Reminder** at a date and time: the bubble lets you know.
 - Search and filters (lists, with a reminder).
 - Saved automatically as you type.
 
-### 📅 Calendar
+### Calendar
 
 ![Calendar tab](images/en/agenda.webp)
 
@@ -250,23 +250,23 @@ La Poste or any IMAP/SMTP server.
 - Reminder from the bubble: on time, 5, 15, 30 minutes or 1 hour before, or
   the day before.
 
-### 🔐 Passwords
+### Passwords
 
 An encrypted vault, opened with a master password.
 
 ![Passwords tab](images/en/motsdepasse.webp)
 
 - Store your logins by category, with an encrypted note.
-- **🔑 Copy** a password: it is cleared from the clipboard after 30 seconds and
+- **Copy** a password: it is cleared from the clipboard after 30 seconds and
   does not go into the Windows clipboard history (Win + V).
-- **👁 Show** a password for 15 seconds.
-- **🎲 Generator** for strong passwords.
-- The vault locks itself after 5 minutes of inactivity (or 🔒).
+- **Show** a password for 15 seconds.
+- **Generator** for strong passwords.
+- The vault locks itself after 5 minutes of inactivity (or ).
 
-> ⚠️ The master password is not stored anywhere: if you forget it, the vault
+> The master password is not stored anywhere: if you forget it, the vault
 > is lost. Write it down on paper.
 
-### 🧪 Toolbox
+### Toolbox
 
 Everyday small tools. Nothing leaves the page.
 
@@ -278,7 +278,7 @@ Everyday small tools. Nothing leaves the page.
 - **Regular expressions** tested live.
 - **Hashing** (SHA) of a text or a file, **colors**.
 
-### ✂️ Snippets
+### Snippets
 
 Your favorite commands and pieces of code.
 
@@ -289,7 +289,7 @@ Your favorite commands and pieces of code.
 - Order by use, by title or by date.
 - Also available from the bubble's right-click menu.
 
-### 📋 Clipboard
+### Clipboard
 
 The last 50 texts you copied.
 
@@ -302,7 +302,7 @@ The last 50 texts you copied.
 - The history is kept **in memory only** and cleared when the app closes;
   passwords copied from the vault never go into it.
 
-### ⏱️ Time
+### Time
 
 The time spent on each project.
 
@@ -314,7 +314,7 @@ The time spent on each project.
 - Add a **missed session**, edit or delete a session.
 - **CSV export** for Excel and invoicing.
 
-### ⚙️ Settings
+### Settings
 
 ![Settings](images/en/reglages.webp)
 
@@ -323,7 +323,7 @@ The time spent on each project.
 - **Project folders**: where the Projects and GitHub tabs look for your
   projects.
 - Start with Windows, Desktop shortcut.
-- **About**: "🔄 Check for updates".
+- **About**: "Check for updates".
 
 ## Security and privacy
 
@@ -353,7 +353,7 @@ Install Docker Desktop and start it; the tab offers to download it or start
 it. Without Docker, the rest of the tool works normally.
 
 **How do I update Mes outils?**
-Settings › About › "🔄 Check for updates". With the installer, click
+Settings › About › "Check for updates". With the installer, click
 **Install**: the new version downloads, installs and Mes outils restarts by
 itself (your settings and data are kept). When installed with `git clone`, the
 update runs `git pull`; then restart the bubble (right-click › "Quit the
@@ -369,7 +369,7 @@ and its direct subfolders; a project elsewhere can be added with
 "+ Add a project".
 
 **A dev server will not stop.**
-"⏹ Stop" only stops what Mes outils started. For another program, use the
+"Stop" only stops what Mes outils started. For another program, use the
 Ports tab.
 
 **Where is my data?**
@@ -380,3 +380,7 @@ In the Mes outils folder: `outils.json` (settings and tiles) and `donnees\`
 
 A tab = one Python file and one JavaScript file, without touching the rest.
 Everything is explained in [MODULES.md](MODULES.md) (in French).
+
+---
+
+Older versions of this guide: [version 1.3](archives/v1.3/GUIDE.en.md).

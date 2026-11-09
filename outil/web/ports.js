@@ -62,12 +62,12 @@
     .pt-reponse.pris { color: var(--ambre-texte); background: var(--ambre-clair); box-shadow: none; }
     .pt-carte { background: var(--carte); border-radius: var(--rayon); box-shadow: var(--ombre); padding: 6px; overflow-x: auto; }
     .pt-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13.5px; }
-    .pt-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--gris); font-weight: 800; padding: 8px; }
+    .pt-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--gris); font-weight: 600; padding: 8px; }
     .pt-table td { padding: 7px 8px; border-top: 1px solid var(--ligne); vertical-align: middle; color: var(--encre); }
     .pt-table tr:hover td { background: var(--surface); }
     .pt-table tr.dev td:first-child { box-shadow: inset 3px 0 0 var(--violet); }
-    .pt-port { font-family: var(--mono); font-weight: 800; font-size: 14.5px; white-space: nowrap; }
-    .pt-proto { font-size: 10.5px; font-weight: 800; color: var(--gris); margin-left: 4px; }
+    .pt-port { font-family: var(--mono); font-weight: 600; font-size: 14.5px; white-space: nowrap; }
+    .pt-proto { font-size: 10.5px; font-weight: 600; color: var(--gris); margin-left: 4px; }
     .pt-dev { display: inline-block; margin-top: 2px; background: var(--violet-clair); color: var(--violet); }
     .pt-adr { font-family: var(--mono); font-size: 12.5px; max-width: 190px; overflow-wrap: anywhere; }
     .pt-portee { display: block; font-family: "Segoe UI", system-ui, sans-serif; font-size: 11.5px; color: var(--doux); }

@@ -87,7 +87,7 @@
     .bo-coche { display: inline-flex; gap: 7px; align-items: center; font-size: 13.5px; cursor: pointer; color: var(--encre); }
     .bo-coche input { width: 16px; height: 16px; accent-color: var(--violet); }
     .bo-sortie { margin-top: 12px; min-width: 0; }
-    .bo-sortie .bo-tete { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 800; color: var(--doux); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 5px; }
+    .bo-sortie .bo-tete { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--doux); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 5px; }
     .bo-sortie .bo-tete .espace { flex: 1; }
     .bo-copier { white-space: nowrap; border: 0; background: var(--violet-clair); color: var(--violet); border-radius: 9px; padding: 3px 10px; font-size: 12px; font-weight: 700; cursor: pointer; text-transform: none; letter-spacing: 0; }
     .bo-copier:hover { background: var(--violet); color: var(--sur-violet); }
@@ -115,7 +115,7 @@
     .bo-regex input { flex: 1; border: 0 !important; background: transparent !important; box-shadow: none !important; outline: none; padding: 9px 2px !important; font-weight: 400; font-family: var(--mono); font-size: 14px; color: var(--encre); min-width: 0; }
     .bo-drapeaux { display: flex; gap: 4px; }
     .bo-drapeaux button { border: 1.5px solid var(--ligne); background: var(--surface); color: var(--doux); border-radius: 9px; width: 32px; height: 32px;
-      font-family: var(--mono); font-weight: 800; cursor: pointer; }
+      font-family: var(--mono); font-weight: 600; cursor: pointer; }
     .bo-drapeaux button.actif { background: var(--violet); border-color: var(--violet); color: var(--sur-violet); }
     .bo-surligne { background: var(--ambre-clair); color: var(--ambre-texte); border-radius: 3px; box-shadow: 0 0 0 1px var(--ambre); }
     .bo-surligne.vide { box-shadow: 0 0 0 1px var(--ambre); padding: 0 1px; }
@@ -123,7 +123,7 @@
     .bo-corresp > div { background: var(--surface); border-radius: 10px; padding: 7px 10px; font-size: 13px; }
     .bo-corresp code { font-family: var(--mono); background: var(--code); color: var(--code-texte); border-radius: 6px; padding: 1px 5px; word-break: break-all; }
     .bo-corresp small { color: var(--doux); margin-right: 6px; }
-    .bo-pastille { width: 100%; height: 90px; border-radius: 16px; border: 1.5px solid var(--ligne);
+    .bo-pastille { width: 100%; height: 90px; border-radius: var(--rayon); border: 1.5px solid var(--ligne);
       background-image: linear-gradient(45deg, var(--surface) 25%, transparent 25%, transparent 75%, var(--surface) 75%),
         linear-gradient(45deg, var(--surface) 25%, transparent 25%, transparent 75%, var(--surface) 75%);
       background-size: 16px 16px; background-position: 0 0, 8px 8px; position: relative; overflow: hidden; }

@@ -60,13 +60,13 @@
   const style = document.createElement("style");
   style.textContent = `
     .ex-filtres { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: -6px 0 16px; }
-    .ex-filtres .lib { font-size: 12px; font-weight: 800; color: var(--gris); text-transform: uppercase; letter-spacing: .8px; }
+    .ex-filtres .lib { font-size: 12px; font-weight: 600; color: var(--gris); text-transform: uppercase; letter-spacing: .8px; }
     .ex-filtres .etiquette { cursor: pointer; border: 0; }
     .ex-filtres .etiquette.actif { background: var(--violet); color: var(--sur-violet); }
     .ex-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; align-items: start; }
     .ex-carte { display: flex; flex-direction: column; gap: 8px; animation: apparait .35s both; min-width: 0; }
     .ex-tete { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .ex-tete .titre { font-weight: 800; font-size: 15px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ex-tete .titre { font-weight: 600; font-size: 15px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ex-code { margin: 0; background: var(--code); color: var(--code-texte); font-family: var(--mono); font-size: 12.5px; line-height: 1.5;
       border: 1px solid var(--ligne); border-radius: 12px; padding: 10px 12px; max-height: 170px; overflow: hidden; white-space: pre-wrap;
       word-break: break-word; cursor: copy; position: relative; transition: border-color .15s; }

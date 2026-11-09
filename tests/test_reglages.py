@@ -25,6 +25,7 @@ class TestSocle(ServeurTest):
         self.assertEqual(statut, 200)
         self.assertIn("reglages.js", r["fichiers"])
         self.assertNotIn("i18n.js", r["fichiers"], "i18n.js est chargé à part, en premier")
+        self.assertNotIn("icones.js", r["fichiers"], "icones.js est chargé à part, en premier")
         self.assertEqual((r["langue"], r["masques"]), ("en", ["ssh"]))
 
     def test_module_inconnu_ou_invalide(self):

@@ -1,13 +1,13 @@
 # Mes outils
 
-⬇️ **[Télécharger Mes outils pour Windows (Setup.exe)](https://github.com/rarianaAina/mes-outils/releases/latest/download/Mes-outils-Setup.exe)** · rien d'autre à installer
+**[Télécharger Mes outils pour Windows (Setup.exe)](https://github.com/rarianaAina/mes-outils/releases/latest/download/Mes-outils-Setup.exe)** · rien d'autre à installer
 
-📖 **[Guide d'utilisation illustré](docs/GUIDE.md)** · **[Illustrated guide (English)](docs/GUIDE.en.md)**
+**[Guide d'utilisation illustré](docs/GUIDE.md)** · **[Illustrated guide (English)](docs/GUIDE.en.md)**
 
 ![Accueil de Mes outils](docs/images/fr/accueil.webp)
 
 Un tableau de bord personnel pour Windows, pensé pour les développeurs : une
-petite bulle 🧰 flotte sur l'écran et ouvre, d'un clic, vos projets, vos
+petite bulle flotte sur l'écran et ouvre, d'un clic, vos projets, vos
 serveurs de dev, GitHub, vos mails, notes, agenda, mots de passe et une boîte
 à outils.
 

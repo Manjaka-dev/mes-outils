@@ -44,10 +44,10 @@
   const style = document.createElement("style");
   style.textContent = `
     .notes-grille { columns: 4 240px; column-gap: 16px; }
-    .note { break-inside: avoid; margin: 0 0 16px; border-radius: 18px; padding: 14px 16px 12px; box-shadow: var(--ombre);
+    .note { background: var(--note, #fff); break-inside: avoid; margin: 0 0 16px; border-radius: var(--rayon); padding: 14px 16px 12px; box-shadow: var(--ombre);
             cursor: pointer; position: relative; transition: transform .2s, box-shadow .2s; animation: apparait .35s both; border: 1.5px solid rgba(0,0,0,.04); color: #1f1a3a; color-scheme: light; }
-    .note:hover { transform: translateY(-3px) rotate(-.4deg); }
-    .note .titre { font-weight: 800; font-size: 15.5px; margin: 0 22px 6px 0; word-break: break-word; }
+    .note:hover { transform: none; }
+    .note .titre { font-weight: 600; font-size: 15.5px; margin: 0 22px 6px 0; word-break: break-word; }
     .note .texte { white-space: pre-wrap; font-size: 14px; color: #3b3657; line-height: 1.45; max-height: 230px; overflow: hidden; word-break: break-word; }
     .note .epingle { position: absolute; top: 10px; right: 10px; font-size: 15px; }
     .note .bas { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
@@ -57,9 +57,9 @@
     .coche input { margin-top: 3px; accent-color: var(--menthe); width: 16px; height: 16px; flex: none; cursor: pointer; }
     .coche.fait span { text-decoration: line-through; color: #a7a3bd; }
     .notes-vide { text-align: center; padding: 50px 20px; color: var(--doux); }
-    .notes-vide div { font-size: 60px; animation: flotte 3s ease-in-out infinite; }
-    @keyframes flotte { 50% { transform: translateY(-8px) rotate(5deg); } }
-    .editeur-note { border-radius: 20px; padding: 6px 4px; color: #1f1a3a; color-scheme: light; }
+    .notes-vide div { font-size: 60px;  }
+    @keyframes flotte { 50% { transform: none; } }
+    .editeur-note { border-radius: var(--rayon); padding: 6px 4px; color: #1f1a3a; color-scheme: light; }
     /* Posés sur la couleur de la note (claire, choisie par l'utilisateur) : texte
        sombre et fond transparent, même en thème sombre (!important : le style
        commun des champs de hub.html est plus précis). */
@@ -67,7 +67,7 @@
       background: transparent !important; border-color: transparent !important; box-shadow: none !important; color: #1f1a3a !important; padding-left: 2px !important; }
     .editeur-note .liste-edition .element input[type=text]:focus { border-bottom-color: #6c4cf5 !important; }
     .editeur-note input::placeholder, .editeur-note textarea::placeholder { color: #8d89a8 !important; }
-    .editeur-note input.titre-note { width: 100%; border: 0; background: transparent; font-size: 20px; font-weight: 800; outline: none; margin-bottom: 8px; }
+    .editeur-note input.titre-note { width: 100%; border: 0; background: transparent; font-size: 20px; font-weight: 600; outline: none; margin-bottom: 8px; }
     .editeur-note textarea.texte-note { width: 100%; border: 0; background: transparent; outline: none; resize: vertical; min-height: 170px; font-size: 15px; line-height: 1.5; }
     .liste-edition .element { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
     .liste-edition .element input[type=text] { flex: 1; border: 0; border-bottom: 1.5px dashed transparent; background: transparent; outline: none; font-size: 15px; padding: 4px 0; }
@@ -82,6 +82,19 @@
     .outils-note input[type=datetime-local] { border: 1.5px solid #e7e3fb !important; border-radius: 10px !important; padding: 5px 8px !important; background: #fff !important; color: #1f1a3a !important; color-scheme: light; }
     .editeur-note .outils-note .btn.discret { color: #6b6790; }
     .sauve { font-size: 12px; color: #6b6790; margin-left: auto; }
+  
+    /* L'éditeur prend la couleur de la note. */
+    .fenetre:has(.editeur-note) { background: var(--note, var(--carte)); }
+    /* Mode nuit : la couleur de la note devient une teinte sombre, texte clair. */
+    :root[data-theme="sombre"] .note { background: color-mix(in srgb, var(--note, #fff) 13%, var(--carte)); color: var(--encre); color-scheme: dark; border-color: var(--ligne); }
+    :root[data-theme="sombre"] .note .texte { color: var(--doux); }
+    :root[data-theme="sombre"] .note .chip { background: rgba(255,255,255,.07); color: var(--doux); }
+    :root[data-theme="sombre"] .fenetre:has(.editeur-note) { background: color-mix(in srgb, var(--note, #fff) 13%, var(--carte)); }
+    :root[data-theme="sombre"] .editeur-note { color: var(--encre); color-scheme: dark; }
+    :root[data-theme="sombre"] .editeur-note input, :root[data-theme="sombre"] .editeur-note textarea,
+    :root[data-theme="sombre"] .editeur-note .liste-edition .element input[type=text] { color: var(--encre) !important; }
+    :root[data-theme="sombre"] .editeur-note input::placeholder, :root[data-theme="sombre"] .editeur-note textarea::placeholder { color: var(--gris) !important; }
+    :root[data-theme="sombre"] .outils-note input[type=datetime-local] { background: var(--champ) !important; color: var(--encre) !important; border-color: var(--ligne) !important; color-scheme: dark; }
   `;
   document.head.append(style);
 
@@ -120,7 +133,7 @@
           (n.elements || []).length > 8 ? el("div", { class: "chip" }, t("+ {n} autres", { n: n.elements.length - 8 })) : null)
       : el("div", { class: "texte" }, brut(n.texte));
     const faits = (n.elements || []).filter(e => e.fait).length;
-    return el("div", { class: "note", style: `background:${fond};animation-delay:${i * 30}ms`, onclick: () => editer(n) },
+    return el("div", { class: "note", style: `--note:${fond}`, onclick: () => editer(n) },
       n.epinglee ? el("span", { class: "epingle", title: "Épinglée" }, "📌") : null,
       n.titre ? el("div", { class: "titre" }, brut(n.titre)) : null,
       corps,
@@ -211,7 +224,7 @@
     };
 
     const pastilles = el("div", { class: "pastilles-c" }, COULEURS_NOTE.map(c => el("button", { style: `background:${c}`, class: (n.couleur || "#ffffff") === c ? "choisi" : "", title: "Couleur",
-      onclick: ev => { n.couleur = c; fenetreNote().style.background = c; [...pastilles.children].forEach(b => b.classList.toggle("choisi", b === ev.currentTarget)); planifier(); } })));
+      onclick: ev => { n.couleur = c; fenetreNote().style.setProperty("--note", c); [...pastilles.children].forEach(b => b.classList.toggle("choisi", b === ev.currentTarget)); planifier(); } })));
     const epingle = el("button", { class: "btn" + (n.epinglee ? " actif" : ""), title: "Épingler en haut et sur l'accueil",
       onclick: ev => { n.epinglee = !n.epinglee; ev.currentTarget.classList.toggle("actif", n.epinglee); planifier(); } }, "📌");
     const rappel = el("input", { type: "datetime-local", value: n.rappel || "", title: "Rappel par la bulle",
@@ -246,7 +259,7 @@
         } }, "Terminé")));
     dessinerCorps();
     fenetre([boite]);
-    fenetreNote().style.background = n.couleur || "#ffffff";
+    fenetreNote().style.setProperty("--note", n.couleur || "#ffffff");
     setTimeout(() => (n.titre ? zoneCorps.querySelector("textarea, input") : boite.querySelector(".titre-note"))?.focus(), 60);
     // La fenêtre se ferme aussi par Échap ou un clic à côté : on redessine
     // pour montrer la note telle qu'elle a été enregistrée.

@@ -16,6 +16,7 @@ programme, invisible, suffit.
 import ctypes
 import json
 import os
+import re
 import sys
 import threading
 import tkinter as tk
@@ -128,38 +129,52 @@ def ouvrir_tableau(onglet=None):
 # Image de la bulle
 # ---------------------------------------------------------------------------
 def image_bulle(diametre):
-    """Bulle ronde dégradée avec l'emoji 🧰, posée sur la couleur clé : les
-    pixels de bord sont tranchés net (pas de halo autour de la bulle)."""
-    from PIL import Image, ImageDraw, ImageFont, ImageTk
+    """Bulle ronde, couleur d'accent unie, avec le logo de Mes outils (quatre
+    carrés au trait), posée sur la couleur clé : bords nets, sans halo."""
+    from PIL import Image, ImageDraw, ImageTk
 
     s = 4  # sur-échantillonnage
     d = diametre * s
-    degrade = Image.new("RGBA", (d, d))
-    px = degrade.load()
-    haut, bas = (108, 76, 245), (160, 128, 255)
-    for y in range(d):
-        for x in range(d):
-            t = (x + y) / (2 * d)
-            px[x, y] = tuple(int(haut[i] + (bas[i] - haut[i]) * t) for i in range(3)) + (255,)
     bulle = Image.new("RGBA", (d, d), (0, 0, 0, 0))
-    masque = Image.new("L", (d, d), 0)
-    ImageDraw.Draw(masque).ellipse((0, 0, d - 1, d - 1), fill=255)
-    bulle.paste(degrade, (0, 0), masque)
-    ImageDraw.Draw(bulle).ellipse((s, s, d - 1 - s, d - 1 - s), outline=(255, 255, 255, 235), width=3 * s)
-    try:
-        police = ImageFont.truetype(os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "Fonts", "seguiemj.ttf"), 109)
-        emoji = Image.new("RGBA", (160, 160), (0, 0, 0, 0))
-        ImageDraw.Draw(emoji).text((80, 86), "🧰", font=police, anchor="mm", embedded_color=True)
-        taille = int(d * 0.62)
-        emoji = emoji.resize((taille, taille), Image.LANCZOS)
-        bulle.alpha_composite(emoji, ((d - taille) // 2, (d - taille) // 2))
-    except OSError:
-        pass
+    dessin = ImageDraw.Draw(bulle)
+    dessin.ellipse((0, 0, d - 1, d - 1), fill=(91, 91, 214, 255))
+    dessin.ellipse((s, s, d - 1 - s, d - 1 - s), outline=(255, 255, 255, 220), width=2 * s)
+    # Logo : 2 x 2 carrés arrondis au trait, comme l'icône de l'application.
+    cote, ecart, trait = d * 0.17, d * 0.07, max(2, int(d * 0.035))
+    debut = (d - (2 * cote + ecart)) / 2
+    for ligne in range(2):
+        for colonne in range(2):
+            x = debut + colonne * (cote + ecart)
+            y = debut + ligne * (cote + ecart)
+            dessin.rounded_rectangle((x, y, x + cote, y + cote), radius=cote * 0.22,
+                                     outline=(255, 255, 255, 255), width=trait)
     bulle = bulle.resize((diametre, diametre), Image.LANCZOS)
     fond = Image.new("RGBA", (diametre, diametre), (1, 2, 3, 255))
     alpha = bulle.split()[3].point(lambda a: 255 if a > 140 else 0)
     fond.paste(bulle.convert("RGB"), (0, 0), alpha)
     return ImageTk.PhotoImage(fond.convert("RGB"))
+
+
+# Pas d'emoji dans les menus et les cartes de la bulle : texte seul.
+_EMOJI = re.compile("[🀀-🫿☀-➿⬀-⯿⌀-⏿■-◿]️?")
+
+
+def sobre(texte):
+    return " ".join(_EMOJI.sub("", str(texte)).split())
+
+
+class MenuSobre(tk.Menu):
+    """Menu dont les libellés perdent leurs emojis (ceux des tuiles, par exemple)."""
+
+    def add_command(self, cnf=None, **kw):
+        if "label" in kw:
+            kw["label"] = sobre(kw["label"])
+        return super().add_command(cnf or {}, **kw)
+
+    def add_cascade(self, cnf=None, **kw):
+        if "label" in kw:
+            kw["label"] = sobre(kw["label"])
+        return super().add_cascade(cnf or {}, **kw)
 
 
 # ---------------------------------------------------------------------------
@@ -415,15 +430,15 @@ class Bulle:
         f = tk.Toplevel(self.racine)
         f.overrideredirect(True)
         f.attributes("-topmost", True)
-        f.configure(bg="#6c4cf5")
+        f.configure(bg="#5b5bd6")
         self.rappels_affiches[cle] = f
         cadre = tk.Frame(f, bg="#ffffff", padx=16, pady=12)
         cadre.pack(padx=2, pady=2)
         icone = {"notes": "📝", "agenda": "📅", "temps": "⏱️"}.get(rappel["genre"], "⏰")
         entete = tr("Pomodoro") if rappel["genre"] == "temps" else tr("Rappel")
-        tk.Label(cadre, text=f"⏰  {entete} {icone}", bg="#ffffff", fg="#6b6790",
+        tk.Label(cadre, text=entete.upper(), bg="#ffffff", fg="#5f5f68",
                  font=("Segoe UI", 9, "bold")).pack(anchor="w")
-        tk.Label(cadre, text=rappel["titre"], bg="#ffffff", fg="#1f1a3a", font=("Segoe UI", 12, "bold"),
+        tk.Label(cadre, text=sobre(rappel["titre"]), bg="#ffffff", fg="#18181b", font=("Segoe UI", 12, "bold"),
                  wraplength=int(300 * self.echelle), justify="left").pack(anchor="w", pady=(2, 0))
         if rappel.get("detail"):
             tk.Label(cadre, text=rappel["detail"], bg="#ffffff", fg="#6b6790", font=("Segoe UI", 10),
@@ -447,9 +462,9 @@ class Bulle:
             if action == "ouvrir":
                 ouvrir_tableau(rappel["genre"])
 
-        choix = (("Plus tard", "plus_tard", "#f1eefc", "#6b6790"),
-                 ("OK", "ok", "#f1eefc", "#1f1a3a"),
-                 ("Ouvrir", "ouvrir", "#6c4cf5", "#ffffff"))
+        choix = (("Plus tard", "plus_tard", "#f2f2f4", "#6b6790"),
+                 ("OK", "ok", "#f2f2f4", "#1f1a3a"),
+                 ("Ouvrir", "ouvrir", "#5b5bd6", "#ffffff"))
         if rappel["genre"] == "temps":
             choix = choix[1:]  # une fin de période ne se reporte pas
         for texte, action, fond, encre in choix:
@@ -487,9 +502,9 @@ class Bulle:
         f.attributes("-toolwindow", True)   # pas de bouton dans la barre des tâches
         f.configure(bg="#fff4c2", padx=12, pady=10)
         f.resizable(False, False)
-        tk.Label(f, text="📝  " + tr("Note rapide"), bg="#fff4c2", fg="#6b6790", font=("Segoe UI", 9, "bold")).pack(anchor="w")
-        zone = tk.Text(f, width=40, height=7, wrap="word", relief="flat", bg="#fffbe6", fg="#1f1a3a",
-                       font=("Segoe UI", 11), padx=8, pady=6, insertbackground="#6c4cf5")
+        tk.Label(f, text=tr("Note rapide"), bg="#fff4c2", fg="#6b6790", font=("Segoe UI", 9, "bold")).pack(anchor="w")
+        zone = tk.Text(f, width=40, height=7, wrap="word", relief="flat", bg="#fffbe6", fg="#18181b",
+                       font=("Segoe UI", 11), padx=8, pady=6, insertbackground="#5b5bd6")
         zone.pack(pady=(4, 8))
         aide = tk.Label(f, text=tr("1re ligne = titre · Ctrl + Entrée pour enregistrer"), bg="#fff4c2", fg="#a7a3bd", font=("Segoe UI", 8))
         aide.pack(anchor="w")
@@ -511,8 +526,8 @@ class Bulle:
         boutons.pack(anchor="e", pady=(6, 0))
         tk.Button(boutons, text=tr("Annuler"), command=f.destroy, relief="flat", bg="#fff4c2", fg="#6b6790",
                   font=("Segoe UI", 10), cursor="hand2").pack(side="left", padx=4)
-        tk.Button(boutons, text=tr("Enregistrer"), command=enregistrer, relief="flat", bg="#6c4cf5", fg="#ffffff",
-                  activebackground="#5a3be0", activeforeground="#ffffff", padx=12, pady=3,
+        tk.Button(boutons, text=tr("Enregistrer"), command=enregistrer, relief="flat", bg="#5b5bd6", fg="#ffffff",
+                  activebackground="#4c4cc4", activeforeground="#ffffff", padx=12, pady=3,
                   font=("Segoe UI", 10, "bold"), cursor="hand2").pack(side="left")
         zone.bind("<Control-Return>", enregistrer)
         f.bind("<Escape>", lambda _e: f.destroy())
@@ -527,7 +542,7 @@ class Bulle:
     # -- menu clic droit ---------------------------------------------------
     def menu(self, e):
         police = ("Segoe UI", 10)
-        m = tk.Menu(self.racine, tearoff=False, font=police)
+        m = MenuSobre(self.racine, tearoff=False, font=police)
         m.add_command(label="🧰  " + tr("Ouvrir le tableau de bord"), command=ouvrir_tableau)
         m.add_command(label="📝  " + tr("Note rapide"), command=self.note_rapide)
         mails = f"  ({self.nb_mails} {tr('non lus')})" if self.nb_mails else ""
@@ -542,7 +557,7 @@ class Bulle:
 
         # Serveurs : ceux des projets (derniers états connus, relus toutes
         # les 6 s) puis ceux du gadget Odoo. Le menu s'ouvre sans attendre.
-        sous = tk.Menu(m, tearoff=False, font=police)
+        sous = MenuSobre(m, tearoff=False, font=police)
         for s in self.serveurs_projets:
             nom = f"{s.get('projet', '')} · {s.get('nom', '')}"
             if s.get("etat") in ("marche", "demarrage"):
@@ -588,7 +603,7 @@ class Bulle:
         except Exception:
             favoris = []
         if favoris:
-            sous_e = tk.Menu(m, tearoff=False, font=police)
+            sous_e = MenuSobre(m, tearoff=False, font=police)
             for x in favoris:
                 sous_e.add_command(label=self.court(x.get("titre") or x.get("contenu", "")),
                                    command=lambda x=x: self.en_fond(extraits.copier, x["id"]))
@@ -599,7 +614,7 @@ class Bulle:
         except Exception:
             historique = []
         if presse_papiers:
-            sous_p = tk.Menu(m, tearoff=False, font=police)
+            sous_p = MenuSobre(m, tearoff=False, font=police)
             for x in historique:
                 sous_p.add_command(label=("📌 " if x.get("epingle") else "") + self.court(x.get("texte", "")),
                                    command=lambda x=x: self.en_fond(presse_papiers.recopier, x["id"]))

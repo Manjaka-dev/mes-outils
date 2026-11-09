@@ -118,7 +118,7 @@
         el("input", { type: "checkbox", checked: masques.has(o.nom) ? null : "", onchange: e => {
           if (e.target.checked) masques.delete(o.nom); else masques.add(o.nom);
           enregistrer({ onglets_masques: [...masques] });
-        } }), (o.icone || "🧩") + " " + I18N.traduire(o.titre))));
+        } }), iconeOnglet(o.icone), " " + I18N.traduire(o.titre))));
 
     const listeDossiers = el("div", { class: "liste-reg" },
       i.dossiers_projets.length ? i.dossiers_projets.map(d => el("div", {}, "📁", el("span", { title: d }, d),

@@ -9,6 +9,7 @@ serveurs Odoo sont ceux d'un gadget « Serveurs Odoo » externe, facultatif
 code tel quel.
 """
 import importlib
+import http.client
 import importlib.util
 import json
 import os
@@ -33,6 +34,12 @@ ICI = config.ICI
 RACINE = config.RACINE
 PAGE = os.path.join(ICI, "hub.html")
 JOURNAL = config.JOURNAL
+
+# Périmètre de la première étape du portage macOS.
+TUILES_MAC = ("dossier", "fichier", "programme", "lien")
+API_MAC_LECTURE = {"/api/outils", "/api/onglets", "/api/onglet"}
+API_MAC_ECRITURE = {"/api/lancer", "/api/enregistrer", "/api/quitter",
+                    "/api/reglages/lire", "/api/reglages/enregistrer"}
 
 NAVIGATEURS_APPLI = [
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
@@ -91,6 +98,8 @@ def routes_module(nom):
 
 def onglets_web():
     """Les fichiers des onglets (outil/web/*.js), chargés par la page."""
+    if config.MACOS:
+        return ["reglages.js"]
     dossier = os.path.join(ICI, "web")
     # i18n.js et icones.js sont chargés à part, en premier (hub.html).
     return sorted(n for n in os.listdir(dossier) if n.endswith(".js") and n not in ("i18n.js", "icones.js"))
@@ -186,9 +195,26 @@ def port_ouvert(port):
         return False
 
 
+def tableau_disponible():
+    """Vérifie que le port répond avec le tableau de bord de Mes outils."""
+    connexion = http.client.HTTPConnection(HOTE, PORT, timeout=1)
+    try:
+        connexion.request("GET", "/api/onglets", headers={"X-Mes-Outils": "1"})
+        reponse = connexion.getresponse()
+        return reponse.status == 200 and json.loads(reponse.read(65536)).get("macos") is True
+    except (OSError, http.client.HTTPException, ValueError, AttributeError):
+        return False
+    finally:
+        connexion.close()
+
+
 def ouvrir_fenetre_appli(url, largeur=1360, hauteur=860):
     """Une fenêtre sans barre d'adresse, comme un logiciel. À défaut
     d'Edge ou de Chrome, un onglet du navigateur par défaut."""
+    if config.MACOS:
+        if not webbrowser.open(url):
+            raise RuntimeError("Impossible d’ouvrir le navigateur par défaut.")
+        return
     for navigateur in NAVIGATEURS_APPLI:
         if os.path.exists(navigateur):
             subprocess.Popen([navigateur, f"--app={url}", f"--window-size={largeur},{hauteur}"],
@@ -208,6 +234,8 @@ def lancer_outil(identifiant):
     if not outil:
         raise ValueError("Outil introuvable.")
     genre, cible = outil.get("type"), outil.get("cible", "")
+    if config.MACOS and genre not in TUILES_MAC:
+        raise ValueError("Ce type de tuile n’est pas encore disponible sur macOS.")
 
     if genre == "appli_web":
         # Un outil avec son propre petit serveur (ex. Mes factures) : on le
@@ -231,14 +259,24 @@ def lancer_outil(identifiant):
     elif genre == "lien":
         # « fenetre_appli » : le site s'ouvre dans sa propre fenêtre, sans
         # barre d'adresse (WhatsApp Web…).
-        if outil.get("fenetre_appli"):
+        if config.MACOS or outil.get("fenetre_appli"):
             ouvrir_fenetre_appli(cible)
         else:
             webbrowser.open(cible)
     elif genre in ("dossier", "fichier", "programme"):
+        if config.MACOS and cible:
+            cible = os.path.abspath(os.path.expanduser(cible))
         if not os.path.exists(cible):
             raise FileNotFoundError(f"Introuvable : {cible}")
-        os.startfile(cible)
+        if config.MACOS:
+            try:
+                r = subprocess.run(["/usr/bin/open", cible], capture_output=True, timeout=10)
+            except subprocess.TimeoutExpired:
+                raise ValueError("Impossible d’ouvrir ce fichier ou dossier.") from None
+            if r.returncode:
+                raise ValueError("Impossible d’ouvrir ce fichier ou dossier.")
+        else:
+            os.startfile(cible)
     elif genre == "commande":
         lancer_detache(cible if isinstance(cible, list) else cible, outil.get("dossier"))
     else:
@@ -248,10 +286,13 @@ def lancer_outil(identifiant):
 def etat_outils():
     outils = lire_outils()
     for outil in outils["outils"]:
-        if outil.get("type") == "appli_web" and outil.get("port"):
+        if config.MACOS and outil.get("type") not in TUILES_MAC:
+            outil["indisponible"] = True
+        elif outil.get("type") == "appli_web" and outil.get("port"):
             outil["en_marche"] = port_ouvert(outil["port"])
         elif outil.get("type") in ("dossier", "fichier", "programme"):
-            outil["introuvable"] = not os.path.exists(outil.get("cible", ""))
+            cible = outil.get("cible", "")
+            outil["introuvable"] = not os.path.exists(os.path.expanduser(cible) if config.MACOS else cible)
     outils["bulle"] = BULLE_ACTIVE
     return outils
 
@@ -342,6 +383,8 @@ class Gestionnaire(BaseHTTPRequestHandler):
         chemin = urllib.parse.urlparse(self.path).path
         if not self.requete_sure(ecriture=chemin.startswith("/api/")):
             return self.repondre(403, {"erreur": "Accès refusé."})
+        if config.MACOS and chemin.startswith("/api/") and chemin not in API_MAC_LECTURE:
+            return self.repondre(404, {"erreur": "Cette fonction n’est pas encore disponible sur macOS."})
         try:
             if chemin in ("/", "/index.html"):
                 with open(PAGE, "rb") as f:
@@ -350,7 +393,7 @@ class Gestionnaire(BaseHTTPRequestHandler):
                 return self.repondre(200, etat_outils())
             if chemin == "/api/onglets":
                 return self.repondre(200, {"fichiers": onglets_web(), "langue": config.langue(), "theme": config.theme(),
-                                           "masques": lire_outils().get("onglets_masques") or []})
+                                           "masques": lire_outils().get("onglets_masques") or [], "macos": config.MACOS})
             if chemin == "/api/serveurs":
                 return self.repondre(200, etats_serveurs())
             if chemin == "/api/notes":
@@ -389,6 +432,8 @@ class Gestionnaire(BaseHTTPRequestHandler):
         corps = self.rfile.read(longueur) if longueur > 0 else b""
         if not self.requete_sure(ecriture=True):
             return self.repondre(403, {"erreur": "Accès refusé."})
+        if config.MACOS and chemin not in API_MAC_ECRITURE:
+            return self.repondre(404, {"erreur": "Cette fonction n’est pas encore disponible sur macOS."})
         try:
             donnees_requete = json.loads(corps.decode("utf-8") or "{}")
             if chemin == "/api/lancer":
@@ -567,6 +612,8 @@ class Gestionnaire(BaseHTTPRequestHandler):
 def main():
     adresse = f"http://{HOTE}:{PORT}/"
     if port_ouvert(PORT):
+        if config.MACOS and not tableau_disponible():
+            raise SystemExit(f"Le port {PORT} est déjà occupé par un autre service.")
         # Déjà lancé (au démarrage de Windows, par exemple) : juste la fenêtre.
         ouvrir_fenetre_appli(adresse, 1180, 800)
         return

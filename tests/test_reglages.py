@@ -59,12 +59,41 @@ class TestSocle(ServeurTest):
             self.assertNotIn("langue", cfg.lire(), "rien n'est enregistré après un refus")
 
     def test_dossiers_projets(self):
-        with ConfigTemporaire() as cfg:
+        with ConfigTemporaire() as cfg, mock.patch.object(config, "MACOS", False), \
+                mock.patch.object(installation, "etat", return_value={"bureau": False, "demarrage": False}):
             statut, r = self.post("/api/reglages/dossiers", {"dossiers": [cfg.dossier]})
             self.assertEqual((statut, r["dossiers_projets"]), (200, [cfg.dossier]))
             statut, _ = self.post("/api/reglages/dossiers", {"dossiers": [r"Z:\n-existe-pas"]})
             self.assertEqual(statut, 400)
             self.assertEqual(config.dossiers_projets(), [cfg.dossier])
+
+    def test_accueil_et_reglages_macos(self):
+        with ConfigTemporaire() as cfg, mock.patch.object(config, "MACOS", True):
+            statut, info = self.get("/api/onglets")
+            self.assertEqual(statut, 200)
+            self.assertTrue(info["macos"])
+            self.assertEqual(info["fichiers"], ["reglages.js"])
+            self.assertEqual(self.get("/api/outils", entete=False)[0], 403)
+            self.assertEqual(self.get("/api/mail/non_lus")[0], 404)
+            self.assertEqual(self.post("/api/reglages/mise_a_jour")[0], 404)
+
+            statut, r = self.post("/api/reglages/enregistrer", {"prenom": "Éloïse", "langue": "en", "theme": "sombre"})
+            self.assertEqual(statut, 200)
+            self.assertFalse(r["maj_possible"])
+            self.assertEqual((cfg.lire()["prenom"], cfg.lire()["langue"], cfg.lire()["theme"]), ("Éloïse", "en", "sombre"))
+
+    def test_tuile_macos_chemin_avec_espaces_et_accents(self):
+        with ConfigTemporaire() as cfg, mock.patch.object(config, "MACOS", True):
+            chemin = os.path.join(cfg.dossier, "Dossier été")
+            os.mkdir(chemin)
+            self.assertEqual(self.post("/api/enregistrer", {"outils": [
+                {"id": "dossier", "type": "dossier", "cible": chemin},
+                {"id": "appli", "type": "appli_web", "port": 8765},
+            ]})[0], 200)
+            with mock.patch.object(self.hub.subprocess, "run", return_value=mock.Mock(returncode=0)) as ouvrir:
+                self.assertEqual(self.post("/api/lancer", {"id": "dossier"})[0], 200)
+                self.assertEqual(self.post("/api/lancer", {"id": "appli"})[0], 400)
+            ouvrir.assert_called_once_with(["/usr/bin/open", chemin], capture_output=True, timeout=10)
 
     def _reponse_github(self, donnees):
         """Une fausse réponse de l'API GitHub (Releases)."""
@@ -136,6 +165,7 @@ class TestProgrammeInstalle(unittest.TestCase):
     """Mes outils.exe (PyInstaller) : pas de Python sur le PC, données dans
     le dossier « Mes outils » de %APPDATA%."""
 
+    @mock.patch.object(config, "MACOS", False)
     def test_donnees_dans_appdata(self):
         with mock.patch.object(config, "GELE", True), mock.patch.dict(os.environ, {"APPDATA": r"C:\Profil\AppData"}):
             os.environ.pop("MES_OUTILS_DONNEES", None)
@@ -145,6 +175,13 @@ class TestProgrammeInstalle(unittest.TestCase):
             self.assertEqual(config.dossier_utilisateur(), config.RACINE, "code source : données à côté du code")
         with mock.patch.dict(os.environ, {"MES_OUTILS_DONNEES": r"D:\Ailleurs"}):
             self.assertEqual(config.dossier_utilisateur(), r"D:\Ailleurs")
+
+    def test_donnees_dans_application_support_macos(self):
+        with mock.patch.object(config, "MACOS", True), mock.patch.dict(os.environ, {"MES_OUTILS_DONNEES": ""}):
+            attendu = os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Mes outils")
+            self.assertEqual(config.dossier_utilisateur(), attendu)
+            with mock.patch.dict(os.environ, {"MES_OUTILS_DONNEES": "autre-profil"}):
+                self.assertEqual(config.dossier_utilisateur(), "autre-profil")
 
     def test_premier_lancement_cree_le_dossier(self):
         with ConfigTemporaire() as cfg:
@@ -181,6 +218,7 @@ class TestProgrammeInstalle(unittest.TestCase):
             self.assertEqual(installation.python_fenetre(), sys.executable)
             self.assertEqual(installation.verifier(), [], "rien à installer en plus")
 
+    @mock.patch.object(config, "MACOS", False)
     def test_reprise_d_une_ancienne_installation(self):
         """Premier lancement du programme installé : les réglages et données
         d'une copie « code source » sont copiés (l'original reste intact)."""

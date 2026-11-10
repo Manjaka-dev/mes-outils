@@ -14,11 +14,13 @@ Elle fait aussi tourner le petit serveur du tableau de bord (hub.py) : un seul
 programme, invisible, suffit.
 """
 import ctypes
+import errno
 import json
 import os
 import re
 import sys
 import threading
+import time
 import tkinter as tk
 from ctypes import wintypes
 from http.server import ThreadingHTTPServer
@@ -32,11 +34,14 @@ TITRE_TABLEAU = "Mes outils"          # titre de la page du tableau de bord
 CLE = "#010203"                       # couleur rendue transparente autour de la bulle
 TAILLE = 64                           # diamètre à 100 % d'affichage
 OPACITE_REPOS, OPACITE_SURVOL = 0.62, 1.0
-user32 = ctypes.windll.user32
+MACOS = hub.config.MACOS
+if not MACOS:
+    user32 = ctypes.windll.user32
 
 # Textes de la bulle en anglais (langue choisie dans les Réglages).
 ANGLAIS = {
     "Ouvrir le tableau de bord": "Open the dashboard", "Note rapide": "Quick note", "Mails": "Mail",
+    "Réglages": "Settings",
     "non lus": "unread", "Agenda": "Calendar", "Notes": "Notes", "Mots de passe": "Passwords",
     "Projets": "Projects", "GitHub": "GitHub", "en échec": "failing", "Serveurs locaux": "Local servers",
     "Serveurs Odoo": "Odoo servers", "Ouvrir": "Open", "Arrêter": "Stop", "Démarrer": "Start",
@@ -78,13 +83,29 @@ def module(nom):
 # ---------------------------------------------------------------------------
 # Une seule bulle à la fois
 # ---------------------------------------------------------------------------
-_noyau = ctypes.WinDLL("kernel32", use_last_error=True)
+if not MACOS:
+    _noyau = ctypes.WinDLL("kernel32", use_last_error=True)
 _verrou_instance = None
 
 
 def deja_lancee():
     """Vrai si une bulle tourne déjà. Le verrou reste tenu tant que celle-ci vit."""
     global _verrou_instance
+    if MACOS:
+        import fcntl
+
+        os.makedirs(hub.config.BASE, exist_ok=True)
+        verrou = open(os.path.join(hub.config.BASE, f"bulle-{hub.PORT}.lock"), "a")
+        try:
+            fcntl.flock(verrou, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            verrou.close()
+            return True
+        except OSError:
+            verrou.close()
+            raise
+        _verrou_instance = verrou
+        return False
     # Nom connu de l'installateur (AppMutex) ; une copie d'essai sur un autre
     # port (MES_OUTILS_PORT) a son propre verrou.
     nom = "MesOutils.Bulle" if hub.PORT == 8760 else f"MesOutils.Bulle.{hub.PORT}"
@@ -117,7 +138,7 @@ def ouvrir_tableau(onglet=None):
     """Ramener le tableau de bord devant (ou l'ouvrir), sur un onglet donné."""
     if onglet:
         hub.demander_onglet(onglet)  # la page déjà ouverte le lit d'elle-même
-    hwnd = trouver_fenetre(TITRE_TABLEAU)
+    hwnd = None if MACOS else trouver_fenetre(TITRE_TABLEAU)
     if hwnd:
         user32.ShowWindow(hwnd, 9)  # SW_RESTORE
         user32.SetForegroundWindow(hwnd)
@@ -128,7 +149,7 @@ def ouvrir_tableau(onglet=None):
 # ---------------------------------------------------------------------------
 # Image de la bulle
 # ---------------------------------------------------------------------------
-def image_bulle(diametre):
+def image_bulle(diametre, transparence=False):
     """Bulle ronde, couleur d'accent unie, avec le logo de Mes outils (quatre
     carrés au trait), posée sur la couleur clé : bords nets, sans halo."""
     from PIL import Image, ImageDraw, ImageTk
@@ -149,6 +170,8 @@ def image_bulle(diametre):
             dessin.rounded_rectangle((x, y, x + cote, y + cote), radius=cote * 0.22,
                                      outline=(255, 255, 255, 255), width=trait)
     bulle = bulle.resize((diametre, diametre), Image.LANCZOS)
+    if transparence:
+        return ImageTk.PhotoImage(bulle)
     fond = Image.new("RGBA", (diametre, diametre), (1, 2, 3, 255))
     alpha = bulle.split()[3].point(lambda a: 255 if a > 140 else 0)
     fond.paste(bulle.convert("RGB"), (0, 0), alpha)
@@ -182,26 +205,38 @@ class MenuSobre(tk.Menu):
 # ---------------------------------------------------------------------------
 class Bulle:
     def __init__(self):
-        try:
-            ctypes.windll.shcore.SetProcessDpiAwareness(1)
-        except Exception:
-            pass
+        if not MACOS:
+            try:
+                ctypes.windll.shcore.SetProcessDpiAwareness(1)
+            except Exception:
+                pass
         self.racine = r = tk.Tk()
+        if MACOS:
+            r.withdraw()
         r.title("Mes outils · bulle")
         r.overrideredirect(True)            # sans bordure, sans barre des tâches
         r.attributes("-topmost", True)
-        r.attributes("-transparentcolor", CLE)
+        fond = CLE
+        if MACOS:
+            fond = "systemTransparent"
+            try:
+                r.attributes("-stylemask", "")  # fenêtre Aqua sans barre de titre (Tk 9)
+            except tk.TclError:
+                pass  # Tk 8 utilise overrideredirect
+            r.attributes("-transparent", True)
+        else:
+            r.attributes("-transparentcolor", CLE)
         r.attributes("-alpha", OPACITE_REPOS)
-        r.configure(bg=CLE)
+        r.configure(bg=fond)
 
         self.echelle = r.winfo_fpixels("1i") / 96
         self.d = int(TAILLE * self.echelle)
         marge = int(10 * self.echelle)
         self.largeur = self.d + 2 * marge     # place pour les pastilles des deux côtés
-        self.toile = tk.Canvas(r, width=self.largeur, height=self.d + marge, bg=CLE,
+        self.toile = tk.Canvas(r, width=self.largeur, height=self.d + marge, bg=fond,
                                highlightthickness=0, bd=0, cursor="hand2")
         self.toile.pack()
-        self.image = image_bulle(self.d)
+        self.image = image_bulle(self.d, transparence=MACOS)
         self.toile.create_image(marge, marge, image=self.image, anchor="nw")
         self.marge = marge
         self.pastille = None
@@ -217,17 +252,24 @@ class Bulle:
         self.toile.bind("<B1-Motion>", self.glisse)
         self.toile.bind("<ButtonRelease-1>", self.relache)
         self.toile.bind("<Button-3>", self.menu)
+        if MACOS:
+            self.toile.bind("<Button-2>", self.menu)
+            self.toile.bind("<Control-Button-1>", self.menu)
+            self.toile.bind("<Control-ButtonRelease-1>", lambda _e: "break")
         self.toile.bind("<Enter>", lambda _e: r.attributes("-alpha", OPACITE_SURVOL))
         self.toile.bind("<Leave>", lambda _e: r.attributes("-alpha", OPACITE_REPOS))
 
         self.placer()
-        r.after(50, self.hors_barre_des_taches)
         self.demarrer_tableau()
-        self.suivre_serveurs()
-        r.after(3000, self.suivre_mails)
-        r.after(5000, self.suivre_rappels)
-        r.after(10000, self.suivre_ci)
-        r.after(1500, self.demarrer_presse_papiers)
+        if MACOS:
+            r.deiconify()
+        else:
+            r.after(50, self.hors_barre_des_taches)
+            self.suivre_serveurs()
+            r.after(3000, self.suivre_mails)
+            r.after(5000, self.suivre_rappels)
+            r.after(10000, self.suivre_ci)
+            r.after(1500, self.demarrer_presse_papiers)
 
     def hors_barre_des_taches(self):
         """Style « fenêtre d'outil » : jamais de bouton dans la barre des
@@ -249,15 +291,24 @@ class Bulle:
                 x, y = json.load(f)["position"]
         except (OSError, ValueError, KeyError, TypeError):
             pass
-        gauche, haut = user32.GetSystemMetrics(76), user32.GetSystemMetrics(77)
-        larg, haute = user32.GetSystemMetrics(78), user32.GetSystemMetrics(79)
-        if x is None or not (gauche <= x <= gauche + larg - 40 and haut <= y <= haut + haute - 40):
+        if MACOS:
+            gauche, haut = 0, 0
+            droite = max(0, r.winfo_screenwidth() - self.largeur)
+            bas = max(0, r.winfo_screenheight() - self.d - self.marge)
+        else:
+            gauche, haut = user32.GetSystemMetrics(76), user32.GetSystemMetrics(77)
+            droite = gauche + user32.GetSystemMetrics(78) - 40
+            bas = haut + user32.GetSystemMetrics(79) - 40
+        if not (isinstance(x, int) and isinstance(y, int)
+                and gauche <= x <= droite and haut <= y <= bas):
             x = r.winfo_screenwidth() - self.largeur - int(24 * self.echelle)
             y = int(r.winfo_screenheight() * 0.62)
         r.geometry(f"+{x}+{y}")
 
     def memoriser(self):
         try:
+            if MACOS:
+                self.racine.update_idletasks()
             with open(FICHIER_POSITION, "w", encoding="utf-8") as f:
                 json.dump({"position": [self.racine.winfo_x(), self.racine.winfo_y()]}, f)
         except OSError:
@@ -269,19 +320,31 @@ class Bulle:
         self.deplacee = False
 
     def glisse(self, e):
+        if MACOS and not getattr(self, "depart", None):
+            return
         x0, y0, wx, wy = self.depart
         dx, dy = e.x_root - x0, e.y_root - y0
         if abs(dx) + abs(dy) > 4:
             self.deplacee = True
         if self.deplacee:
-            self.racine.geometry(f"+{wx + dx}+{wy + dy}")
+            x, y = wx + dx, wy + dy
+            if MACOS:
+                x = max(0, min(x, self.racine.winfo_screenwidth() - self.largeur))
+                y = max(0, min(y, self.racine.winfo_screenheight() - self.d - self.marge))
+            self.racine.geometry(f"+{x}+{y}")
 
     def relache(self, _e):
+        if MACOS and not getattr(self, "depart", None):
+            return  # relâchement après un Ctrl-clic qui a ouvert le menu
         if self.deplacee:
             self.memoriser()
         else:
             self.rebond()
-            ouvrir_tableau()
+            if MACOS:
+                self.en_fond(ouvrir_tableau)
+            else:
+                ouvrir_tableau()
+        self.depart = None
 
     def rebond(self):
         # Petit « plop » : la bulle s'enfonce puis revient.
@@ -290,10 +353,15 @@ class Bulle:
 
     # -- serveur du tableau de bord -----------------------------------------
     def demarrer_tableau(self):
-        if hub.port_ouvert(hub.PORT):
+        if not MACOS and hub.port_ouvert(hub.PORT):
             return  # déjà servi (tableau de bord lancé à part)
+        try:
+            serveur = ThreadingHTTPServer((hub.HOTE, hub.PORT), hub.Gestionnaire)
+        except OSError as erreur:
+            if MACOS and erreur.errno == errno.EADDRINUSE:
+                raise SystemExit(f"Le port {hub.PORT} est déjà occupé par un autre service.") from None
+            raise
         hub.BULLE_ACTIVE = True
-        serveur = ThreadingHTTPServer((hub.HOTE, hub.PORT), hub.Gestionnaire)
         threading.Thread(target=serveur.serve_forever, daemon=True).start()
         hub.journal("Démarrage par la bulle sur port %d" % hub.PORT)
 
@@ -543,7 +611,33 @@ class Bulle:
     def menu(self, e):
         police = ("Segoe UI", 10)
         m = MenuSobre(self.racine, tearoff=False, font=police)
-        m.add_command(label="🧰  " + tr("Ouvrir le tableau de bord"), command=ouvrir_tableau)
+        if MACOS:
+            m.add_command(label=tr("Ouvrir le tableau de bord"), command=lambda: self.en_fond(ouvrir_tableau))
+            m.add_command(label=tr("Réglages"), command=lambda: self.en_fond(ouvrir_tableau, "reglages"))
+        else:
+            m.add_command(label="🧰  " + tr("Ouvrir le tableau de bord"), command=ouvrir_tableau)
+            self.menu_fonctions(m, police)
+
+        try:
+            outils = hub.lire_outils()["outils"]
+        except Exception:
+            outils = []
+        if MACOS:
+            outils = [outil for outil in outils if outil.get("type") in hub.TUILES_MAC]
+        if outils:
+            m.add_separator()
+        for outil in outils:
+            m.add_command(label=f"{outil.get('emoji', '•')}  {outil.get('nom', '')}",
+                          command=lambda o=outil: self.en_fond(hub.lancer_outil, o["id"]))
+        m.add_separator()
+        m.add_command(label="🙈  " + tr("Masquer 15 minutes"), command=self.masquer)
+        m.add_command(label="🚪  " + tr("Quitter la bulle"), command=self.quitter)
+        try:
+            m.tk_popup(e.x_root, e.y_root)
+        finally:
+            m.grab_release()
+
+    def menu_fonctions(self, m, police):
         m.add_command(label="📝  " + tr("Note rapide"), command=self.note_rapide)
         mails = f"  ({self.nb_mails} {tr('non lus')})" if self.nb_mails else ""
         m.add_command(label=f"✉️  {tr('Mails')}{mails}", command=lambda: ouvrir_tableau("mails"))
@@ -622,23 +716,6 @@ class Bulle:
                 sous_p.add_command(label=tr("(vide)"), state="disabled")
             m.add_cascade(label="📋  " + tr("Presse-papiers"), menu=sous_p)
 
-        try:
-            outils = hub.lire_outils()["outils"]
-        except Exception:
-            outils = []
-        if outils:
-            m.add_separator()
-        for outil in outils:
-            m.add_command(label=f"{outil.get('emoji', '•')}  {outil.get('nom', '')}",
-                          command=lambda o=outil: self.en_fond(hub.lancer_outil, o["id"]))
-        m.add_separator()
-        m.add_command(label="🙈  " + tr("Masquer 15 minutes"), command=self.masquer)
-        m.add_command(label="🚪  " + tr("Quitter la bulle"), command=self.quitter)
-        try:
-            m.tk_popup(e.x_root, e.y_root)
-        finally:
-            m.grab_release()
-
     @staticmethod
     def court(texte, n=48):
         """Une ligne courte pour un menu (sans retour à la ligne)."""
@@ -660,7 +737,8 @@ class Bulle:
             try:
                 fonction(*args)
             except Exception as erreur:  # noqa: BLE001
-                self.racine.after(0, lambda: messagebox.showerror("Mes outils", str(erreur), parent=self.racine))
+                message = str(erreur)
+                self.racine.after(0, lambda: messagebox.showerror("Mes outils", message, parent=self.racine))
         threading.Thread(target=tache, daemon=True).start()
 
     def demarrer(self, s):
@@ -688,7 +766,16 @@ class Bulle:
 
 
 def main():
-    if deja_lancee():
+    occupe = deja_lancee()
+    if MACOS and (occupe or hub.port_ouvert(hub.PORT)):
+        for _ in range(20 if occupe else 1):
+            if hub.tableau_disponible():
+                ouvrir_tableau()
+                return
+            if occupe:
+                time.sleep(0.1)
+        raise SystemExit(f"Le tableau de bord ne répond pas sur le port {hub.PORT}. Ce port est peut-être déjà occupé.")
+    if occupe:
         # Raccourci relancé alors que la bulle est là : ouvrir le tableau de bord.
         ouvrir_tableau()
         return

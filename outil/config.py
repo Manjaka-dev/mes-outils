@@ -13,6 +13,7 @@ Où sont les données ?
   %APPDATA%\\Mes outils (elles survivent aux mises à jour et à la
   désinstallation) ;
 - lancé depuis le code source (git clone) : à côté du code, comme avant ;
+- sur macOS : dans ~/Library/Application Support/Mes outils ;
 - la variable d'environnement MES_OUTILS_DONNEES force un autre dossier.
 
 Les tests remplacent FICHIER_OUTILS et DONNEES par des chemins temporaires.
@@ -26,6 +27,7 @@ import threading
 VERSION = "1.4.0"
 DEPOT = "https://github.com/rarianaAina/mes-outils"
 API_VERSIONS = "https://api.github.com/repos/rarianaAina/mes-outils/releases/latest"
+MACOS = sys.platform == "darwin"
 # Vrai dans le programme installé (Mes outils.exe) : pas de Python sur le PC.
 GELE = bool(getattr(sys, "frozen", False))
 # Le code et les pages (dans le programme installé : son dossier interne).
@@ -38,6 +40,8 @@ def dossier_utilisateur():
     choisi = os.environ.get("MES_OUTILS_DONNEES")
     if choisi:
         return choisi
+    if MACOS:
+        return os.path.join(os.path.expanduser("~"), "Library", "Application Support", "Mes outils")
     if GELE:
         return os.path.join(os.environ.get("APPDATA") or os.path.expanduser("~"), "Mes outils")
     return RACINE
@@ -48,7 +52,7 @@ FICHIER_OUTILS = os.path.join(BASE, "outils.json")
 FICHIER_EXEMPLE = os.path.join(ICI if GELE else RACINE, "outils.exemple.json")
 DONNEES = os.path.join(BASE, "donnees")
 FICHIER_BULLE = os.path.join(BASE, "bulle.json")
-JOURNAL = os.path.join(BASE if GELE else ICI, "hub.log")
+JOURNAL = os.path.join(BASE if GELE or MACOS else ICI, "hub.log")
 LANGUES = ("fr", "en")
 THEMES = ("auto", "clair", "sombre")
 
@@ -83,7 +87,7 @@ def premier_lancement():
         if os.path.exists(FICHIER_OUTILS):
             return None
         os.makedirs(os.path.dirname(FICHIER_OUTILS), exist_ok=True)
-        if GELE:
+        if GELE and not MACOS:
             for ancienne in anciennes_installations():
                 if os.path.normcase(ancienne) == os.path.normcase(BASE):
                     continue

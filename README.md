@@ -75,6 +75,26 @@ dépôt). Pour utiliser un autre Python que celui du PATH : variable
 étiquette `vX.Y.Z` poussée sur GitHub le construit et le publie tout seul
 (`.github/workflows/version.yml`).
 
+### macOS (Apple Silicon, depuis le code source)
+
+Installez Python 3.10 ou plus récent avec Tkinter. Depuis le dossier du dépôt :
+
+```sh
+python3 -m venv ~/.venvs/mes-outils
+~/.venvs/mes-outils/bin/python -m pip install -r requirements.txt
+~/.venvs/mes-outils/bin/python outil/bulle.py
+```
+
+Un clic sur la bulle ouvre le tableau de bord dans le navigateur par défaut.
+Faites glisser la bulle pour la déplacer et utilisez le clic secondaire pour
+accéder à Réglages ou quitter. Cette première étape donne accès à l’accueil,
+aux tuiles de fichiers, dossiers, applications et liens, et aux réglages de
+profil, de langue et de thème.
+
+Les données macOS sont dans `~/Library/Application Support/Mes outils`.
+Pour isoler une copie d’essai, définissez `MES_OUTILS_DONNEES` et, si le port
+`8760` est déjà utilisé, `MES_OUTILS_PORT`.
+
 ## Ajouter un onglet
 
 Un onglet = un fichier Python et un fichier JavaScript, sans toucher au

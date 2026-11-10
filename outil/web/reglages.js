@@ -165,17 +165,18 @@
           el("label", { class: "champ" }, "Prénom (pour la salutation)", prenom),
           el("label", { class: "champ" }, "Langue", langues),
           el("label", { class: "champ" }, "Thème", themes)),
-        carte("🗂️", "Onglets affichés", el("p", { class: "aide" }, "Décochez les onglets dont vous ne vous servez pas : ils disparaissent du menu (rien n'est effacé)."), cases),
-        carte("📁", "Dossiers de projets", el("p", { class: "aide" }, "Les onglets GitHub, Projets et État Git y cherchent vos projets (le dossier et ses sous-dossiers directs)."),
+        !S.macos && carte("🗂️", "Onglets affichés", el("p", { class: "aide" }, "Décochez les onglets dont vous ne vous servez pas : ils disparaissent du menu (rien n'est effacé)."), cases),
+        !S.macos && carte("📁", "Dossiers de projets", el("p", { class: "aide" }, "Les onglets GitHub, Projets et État Git y cherchent vos projets (le dossier et ses sous-dossiers directs)."),
           listeDossiers, ajoutDossier),
-        carte("💻", "Windows", interrupteur("demarrage", "Lancer la bulle au démarrage de Windows"),
+        !S.macos && carte("💻", "Windows", interrupteur("demarrage", "Lancer la bulle au démarrage de Windows"),
           interrupteur("bureau", "Raccourci « Mes outils » sur le Bureau")),
-        carte("✉️", "Boîte mail", el("p", { class: "aide" }, "La boîte mail se connecte dans l'onglet Mails."),
+        !S.macos && carte("✉️", "Boîte mail", el("p", { class: "aide" }, "La boîte mail se connecte dans l'onglet Mails."),
           el("button", { class: "btn", onclick: () => montrerVue("mails") }, "Ouvrir l'onglet Mails")),
         carte("🧰", "À propos", el("p", { class: "aide" }, t("Version {v}", { v: i.version })),
           el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
-            el("button", { class: "btn", onclick: () => api("/api/github/ouvrir_page", { url: i.depot }).catch(e => toast("😕 " + e.message, "erreur")) }, "🌐 Code source sur GitHub"),
-            majBtn))));
+            S.macos ? el("a", { class: "btn", href: i.depot, target: "_blank", rel: "noopener noreferrer" }, "🌐 Code source sur GitHub")
+              : el("button", { class: "btn", onclick: () => api("/api/github/ouvrir_page", { url: i.depot }).catch(e => toast("😕 " + e.message, "erreur")) }, "🌐 Code source sur GitHub"),
+            i.maj_possible && majBtn))));
   }
 
   /** Lance la mise à jour, puis attend que la nouvelle version réponde. */

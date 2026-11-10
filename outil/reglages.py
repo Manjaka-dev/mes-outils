@@ -37,8 +37,8 @@ def lire(_d=None):
         "dossiers_projets": config.dossiers_projets(),
         "version": config.VERSION,
         "depot": config.DEPOT,
-        "raccourcis": installation.etat(),
-        "maj_possible": True,
+        "raccourcis": {} if config.MACOS else installation.etat(),
+        "maj_possible": not config.MACOS,
         "installe": config.GELE,
     }
 

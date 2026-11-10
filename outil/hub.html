@@ -587,11 +587,14 @@ async function chargerOutils() {
   if (empreinte === S.empreinte) return;
   S.empreinte = empreinte;
   S.config = config;
+  if (S.macos) $("#btn-quitter").hidden = Boolean(config.bulle);
   horloge();
   afficherTuiles();
 }
 function tuile(outil, apercu = false) {
-  const statut = outil.type === "appli_web"
+  const statut = outil.indisponible
+    ? el("div", { class: "etat" }, "Indisponible sur macOS")
+    : outil.type === "appli_web"
     ? el("div", { class: "etat" }, el("span", { class: "point" + (outil.en_marche ? " marche" : "") }), outil.en_marche ? "En marche" : "Prêt à lancer")
     : outil.introuvable ? el("div", { class: "etat", style: "color:var(--rouge)" }, "⚠️ Introuvable")
     : el("div", { class: "etat" }, (TYPES[outil.type]?.emoji || "") + " " + (TYPES[outil.type]?.nom || ""));
@@ -604,7 +607,10 @@ function tuile(outil, apercu = false) {
     t.append(el("div", { class: "actions-edition" },
       el("span", { class: "rond", title: "Modifier", onclick: e => { e.stopPropagation(); editer(outil); } }, "✎"),
       el("span", { class: "rond suppr", title: "Retirer", onclick: e => { e.stopPropagation(); retirer(outil); } }, "✕")));
-    t.addEventListener("click", () => S.edition ? editer(outil) : lancer(outil, t));
+    t.addEventListener("click", () => {
+      if (S.edition) editer(outil);
+      else if (!outil.indisponible) lancer(outil, t);
+    });
   }
   return t;
 }
@@ -635,7 +641,7 @@ $("#btn-edition").onclick = () => {
 };
 
 async function enregistrer() {
-  const outils = S.config.outils.map(({ en_marche, introuvable, ...o }) => o);
+  const outils = S.config.outils.map(({ en_marche, introuvable, indisponible, ...o }) => o);
   await api("/api/enregistrer", { outils });
   await chargerOutils();
 }
@@ -650,7 +656,7 @@ async function retirer(outil) {
 function editer(outil) {
   const brouillon = outil ? structuredClone(outil) : { nom: "", icone: "app-window", couleur: COULEURS[0], type: "dossier", cible: "", description: "" };
   brouillon.icone = iconeOutil(brouillon);
-  delete brouillon.en_marche; delete brouillon.introuvable;
+  delete brouillon.en_marche; delete brouillon.introuvable; delete brouillon.indisponible;
   const apercu = el("div", { class: "apercu-tuile" });
   const majApercu = () => apercu.replaceChildren(tuile(brouillon, true));
 
@@ -666,15 +672,17 @@ function editer(outil) {
   const zoneCible = el("div");
   const dessinerCible = () => {
     const t = TYPES[brouillon.type] || TYPES.dossier;
+    const aide = S.macos && brouillon.type === "dossier" ? "Chemin du dossier, ex. ~/Documents"
+      : S.macos && ["fichier", "programme"].includes(brouillon.type) ? "Chemin d’un fichier ou d’une app .app" : t.aide;
     const enfants = [el("label", { class: "champ" }, brouillon.type === "lien" || brouillon.type === "appli_web" ? "Adresse" : "Chemin",
-      el("input", { value: brouillon.cible || "", placeholder: t.aide, oninput: e => { brouillon.cible = e.target.value.trim(); } }))];
-    if (brouillon.type === "lien") {
+      el("input", { value: brouillon.cible || "", placeholder: aide, oninput: e => { brouillon.cible = e.target.value.trim(); } }))];
+    if (brouillon.type === "lien" && !S.macos) {
       enfants.push(el("label", { class: "champ", style: "flex-direction:row;align-items:center;gap:8px" },
         el("input", { type: "checkbox", checked: brouillon.fenetre_appli ? "" : null, style: "width:18px;height:18px;accent-color:var(--violet)",
           onchange: e => { brouillon.fenetre_appli = e.target.checked; } }),
         "Ouvrir dans sa propre fenêtre (sans barre d'adresse), comme une application"));
     }
-    if (brouillon.type === "appli_web") {
+    if (brouillon.type === "appli_web" && !S.macos) {
       enfants.push(
         el("label", { class: "champ" }, "Port de l'appli",
           el("input", { type: "number", value: brouillon.port ?? "", placeholder: "ex. 8765", oninput: e => { brouillon.port = e.target.value ? Number(e.target.value) : undefined; } })),
@@ -685,7 +693,7 @@ function editer(outil) {
     }
     zoneCible.replaceChildren(...enfants);
   };
-  const types = el("div", { class: "types" }, Object.entries(TYPES).map(([cle, t]) =>
+  const types = el("div", { class: "types" }, Object.entries(TYPES).filter(([cle]) => !S.macos || cle !== "appli_web").map(([cle, t]) =>
     el("button", { type: "button", class: cle === brouillon.type ? "choisi" : "", onclick: e => {
       brouillon.type = cle; [...types.children].forEach(b => b.classList.toggle("choisi", b === e.currentTarget)); dessinerCible(); majApercu();
     } }, el("span", {}, t.emoji), t.nom)));
@@ -866,6 +874,7 @@ function chargerScript(src) {
 async function demarrerOnglets() {
   let info = { fichiers: [], langue: "fr", masques: [] };
   try { info = await api("/api/onglets"); } catch (e) { toast("😕 " + e.message, "erreur", 8000); }
+  S.macos = info.macos === true;
   I18N.langue = info.langue;
   S.masques = info.masques;
   appliquerTheme(info.theme || "auto");
@@ -879,8 +888,14 @@ async function demarrerOnglets() {
   construireMenu();
   horloge();
   montrerVue((location.hash || "#accueil").slice(1) || "accueil");
-  compterMails();
-  chargerServeursProjets();
+  if (!S.macos) {
+    compterMails();
+    chargerServeurs();
+    chargerServeursProjets();
+    setInterval(compterMails, 120000);
+    setInterval(chargerServeurs, 5000);
+    setInterval(() => { if (S.vue === "serveurs") chargerServeursProjets(); }, 5000);
+  }
 }
 
 // La bulle peut demander un onglet (rappel, note rapide…).
@@ -892,6 +907,7 @@ setInterval(async () => {
 function dateLocale(iso) { return iso ? new Date(iso) : null; }
 function memeJour(a, b) { return a && b && a.toDateString() === b.toDateString(); }
 async function afficherAujourdhui() {
+  if (S.macos) return;
   let agenda = [], notes = [];
   try { [agenda, notes] = await Promise.all([api("/api/agenda"), api("/api/notes")]); } catch { return; }
   const auj = new Date(), demain = new Date(Date.now() + 864e5);
@@ -1025,6 +1041,13 @@ I18N.ajouter({
   "Thème : sombre": "Theme: dark", "Thème : clair": "Theme: light", "Thème sombre": "Dark theme", "Thème clair": "Light theme",
   "Thème automatique (comme Windows)": "Automatic theme (like Windows)", "Modifier les tuiles": "Edit the tiles",
   "Recharger la page": "Reload the page", "Onglets": "Tabs", "Mes outils": "My tools", "Actions": "Actions", "Rien trouvé": "Nothing found",
+  "Indisponible sur macOS": "Unavailable on macOS",
+  "Thème : automatique": "Theme: automatic", "Thème automatique": "Automatic theme",
+  "Chemin du dossier, ex. ~/Documents": "Folder path, e.g. ~/Documents",
+  "Chemin d’un fichier ou d’une app .app": "Path to a file or an .app bundle",
+  "Ce type de tuile n’est pas encore disponible sur macOS.": "This shortcut type is not available on macOS yet.",
+  "Impossible d’ouvrir ce fichier ou dossier.": "Could not open this file or folder.",
+  "Impossible d’ouvrir le navigateur par défaut.": "Could not open the default browser.",
   "choisir": "select", "ouvrir": "open", "fermer": "close", "Entrée": "Enter", "Échap": "Esc",
   "Au quotidien": "Everyday", "Développement": "Development", "Petits outils": "Handy tools",
   "Palette de commandes": "Command palette",
@@ -1053,7 +1076,8 @@ function appliquerTheme(choix) {
   document.documentElement.dataset.theme = sombre ? "sombre" : "clair";
   const b = $("#btn-theme");
   b.textContent = choix === "auto" ? "🌗" : sombre ? "🌙" : "☀️";
-  b.title = I18N.traduire(choix === "auto" ? "Thème : automatique (comme Windows)" : sombre ? "Thème : sombre" : "Thème : clair");
+  const automatique = S.macos ? "Thème : automatique" : "Thème : automatique (comme Windows)";
+  b.title = I18N.traduire(choix === "auto" ? automatique : sombre ? "Thème : sombre" : "Thème : clair");
   try { localStorage.setItem("mes-outils-theme", choix); } catch {}
 }
 sombreWindows.addEventListener("change", () => { if (S.theme === "auto") appliquerTheme("auto"); });
@@ -1076,6 +1100,7 @@ function elementsPalette() {
     items.push({ section: "Onglets", icone: iconeOnglet(o.icone), titre: I18N.traduire(o.titre), detail: I18N.traduire(GROUPES[o.groupe] || ""), action: () => montrerVue(o.nom) });
   }
   for (const o of S.config?.outils || []) {
+    if (o.indisponible) continue;
     items.push({ section: "Mes outils", icone: icone(iconeOutil(o)), titre: o.nom, detail: o.description || "", action: () => lancer(o, document.createElement("div")) });
   }
   for (const n of Object.keys(VUES)) {
@@ -1085,7 +1110,7 @@ function elementsPalette() {
   items.push(
     { section: "Actions", icone: "🌙", titre: I18N.traduire("Thème sombre"), action: () => changerTheme("sombre") },
     { section: "Actions", icone: "☀️", titre: I18N.traduire("Thème clair"), action: () => changerTheme("clair") },
-    { section: "Actions", icone: "🌗", titre: I18N.traduire("Thème automatique (comme Windows)"), action: () => changerTheme("auto") },
+    { section: "Actions", icone: "🌗", titre: I18N.traduire(S.macos ? "Thème automatique" : "Thème automatique (comme Windows)"), action: () => changerTheme("auto") },
     { section: "Actions", icone: "✏️", titre: I18N.traduire("Modifier les tuiles"), action: () => { montrerVue("accueil"); if (!S.edition) $("#btn-edition").click(); } },
     { section: "Actions", icone: "🔄", titre: I18N.traduire("Recharger la page"), action: () => location.reload() });
   return items;
@@ -1147,14 +1172,12 @@ document.addEventListener("keydown", e => {
 });
 
 // -------------------------------------------------------------- départ
-setInterval(compterMails, 120000);
-demarrerOnglets().then(() => { if (S.vue === "accueil") afficherAujourdhui(); });
+demarrerOnglets().then(() => {
+  if (S.vue === "accueil") afficherAujourdhui();
+  chargerOutils().catch(e => toast("😕 " + e.message, "erreur", 8000));
+});
 horloge();
 setInterval(horloge, 10000);
-chargerOutils().catch(e => toast("😕 " + e.message, "erreur", 8000));
-chargerServeurs();
-setInterval(chargerServeurs, 5000);
-setInterval(() => { if (S.vue === "serveurs") chargerServeursProjets(); }, 5000);
 setInterval(() => chargerOutils().catch(() => {}), 15000);
 </script>
 </body>

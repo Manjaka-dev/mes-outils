@@ -19,12 +19,15 @@ import io
 import json
 import os
 import re
+import signal
 import subprocess
 import threading
 import time
 import webbrowser
 from concurrent.futures import ThreadPoolExecutor
 from ctypes import wintypes
+
+import config
 
 SANS_FENETRE = 0x08000000
 DUREE_CACHE = 2.0  # secondes
@@ -189,12 +192,84 @@ def nos_pids():
     return {os.getpid(), os.getppid()}
 
 
+def lire_lsof(sortie, proto):
+    resultat = {}
+    pid, nom = None, ""
+    for ligne in sortie.splitlines():
+        champ, valeur = ligne[:1], ligne[1:]
+        if champ == "p":
+            pid, nom = (int(valeur) if valeur.isdecimal() else None), ""
+        elif champ == "c":
+            nom = valeur
+        elif champ == "n" and pid is not None:
+            adresse, port = separer_adresse(valeur.split("->", 1)[0])
+            if port:
+                resultat[(pid, adresse, port)] = {"pid": pid, "nom": nom, "proto": proto,
+                                                 "adresse": adresse, "port": port}
+    return list(resultat.values())
+
+
+def _identite_mac(pid):
+    from projets import chemin_processus_mac, processus_mac
+
+    info = processus_mac(pid)
+    if info is None:
+        return None, True
+    chemin = chemin_processus_mac(pid)
+    systeme = ("/System/", "/usr/libexec/", "/usr/sbin/", "/Library/Apple/System/")
+    protege = (info.identifiants[0] != os.getuid() or not chemin or chemin.startswith(systeme)
+               or pid <= 4 or pid in ancetres_mac())
+    return f"{info.secondes}:{info.microsecondes}", protege
+
+
+def ancetres_mac():
+    from projets import processus_mac
+
+    courant, chaine = os.getpid(), set()
+    while courant > 1 and courant not in chaine:
+        chaine.add(courant)
+        info = processus_mac(courant)
+        if info is None:
+            break
+        courant = info.ppid
+    return chaine
+
+
+def _lister_mac(udp):
+    lignes, identites = [], {}
+    for proto in ("TCP", "UDP") if udp else ("TCP",):
+        commande = ["/usr/sbin/lsof", "-nP", f"-i{proto}", "-Fpcfn"]
+        if proto == "TCP":
+            commande.append("-sTCP:LISTEN")
+        try:
+            r = subprocess.run(commande, capture_output=True, text=True, encoding="utf-8",
+                               errors="replace", timeout=15)
+        except (OSError, subprocess.SubprocessError):
+            raise ValueError("Impossible de lire les ports en écoute.") from None
+        if r.returncode not in (0, 1):
+            raise ValueError("Impossible de lire les ports en écoute.")
+        lignes.extend(lire_lsof(r.stdout, proto))
+    for e in lignes:
+        pid, port = e["pid"], e["port"]
+        if pid not in identites:
+            identites[pid] = _identite_mac(pid)
+        cree, protege = identites[pid]
+        e.update(cree=cree, protege=protege, soi=pid in nos_pids(), commande="", memoire_ko=None,
+                 dev=PORTS_DEV.get(port, ""), web=e["proto"] == "TCP" and est_web(port, e["nom"]))
+    return sorted(lignes, key=lambda e: (e["port"], e["proto"], e["adresse"]))
+
+
 def lister_ports(udp=False, forcer=False):
     """Les ports en écoute, avec le programme qui les occupe (cache court)."""
     with _verrou:
         if (not forcer and _cache["resultat"] is not None and _cache["udp"] == udp
                 and time.monotonic() - _cache["instant"] < DUREE_CACHE):
             return _cache["resultat"]
+    if config.MACOS:
+        resultat = _lister_mac(udp)
+        with _verrou:
+            _cache.update(udp=udp, instant=time.monotonic(), resultat=resultat)
+        return resultat
     ecoutes = lire_netstat(_executer(["netstat", "-ano"]), udp=udp)
     pids = {e["pid"] for e in ecoutes}
     manquants = {p for p in pids if p not in _commandes}
@@ -342,6 +417,30 @@ def verifier_arret(pid, nom_attendu, arbre=False):
 def arreter(d):
     pid = _pid(d)
     arbre = bool(d.get("arbre"))
+    if config.MACOS:
+        port = _port(d)
+        proto = d.get("proto")
+        cree = d.get("cree")
+        if arbre or proto not in ("TCP", "UDP") or not isinstance(cree, str):
+            raise ValueError("Actualisez la liste des ports avant l’arrêt.")
+        ligne = next((e for e in lister_ports(udp=proto == "UDP", forcer=True)
+                      if (e["pid"], e["port"], e["proto"], e["cree"]) == (pid, port, proto, cree)), None)
+        actuel, protege = _identite_mac(pid)
+        if ligne is None or actuel != cree:
+            raise ValueError("Le processus ou le port a changé : actualisez la liste.")
+        if protege or ligne["protege"]:
+            raise ValueError("Processus système : arrêt refusé.")
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            raise ValueError("Impossible d’arrêter ce processus.") from None
+        oublier_cache()
+        fin = time.monotonic() + 3
+        while time.monotonic() < fin:
+            if _identite_mac(pid)[0] != cree:
+                return {"ok": True, "pid": pid, "nom": ligne["nom"]}
+            time.sleep(0.1)
+        raise ValueError("Le processus n’a pas répondu au signal d’arrêt.")
     nom = verifier_arret(pid, str(d.get("nom") or ""), arbre)
     commande = ["taskkill", "/PID", str(pid), "/F"] + (["/T"] if arbre else [])
     r = subprocess.run(commande, capture_output=True, timeout=20, creationflags=SANS_FENETRE)

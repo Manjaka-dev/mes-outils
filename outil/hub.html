@@ -556,7 +556,7 @@ function confirmer(icone, titre, texte, oui = "Oui") {
   });
 }
 
-/** La fenêtre « Choisir un dossier » de Windows. Renvoie le chemin, ou null. */
+/** La fenêtre native « Choisir un dossier ». Renvoie le chemin, ou null. */
 async function choisirDossier(titre = "Choisir un dossier", depart = "") {
   try { return (await api("/api/reglages/choisir_dossier", { titre: I18N.traduire(titre), depart })).chemin; }
   catch (e) { toast("😕 " + e.message, "erreur"); return null; }
@@ -888,14 +888,16 @@ async function demarrerOnglets() {
   construireMenu();
   horloge();
   montrerVue((location.hash || "#accueil").slice(1) || "accueil");
-  if (!S.macos) {
+  if (VUES.mails) {
     compterMails();
-    chargerServeurs();
-    chargerServeursProjets();
     setInterval(compterMails, 120000);
-    setInterval(chargerServeurs, 5000);
-    setInterval(() => { if (S.vue === "serveurs") chargerServeursProjets(); }, 5000);
   }
+  if (!S.macos) {
+    chargerServeurs();
+    setInterval(chargerServeurs, 5000);
+  }
+  chargerServeursProjets();
+  setInterval(() => { if (S.vue === "serveurs") chargerServeursProjets(); }, 5000);
 }
 
 // La bulle peut demander un onglet (rappel, note rapide…).
@@ -907,7 +909,6 @@ setInterval(async () => {
 function dateLocale(iso) { return iso ? new Date(iso) : null; }
 function memeJour(a, b) { return a && b && a.toDateString() === b.toDateString(); }
 async function afficherAujourdhui() {
-  if (S.macos) return;
   let agenda = [], notes = [];
   try { [agenda, notes] = await Promise.all([api("/api/agenda"), api("/api/notes")]); } catch { return; }
   const auj = new Date(), demain = new Date(Date.now() + 864e5);
@@ -988,7 +989,8 @@ function majVideServeurs() {
 }
 function rafraichirServeurs() {
   S.empreinteServeurs = S.empreinteProjets = null;
-  chargerServeurs(); chargerServeursProjets();
+  if (!S.macos) chargerServeurs();
+  chargerServeursProjets();
 }
 async function chargerServeursProjets() {
   if (!VUES.projets || (S.masques || []).includes("projets")) { $("#bloc-projets").hidden = true; majVideServeurs(); return; }
@@ -1010,7 +1012,9 @@ async function chargerServeursProjets() {
       el("div", { class: "boutons" },
         el("button", { class: "icone-btn go", title: "Démarrer", disabled: enRoute || s.etat === "occupe" ? "" : null, onclick: () => commandeProjet(s, "demarrer") }, "▶"),
         el("button", { class: "icone-btn stop", title: "Arrêter", disabled: !enRoute ? "" : null, onclick: () => commandeProjet(s, "arreter") }, "■"),
-        el("button", { class: "icone-btn", title: "Ouvrir dans le navigateur", disabled: s.url || s.port ? null : "", onclick: () => commandeProjet(s, "ouvrir") }, "↗")));
+        el("button", { class: "icone-btn", title: "Ouvrir dans le navigateur", disabled: s.url || s.port ? null : "", onclick: () => commandeProjet(s, "ouvrir") }, "↗"),
+        S.macos && el("button", { class: "icone-btn", title: "Journal", onclick: () => VUES.projets.journal(
+          { id: s.projet_id, nom: s.projet }, { id: s.id, nom: s.nom }) }, "☰")));
   }));
 }
 async function commandeProjet(s, action) {

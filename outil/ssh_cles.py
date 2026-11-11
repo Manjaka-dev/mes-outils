@@ -16,6 +16,7 @@ import datetime
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import threading
@@ -26,15 +27,16 @@ FICHIER = os.path.join(config.DONNEES, "ssh.json")
 DOSSIER_SSH = os.path.join(os.path.expanduser("~"), ".ssh")
 CONFIG_SSH = os.path.join(DOSSIER_SSH, "config")
 OPENSSH = os.path.join(os.environ.get("WINDIR", r"C:\Windows"), "System32", "OpenSSH")
-SSH = os.path.join(OPENSSH, "ssh.exe")
-SSH_KEYGEN = os.path.join(OPENSSH, "ssh-keygen.exe")
-ASKPASS_CMD = os.path.join(config.DONNEES, "ssh_askpass.cmd")
+SSH = "/usr/bin/ssh" if config.MACOS else os.path.join(OPENSSH, "ssh.exe")
+SSH_KEYGEN = "/usr/bin/ssh-keygen" if config.MACOS else os.path.join(OPENSSH, "ssh-keygen.exe")
+ASKPASS_CMD = os.path.join(config.DONNEES, "ssh_askpass.sh" if config.MACOS else "ssh_askpass.cmd")
 # Rend à ssh le mot de passe placé dans l'environnement de ce seul processus
 # ssh. PowerShell lit la variable sans l'interpréter (caractères spéciaux
 # sans risque) ; pas besoin de Python, donc aussi dans le programme installé.
 CONTENU_ASKPASS = ('@powershell -NoProfile -NonInteractive -Command '
                    '"[Console]::OutputEncoding = [Text.Encoding]::UTF8; '
                    '[Console]::Out.WriteLine($env:MESOUTILS_SSH_SECRET)"\n')
+CONTENU_ASKPASS_MAC = '#!/bin/sh\nprintf "%s\\n" "$MESOUTILS_SSH_SECRET"\n'
 CREATE_NO_WINDOW = 0x08000000
 DELAI = 25  # secondes pour une connexion
 _verrou = threading.Lock()
@@ -95,9 +97,9 @@ def _verifier(nom, hote, port, utilisateur):
         hote = hote.split(":")[0]  # un port web collé avec l'IP n'est pas le port SSH
     if not nom:
         raise ErreurSSH("Donnez un nom au serveur.")
-    if not RE_HOTE.match(hote):
+    if not RE_HOTE.match(hote) or hote.startswith("-"):
         raise ErreurSSH("Adresse du serveur invalide (IP ou nom, sans espace).")
-    if not RE_UTILISATEUR.match(utilisateur):
+    if not RE_UTILISATEUR.match(utilisateur) or utilisateur.startswith("-"):
         raise ErreurSSH("Utilisateur invalide (lettres, chiffres, . _ -).")
     try:
         port = int(port or 22)
@@ -123,22 +125,31 @@ def _lire_config():
 
 
 def _ecrire_config(texte):
-    os.makedirs(DOSSIER_SSH, exist_ok=True)
+    os.makedirs(DOSSIER_SSH, mode=0o700, exist_ok=True)
     tmp = CONFIG_SSH + ".tmp"
-    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+    def ouvrir(chemin, drapeaux):
+        return os.open(chemin, drapeaux | (os.O_NOFOLLOW if config.MACOS else 0), 0o600)
+    with open(tmp, "w", encoding="utf-8", newline="\n", opener=ouvrir) as f:
+        if config.MACOS:
+            os.fchmod(f.fileno(), 0o600)
         f.write(texte)
     os.replace(tmp, CONFIG_SSH)
 
 
 def _retirer_bloc(texte, alias):
     debut, fin = _reperes(alias)
-    motif = re.compile(re.escape(debut) + r".*?" + re.escape(fin) + r"\n?", re.S)
+    motif = re.compile(r"^" + re.escape(debut) + r"[ \t]*\n.*?^" + re.escape(fin) + r"[ \t]*(?:\n|$)",
+                       re.M | re.S)
     return motif.sub("", texte)
 
 
 def _poser_bloc(serveur):
     debut, fin = _reperes(serveur["alias"])
     cle = "~/.ssh/" + os.path.basename(serveur["cle"])
+    stricte = ""
+    if config.MACOS:
+        cle = '"' + serveur["cle"].replace("\\", "\\\\") + '"'
+        stricte = "    StrictHostKeyChecking yes\n"
     bloc = (f"{debut}\n"
             f"Host {serveur['alias']}\n"
             f"    HostName {serveur['hote']}\n"
@@ -146,11 +157,12 @@ def _poser_bloc(serveur):
             f"    User {serveur['utilisateur']}\n"
             f"    IdentityFile {cle}\n"
             f"    IdentitiesOnly yes\n"
+            f"{stricte}"
             f"{fin}\n")
     texte = _retirer_bloc(_lire_config(), serveur["alias"])
     if texte and not texte.endswith("\n"):
         texte += "\n"
-    _ecrire_config(texte + bloc)
+    _ecrire_config(bloc + texte if config.MACOS else texte + bloc)
 
 
 # ---------------------------------------------------------------------------
@@ -159,8 +171,14 @@ def _poser_bloc(serveur):
 def _preparer_askpass():
     """Le petit programme que ssh appelle pour obtenir le mot de passe : il
     le lit dans son environnement et l'écrit pour ssh, rien de plus."""
-    contenu = CONTENU_ASKPASS
+    contenu = CONTENU_ASKPASS_MAC if config.MACOS else CONTENU_ASKPASS
     os.makedirs(os.path.dirname(ASKPASS_CMD), exist_ok=True)
+    if config.MACOS:
+        fd = os.open(ASKPASS_CMD, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o700)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            os.fchmod(f.fileno(), 0o700)
+            f.write(contenu)
+        return
     actuel = None
     if os.path.exists(ASKPASS_CMD):
         with open(ASKPASS_CMD, encoding="utf-8") as f:
@@ -180,9 +198,10 @@ def _executer(commande, secret=None, delai=DELAI):
         env.update(SSH_ASKPASS=ASKPASS_CMD, SSH_ASKPASS_REQUIRE="force", DISPLAY="mes-outils",
                    MESOUTILS_SSH_SECRET=secret)
     try:
+        options = {} if config.MACOS else {"creationflags": CREATE_NO_WINDOW}
         return subprocess.run(commande, env=env, stdin=subprocess.DEVNULL, capture_output=True,
                               text=True, encoding="utf-8", errors="replace", timeout=delai,
-                              creationflags=CREATE_NO_WINDOW)
+                              **options)
     except subprocess.TimeoutExpired:
         raise ErreurSSH("Le serveur ne répond pas (délai dépassé). Vérifiez l'adresse et le port.") from None
 
@@ -199,12 +218,14 @@ def _message_erreur(sortie):
         return "Le serveur ne répond pas : vérifiez l'adresse et le port."
     if "REMOTE HOST IDENTIFICATION HAS CHANGED" in texte:
         return "L'empreinte du serveur a changé depuis la dernière connexion. Par prudence, rien n'a été fait."
+    if "Host key verification failed" in texte:
+        return "Vérifiez d’abord l’empreinte du serveur dans Terminal pour l’ajouter aux hôtes connus."
     return texte.splitlines()[-1] if texte else "Erreur inconnue."
 
 
 def _base_ssh(serveur):
     return [SSH, "-p", str(serveur["port"]),
-            "-o", "StrictHostKeyChecking=accept-new",
+            "-o", "StrictHostKeyChecking=yes" if config.MACOS else "StrictHostKeyChecking=accept-new",
             "-o", f"ConnectTimeout={DELAI - 5}",
             f"{serveur['utilisateur']}@{serveur['hote']}"]
 
@@ -243,8 +264,13 @@ def creer(nom, hote, port, utilisateur, mot_de_passe):
         serveur = {"nom": nom, "alias": alias, "hote": hote, "port": port, "utilisateur": utilisateur,
                    "cle": cle, "cree_le": _maintenant()}
 
-        os.makedirs(DOSSIER_SSH, exist_ok=True)
+        os.makedirs(DOSSIER_SSH, mode=0o700, exist_ok=True)
         cree_ici = not os.path.exists(cle)
+        if config.MACOS:
+            _verifier_alias_mac(alias)
+            if not cree_ici or os.path.lexists(cle) or os.path.lexists(cle + ".pub"):
+                raise ErreurSSH("Un fichier de clé existe déjà pour cet alias.")
+            serveur["geree"] = True
         if cree_ici:
             r = _executer([SSH_KEYGEN, "-q", "-t", "ed25519", "-N", "", "-C", f"mes-outils {alias}", "-f", cle])
             if r.returncode != 0:
@@ -259,9 +285,7 @@ def creer(nom, hote, port, utilisateur, mot_de_passe):
                         os.remove(fichier)
             raise
 
-        serveurs.append(serveur)
-        _ecrire(serveurs)
-        _poser_bloc(serveur)
+        _enregistrer_serveur(serveurs, serveur)
     resultat = tester(alias)
     return {"serveur": _trouver(alias), **resultat}
 
@@ -289,23 +313,53 @@ def ajouter_existant(nom, hote, port, utilisateur, cle):
     nom, hote, port, utilisateur = _verifier(nom, hote, port, utilisateur)
     alias = alias_depuis(nom)
     with _verrou:
+        if config.MACOS:
+            if not isinstance(cle, str) or any(c in cle for c in '\n\r"\0%$'):
+                raise ErreurSSH("Chemin de clé privée invalide.")
+            cle = os.path.abspath(os.path.expanduser(cle))
+            if not os.path.isfile(cle) or cle.endswith(".pub"):
+                raise ErreurSSH("Clé privée introuvable.")
+            statut = os.stat(cle)
+            if statut.st_uid != os.getuid() or statut.st_mode & 0o077:
+                raise ErreurSSH("La clé privée doit être accessible uniquement à son propriétaire (chmod 600).")
+            _verifier_alias_mac(alias)
         serveurs = [s for s in lister() if s["alias"] != alias]
         serveur = {"nom": nom, "alias": alias, "hote": hote, "port": port, "utilisateur": utilisateur,
-                   "cle": cle, "cree_le": _maintenant()}
-        serveurs.append(serveur)
-        _ecrire(serveurs)
-        _poser_bloc(serveur)
+                   "cle": cle, "cree_le": _maintenant(), "geree": False}
+        _enregistrer_serveur(serveurs, serveur)
     return serveur
+
+
+def _enregistrer_serveur(serveurs, serveur):
+    if not config.MACOS:
+        _ecrire([*serveurs, serveur])
+        _poser_bloc(serveur)
+        return
+    avant = _lire_config()
+    _poser_bloc(serveur)
+    try:
+        _ecrire([*serveurs, serveur])
+    except OSError:
+        _ecrire_config(avant)
+        raise
+
+
+def _verifier_alias_mac(alias):
+    for ligne in _lire_config().splitlines():
+        directive = ligne.split("#", 1)[0].replace("=", " ", 1).split()
+        if directive and directive[0].lower() == "host" and alias.casefold() in {a.casefold() for a in directive[1:]}:
+            raise ErreurSSH(f"Un serveur s'appelle déjà « {alias} » : choisissez un autre nom.")
 
 
 def retirer(alias):
     """Retirer la clé du serveur, puis de ce PC et de la liste."""
     serveur = _trouver(alias)
     avertissement = None
-    if os.path.exists(serveur["cle"] + ".pub"):
+    geree = serveur.get("geree", not config.MACOS and os.path.basename(serveur["cle"]).startswith("mesoutils_"))
+    if (geree or not config.MACOS) and os.path.exists(serveur["cle"] + ".pub"):
         publique = _cle_publique(serveur)
         distant = ("f=~/.ssh/authorized_keys; if [ -f $f ]; then "
-                   f"grep -vxF '{publique}' $f > $f.mesoutils; cat $f.mesoutils > $f; rm -f $f.mesoutils; "
+                   f"grep -vxF {shlex.quote(publique)} $f > $f.mesoutils; cat $f.mesoutils > $f; rm -f $f.mesoutils; "
                    "fi; echo cle-retiree")
         commande = _base_ssh(serveur)
         commande[1:1] = ["-i", serveur["cle"], "-o", "IdentitiesOnly=yes", "-o", "BatchMode=yes"]
@@ -318,7 +372,7 @@ def retirer(alias):
         _ecrire([s for s in lister() if s["alias"] != alias])
         _ecrire_config(_retirer_bloc(_lire_config(), alias))
         # On ne supprime que les clés créées par l'outil, jamais une clé reprise.
-        if os.path.basename(serveur["cle"]).startswith("mesoutils_"):
+        if geree:
             for fichier in (serveur["cle"], serveur["cle"] + ".pub"):
                 if os.path.exists(fichier):
                     os.remove(fichier)
@@ -327,6 +381,20 @@ def retirer(alias):
 
 def ouvrir_terminal(alias):
     serveur = _trouver(alias)
+    if config.MACOS:
+        script = """
+on run argv
+    set commande to "/usr/bin/ssh " & quoted form of (item 1 of argv)
+    tell application id "com.apple.Terminal"
+        activate
+        do script commande
+    end tell
+end run
+"""
+        r = _executer(["/usr/bin/osascript", "-e", script, "--", serveur["alias"]])
+        if r.returncode:
+            raise ErreurSSH("Impossible d’ouvrir la connexion dans Terminal.")
+        return {"ok": True}
     wt = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Microsoft", "WindowsApps", "wt.exe")
     if os.path.exists(wt):
         subprocess.Popen([wt, "new-tab", "--title", serveur["nom"], SSH, alias], close_fds=True)

@@ -122,7 +122,7 @@ class SourceWindows:
             if not p:
                 return None, "pas_de_texte"
             try:
-                texte = ctypes.wstring_at(p, nb)
+                texte = ctypes.string_at(p, nb * 2).decode("utf-16-le", errors="replace")
             finally:
                 self.k32.GlobalUnlock(h)
             return texte.split("\0", 1)[0], None
@@ -315,7 +315,12 @@ def _la_surveillance():
     global _surveillance
     with _verrou_module:
         if _surveillance is None:
-            _surveillance = Surveillance(_historique, SourceWindows())
+            if config.MACOS:
+                from presse_papiers_macos import SourceMac
+                source = SourceMac()
+            else:
+                source = SourceWindows()
+            _surveillance = Surveillance(_historique, source)
         return _surveillance
 
 

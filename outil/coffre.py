@@ -230,19 +230,20 @@ def _verifier_maitre(maitre):
 # ---------------------------------------------------------------------------
 # Presse-papiers Windows
 # ---------------------------------------------------------------------------
-_u32 = ctypes.WinDLL("user32", use_last_error=True)
-_k32 = ctypes.WinDLL("kernel32", use_last_error=True)
-_u32.OpenClipboard.argtypes = [wintypes.HWND]
-_u32.SetClipboardData.argtypes = [wintypes.UINT, wintypes.HANDLE]
-_u32.SetClipboardData.restype = wintypes.HANDLE
-_u32.RegisterClipboardFormatW.argtypes = [wintypes.LPCWSTR]
-_u32.RegisterClipboardFormatW.restype = wintypes.UINT
-_u32.GetClipboardSequenceNumber.restype = wintypes.DWORD
-_k32.GlobalAlloc.argtypes = [wintypes.UINT, ctypes.c_size_t]
-_k32.GlobalAlloc.restype = wintypes.HGLOBAL
-_k32.GlobalLock.argtypes = [wintypes.HGLOBAL]
-_k32.GlobalLock.restype = wintypes.LPVOID
-_k32.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
+if not config.MACOS:
+    _u32 = ctypes.WinDLL("user32", use_last_error=True)
+    _k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    _u32.OpenClipboard.argtypes = [wintypes.HWND]
+    _u32.SetClipboardData.argtypes = [wintypes.UINT, wintypes.HANDLE]
+    _u32.SetClipboardData.restype = wintypes.HANDLE
+    _u32.RegisterClipboardFormatW.argtypes = [wintypes.LPCWSTR]
+    _u32.RegisterClipboardFormatW.restype = wintypes.UINT
+    _u32.GetClipboardSequenceNumber.restype = wintypes.DWORD
+    _k32.GlobalAlloc.argtypes = [wintypes.UINT, ctypes.c_size_t]
+    _k32.GlobalAlloc.restype = wintypes.HGLOBAL
+    _k32.GlobalLock.argtypes = [wintypes.HGLOBAL]
+    _k32.GlobalLock.restype = wintypes.LPVOID
+    _k32.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
 CF_UNICODETEXT, GMEM_MOVEABLE = 13, 0x0002
 
 
@@ -263,6 +264,10 @@ def _donnees_globales(octets):
 
 
 def copier_presse_papiers(texte, effacer_apres=None):
+    if config.MACOS:
+        from presse_papiers_macos import copier_secret
+        copier_secret(texte, effacer_apres)
+        return
     if not _ouvrir_presse_papiers():
         raise ErreurCoffre("Le presse-papiers est occupé par un autre programme.")
     try:

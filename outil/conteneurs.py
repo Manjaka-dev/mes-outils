@@ -15,6 +15,8 @@ import shutil
 import subprocess
 import webbrowser
 
+import config
+
 SANS_FENETRE = 0x08000000
 
 # Identifiant (hexadécimal) ou nom de conteneur : jamais de « - » au début.
@@ -41,12 +43,21 @@ def chemin_docker():
     trouve = shutil.which("docker")
     if trouve:
         return trouve
+    if config.MACOS:
+        desktop = chemin_desktop()
+        chemins = [os.path.expanduser("~/.docker/bin/docker"), "/opt/homebrew/bin/docker", "/usr/local/bin/docker"]
+        if desktop:
+            chemins.append(os.path.join(desktop, "Contents", "Resources", "bin", "docker"))
+        return next((chemin for chemin in chemins if os.access(chemin, os.X_OK) and os.path.isfile(chemin)), None)
     standard = os.path.join(_programmes(), "Docker", "Docker", "resources", "bin", "docker.exe")
     return standard if os.path.isfile(standard) else None
 
 
 def chemin_desktop():
     """Docker Desktop dans son dossier standard, ou None."""
+    if config.MACOS:
+        return next((chemin for chemin in ("/Applications/Docker.app", os.path.expanduser("~/Applications/Docker.app"))
+                     if os.path.isdir(chemin)), None)
     chemin = os.path.join(_programmes(), "Docker", "Docker", "Docker Desktop.exe")
     return chemin if os.path.isfile(chemin) else None
 
@@ -57,8 +68,8 @@ def _docker(*arguments, delai=30):
     if not programme:
         raise ErreurDocker("Docker n'est pas installé.")
     try:
-        r = subprocess.run([programme, *arguments], capture_output=True, timeout=delai,
-                           creationflags=SANS_FENETRE)
+        options = {} if config.MACOS else {"creationflags": SANS_FENETRE}
+        r = subprocess.run([programme, *arguments], capture_output=True, timeout=delai, **options)
     except subprocess.TimeoutExpired:
         raise ErreurDocker("Docker ne répond pas (délai dépassé).") from None
     sortie = (r.stdout or b"").decode("utf-8", errors="replace")
@@ -291,7 +302,13 @@ def lancer_desktop(d):
     chemin = chemin_desktop()
     if not chemin:
         raise ErreurDocker("Docker Desktop est introuvable sur ce PC.")
-    os.startfile(chemin)
+    if config.MACOS:
+        try:
+            subprocess.run(["/usr/bin/open", chemin], capture_output=True, timeout=10, check=True)
+        except (OSError, subprocess.SubprocessError):
+            raise ErreurDocker("Impossible d’ouvrir Docker Desktop.") from None
+    else:
+        os.startfile(chemin)
     return {"ok": True}
 
 

@@ -87,9 +87,23 @@ python3 -m venv ~/.venvs/mes-outils
 
 Un clic sur la bulle ouvre le tableau de bord dans le navigateur par défaut.
 Faites glisser la bulle pour la déplacer et utilisez le clic secondaire pour
-accéder à Réglages ou quitter. Cette première étape donne accès à l’accueil,
-aux tuiles de fichiers, dossiers, applications et liens, et aux réglages de
-profil, de langue et de thème.
+accéder aux raccourcis, à la note rapide et aux serveurs de développement.
+Sur Mac, les onglets Notes, Agenda, Extraits, Boîte à outils et Temps sont
+disponibles, avec les rappels et le Pomodoro dans la bulle.
+
+Dans Réglages, ajoutez un dossier que Mes outils doit explorer. Depuis
+Projets, ouvrez un projet dans le Finder, Terminal ou VS Code, consultez son
+état Git et configurez ses commandes. Lancez vos serveurs au premier plan
+dans la commande enregistrée, afin que Mes outils puisse suivre leur
+processus et les arrêter. Projets et Serveurs donnent accès à leurs journaux.
+
+Le coffre chiffré et les sauvegardes `.env` utilisent le même format que sur
+Windows. Les identifiants GitHub et mail vont dans le Trousseau macOS. Le
+presse-papiers garde son historique en mémoire et exclut les copies du coffre.
+Ports affiche les programmes en écoute et Docker gère les conteneurs existants.
+Dans SSH, vous pouvez associer une clé privée existante ou en créer une. Pour
+installer une clé publique, enregistrez d’abord l’empreinte vérifiée du
+serveur dans les hôtes connus d’OpenSSH.
 
 Les données macOS sont dans `~/Library/Application Support/Mes outils`.
 Pour isoler une copie d’essai, définissez `MES_OUTILS_DONNEES` et, si le port

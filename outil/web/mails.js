@@ -4,6 +4,10 @@
    passe est rangé dans le coffre Windows (voir mail.py). */
 (() => {
   I18N.ajouter({
+    "Le mot de passe est rangé dans le Trousseau macOS.": "The password is stored in macOS Keychain.",
+    "Impossible d’enregistrer le mot de passe dans le Trousseau macOS.": "Could not save the password in macOS Keychain.",
+    "Le mot de passe est retiré du Trousseau macOS. Vos mails sont conservés.":
+      "The password is removed from macOS Keychain. Your mail is kept.",
     "Mails": "Mail",
     "✉️ Mails": "✉️ Mail",
     // connexion
@@ -233,7 +237,8 @@
     const guide = el("div");
     const libelleSecret = el("span");
     const zoneSecret = el("label", { class: "champ" }, libelleSecret, secret,
-      el("small", {}, "🔒 Il est rangé dans le coffre de Windows (Gestionnaire d'identification), jamais dans un fichier."));
+      el("small", {}, S.macos ? "Le mot de passe est rangé dans le Trousseau macOS."
+        : "🔒 Il est rangé dans le coffre de Windows (Gestionnaire d'identification), jamais dans un fichier."));
     const bouton = el("button", { class: "btn principal", onclick: connecter }, "Connecter");
     const actions = el("div", { class: "actions" }, bouton);
 
@@ -300,7 +305,8 @@
     racine().replaceChildren(el("div", { class: "connexion" },
       el("div", { style: "font-size:48px" }, "✉️"),
       el("h3", {}, "Connecter votre boîte mail"),
-      el("p", { style: "color:var(--doux);margin-top:0" }, "Une seule fois. Le mot de passe est rangé dans le coffre de Windows, jamais dans un fichier."),
+      el("p", { style: "color:var(--doux);margin-top:0" }, S.macos ? "Le mot de passe est rangé dans le Trousseau macOS."
+        : "Une seule fois. Le mot de passe est rangé dans le coffre de Windows, jamais dans un fichier."),
       el("div", { class: "grille-mail", style: "grid-template-columns:1fr 220px" },
         el("label", { class: "champ" }, "Adresse mail", adresse),
         el("label", { class: "champ" }, "Fournisseur", liste)),
@@ -321,7 +327,9 @@
         el("div", { class: "espace" }),
         el("button", { class: "btn principal", onclick: () => composer({}) }, "✏️ Nouveau mail"),
         el("button", { class: "btn discret", title: "Déconnecter la boîte (le mot de passe est retiré du coffre)", onclick: async () => {
-          if (!(await confirmer("🔌", "Déconnecter la boîte mail ?", "Le mot de passe est retiré du coffre Windows. Vos mails ne sont pas touchés.", "Déconnecter"))) return;
+          const texte = S.macos ? "Le mot de passe est retiré du Trousseau macOS. Vos mails sont conservés."
+            : "Le mot de passe est retiré du coffre Windows. Vos mails ne sont pas touchés.";
+          if (!(await confirmer("🔌", "Déconnecter la boîte mail ?", texte, "Déconnecter"))) return;
           await api("/api/mail/deconnexion", {}); M.etat.configuree = false; ecranConnexion(); compterMails();
         } }, "🔌")),
       el("div", { class: "boite" },

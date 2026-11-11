@@ -209,9 +209,41 @@ if ($d.ShowDialog($p) -eq [System.Windows.Forms.DialogResult]::OK) {
 """
 
 
+SCRIPT_DOSSIER_MAC = """
+on run argv
+    set messageChoix to item 1 of argv
+    set dossierDepart to item 2 of argv
+    activate
+    try
+        if dossierDepart is "" then
+            set dossier to choose folder with prompt messageChoix
+        else
+            set dossier to choose folder with prompt messageChoix default location (POSIX file dossierDepart as alias)
+        end if
+        return POSIX path of dossier
+    on error number -128
+        return ""
+    end try
+end run
+"""
+
+
 def choisir_dossier(d):
-    """Ouvre la fenêtre « Choisir un dossier » de Windows, au premier plan.
+    """Ouvre la fenêtre native « Choisir un dossier », au premier plan.
     Renvoie {"chemin": "..."} ou {"chemin": None} si annulé."""
+    if config.MACOS:
+        titre = str(d.get("titre") or "Choisir un dossier")[:120]
+        depart = os.path.expanduser(str(d.get("depart") or ""))
+        depart = os.path.abspath(depart) if os.path.isdir(depart) else ""
+        try:
+            r = subprocess.run(["/usr/bin/osascript", "-", titre, depart], input=SCRIPT_DOSSIER_MAC,
+                               capture_output=True, text=True, encoding="utf-8", timeout=600)
+        except subprocess.TimeoutExpired:
+            return {"chemin": None}
+        if r.returncode:
+            raise ValueError("Impossible d’ouvrir le sélecteur de dossiers.")
+        chemin = r.stdout.rstrip("\n")
+        return {"chemin": os.path.normpath(chemin) if os.path.isdir(chemin) else None}
     env = dict(os.environ, MO_TITRE=str(d.get("titre") or "Choisir un dossier")[:120],
                MO_DEPART=str(d.get("depart") or ""))
     r = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-STA", "-Command", SCRIPT_DOSSIER],

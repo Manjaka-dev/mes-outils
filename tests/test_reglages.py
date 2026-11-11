@@ -72,15 +72,33 @@ class TestSocle(ServeurTest):
             statut, info = self.get("/api/onglets")
             self.assertEqual(statut, 200)
             self.assertTrue(info["macos"])
-            self.assertEqual(info["fichiers"], ["reglages.js"])
+            self.assertEqual(set(info["fichiers"]), {
+                "agenda.js", "boite.js", "conteneurs.js", "extraits.js", "github.js",
+                "mails.js", "motsdepasse.js", "notes.js", "ports.js", "presse_papiers.js",
+                "projets.js", "reglages.js", "serveurs.js", "ssh.js", "temps.js",
+            })
             self.assertEqual(self.get("/api/outils", entete=False)[0], 403)
-            self.assertEqual(self.get("/api/mail/non_lus")[0], 404)
             self.assertEqual(self.post("/api/reglages/mise_a_jour")[0], 404)
+            self.assertEqual(self.post("/api/github/creer")[0], 404)
+            self.assertEqual(self.post("/api/gadget")[0], 404)
 
             statut, r = self.post("/api/reglages/enregistrer", {"prenom": "Éloïse", "langue": "en", "theme": "sombre"})
             self.assertEqual(statut, 200)
             self.assertFalse(r["maj_possible"])
             self.assertEqual((cfg.lire()["prenom"], cfg.lire()["langue"], cfg.lire()["theme"]), ("Éloïse", "en", "sombre"))
+
+    def test_choisir_dossier_macos(self):
+        with ConfigTemporaire() as cfg, mock.patch.object(config, "MACOS", True):
+            chemin = os.path.join(cfg.dossier, "Dossier été")
+            os.mkdir(chemin)
+            with mock.patch.object(reglages.subprocess, "run") as choisir:
+                choisir.return_value = mock.Mock(returncode=0, stdout=chemin + "/\n")
+                self.assertEqual(self.post("/api/reglages/choisir_dossier", {
+                    "titre": 'Choisir "ici"', "depart": chemin,
+                }), (200, {"chemin": chemin}))
+                self.assertEqual(choisir.call_args.args[0], ["/usr/bin/osascript", "-", 'Choisir "ici"', chemin])
+                choisir.return_value.stdout = "\n"
+                self.assertEqual(self.post("/api/reglages/choisir_dossier"), (200, {"chemin": None}))
 
     def test_tuile_macos_chemin_avec_espaces_et_accents(self):
         with ConfigTemporaire() as cfg, mock.patch.object(config, "MACOS", True):

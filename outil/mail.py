@@ -207,15 +207,22 @@ class _CREDENTIAL(ctypes.Structure):
     ]
 
 
-_advapi = ctypes.WinDLL("advapi32", use_last_error=True)
-_advapi.CredReadW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.POINTER(ctypes.POINTER(_CREDENTIAL))]
-_advapi.CredWriteW.argtypes = [ctypes.POINTER(_CREDENTIAL), wintypes.DWORD]
-_advapi.CredDeleteW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD]
-_advapi.CredFree.argtypes = [ctypes.c_void_p]
+if config.MACOS:
+    import coffre_macos
+else:
+    _advapi = ctypes.WinDLL("advapi32", use_last_error=True)
+    _advapi.CredReadW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, ctypes.POINTER(ctypes.POINTER(_CREDENTIAL))]
+    _advapi.CredWriteW.argtypes = [ctypes.POINTER(_CREDENTIAL), wintypes.DWORD]
+    _advapi.CredDeleteW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD]
+    _advapi.CredFree.argtypes = [ctypes.c_void_p]
 CRED_TYPE_GENERIC, CRED_PERSIST_LOCAL_MACHINE = 1, 2
 
 
 def coffre_ecrire(adresse, secret):
+    if config.MACOS:
+        if not coffre_macos.ecrire(CIBLE_COFFRE.format(adresse=adresse), adresse, secret):
+            raise ErreurMail("Impossible d’enregistrer le mot de passe dans le Trousseau macOS.")
+        return
     blob = secret.encode("utf-16-le")
     cred = _CREDENTIAL()
     cred.Type = CRED_TYPE_GENERIC
@@ -229,6 +236,8 @@ def coffre_ecrire(adresse, secret):
 
 
 def coffre_lire(adresse):
+    if config.MACOS:
+        return coffre_macos.lire(CIBLE_COFFRE.format(adresse=adresse))
     pcred = ctypes.POINTER(_CREDENTIAL)()
     if not _advapi.CredReadW(CIBLE_COFFRE.format(adresse=adresse), CRED_TYPE_GENERIC, 0, ctypes.byref(pcred)):
         return None
@@ -240,6 +249,9 @@ def coffre_lire(adresse):
 
 
 def coffre_supprimer(adresse):
+    if config.MACOS:
+        coffre_macos.supprimer(CIBLE_COFFRE.format(adresse=adresse))
+        return
     _advapi.CredDeleteW(CIBLE_COFFRE.format(adresse=adresse), CRED_TYPE_GENERIC, 0)
 
 

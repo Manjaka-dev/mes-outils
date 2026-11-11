@@ -42,6 +42,8 @@ if not MACOS:
 ANGLAIS = {
     "Ouvrir le tableau de bord": "Open the dashboard", "Note rapide": "Quick note", "Mails": "Mail",
     "Réglages": "Settings",
+    "Journal": "Log",
+    "Port occupé": "Port in use",
     "non lus": "unread", "Agenda": "Calendar", "Notes": "Notes", "Mots de passe": "Passwords",
     "Projets": "Projects", "GitHub": "GitHub", "en échec": "failing", "Serveurs locaux": "Local servers",
     "Serveurs Odoo": "Odoo servers", "Ouvrir": "Open", "Arrêter": "Stop", "Démarrer": "Start",
@@ -265,11 +267,11 @@ class Bulle:
             r.deiconify()
         else:
             r.after(50, self.hors_barre_des_taches)
-            self.suivre_serveurs()
-            r.after(3000, self.suivre_mails)
-            r.after(5000, self.suivre_rappels)
-            r.after(10000, self.suivre_ci)
-            r.after(1500, self.demarrer_presse_papiers)
+        r.after(3000, self.suivre_mails)
+        r.after(10000, self.suivre_ci)
+        r.after(1500, self.demarrer_presse_papiers)
+        self.suivre_serveurs()
+        r.after(5000, self.suivre_rappels)
 
     def hors_barre_des_taches(self):
         """Style « fenêtre d'outil » : jamais de bouton dans la barre des
@@ -368,11 +370,14 @@ class Bulle:
     # -- pastille des serveurs Odoo ------------------------------------------
     def suivre_serveurs(self):
         def lire():
-            try:
-                etats = hub.etats_serveurs()
-                nb = sum(1 for s in etats["serveurs"] if s["etat"] == "En marche") if etats["disponible"] else 0
-            except Exception:
-                nb = 0
+            nb = 0
+            if not MACOS:
+                try:
+                    etats = hub.etats_serveurs()
+                    if etats["disponible"]:
+                        nb = sum(s["etat"] == "En marche" for s in etats["serveurs"])
+                except Exception:
+                    pass
             projets = module("projets")
             try:
                 self.serveurs_projets = projets.serveurs() if projets else []
@@ -548,11 +553,14 @@ class Bulle:
             x = self.racine.winfo_x() + self.largeur + int(8 * self.echelle)
         y = max(0, self.racine.winfo_y() - rang * (f.winfo_reqheight() + 8))
         f.geometry(f"+{x}+{y}")
-        try:
-            import winsound
-            winsound.MessageBeep(0x40)  # son « information » de Windows
-        except Exception:
-            pass
+        if MACOS:
+            self.racine.bell()
+        else:
+            try:
+                import winsound
+                winsound.MessageBeep(0x40)  # son « information » de Windows
+            except Exception:
+                pass
         self.secouer()
 
     def secouer(self, n=6):
@@ -567,7 +575,8 @@ class Bulle:
         f = tk.Toplevel(self.racine)
         f.title("Note rapide")
         f.attributes("-topmost", True)
-        f.attributes("-toolwindow", True)   # pas de bouton dans la barre des tâches
+        if not MACOS:
+            f.attributes("-toolwindow", True)   # pas de bouton dans la barre des tâches
         f.configure(bg="#fff4c2", padx=12, pady=10)
         f.resizable(False, False)
         tk.Label(f, text=tr("Note rapide"), bg="#fff4c2", fg="#6b6790", font=("Segoe UI", 9, "bold")).pack(anchor="w")
@@ -616,7 +625,7 @@ class Bulle:
             m.add_command(label=tr("Réglages"), command=lambda: self.en_fond(ouvrir_tableau, "reglages"))
         else:
             m.add_command(label="🧰  " + tr("Ouvrir le tableau de bord"), command=ouvrir_tableau)
-            self.menu_fonctions(m, police)
+        self.menu_fonctions(m, police)
 
         try:
             outils = hub.lire_outils()["outils"]
@@ -659,10 +668,14 @@ class Bulle:
                 sous.add_command(label=f"{rond}  {tr('Ouvrir')} {nom}",
                                  command=lambda s=s: self.action_projet(s, "ouvrir"))
                 sous.add_command(label=f"      {tr('Arrêter')} {nom}", command=lambda s=s: self.action_projet(s, "arreter"))
+            elif MACOS and s.get("etat") == "occupe":
+                sous.add_command(label=f"{tr('Port occupé')} · {nom}", state="disabled")
             else:
                 sous.add_command(label=f"⚪  {tr('Démarrer')} {nom}", command=lambda s=s: self.action_projet(s, "demarrer"))
+            if MACOS:
+                sous.add_command(label=f"      {tr('Journal')} · {nom}", command=lambda s=s: self.action_projet(s, "journal"))
         etats = hub._cache_etats["valeur"] or {"disponible": False}
-        if etats.get("disponible") and etats["serveurs"]:
+        if not MACOS and etats.get("disponible") and etats["serveurs"]:
             if self.serveurs_projets:
                 sous.add_separator()
             for s in etats["serveurs"]:
@@ -730,7 +743,10 @@ class Bulle:
                 tr("Arrêter"), tr("Arrêter {nom} ?", nom=f"{s.get('projet', '')} · {s.get('nom', '')}"),
                 default="no", parent=self.racine):
             return
-        self.en_fond(projets.action_commande, s["projet_id"], s["id"], action)
+        if MACOS and action == "journal":
+            self.en_fond(projets.ouvrir_journal_mac, s["projet_id"], s["id"])
+        else:
+            self.en_fond(projets.action_commande, s["projet_id"], s["id"], action)
 
     def en_fond(self, fonction, *args):
         def tache():

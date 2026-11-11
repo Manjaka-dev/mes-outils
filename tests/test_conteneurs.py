@@ -143,7 +143,8 @@ class TestEtats(unittest.TestCase):
         with mock.patch.object(conteneurs, "chemin_desktop", return_value=None), \
                 self.assertRaisesRegex(conteneurs.ErreurDocker, "introuvable"):
             conteneurs.lancer_desktop({})
-        with mock.patch.object(conteneurs, "chemin_desktop", return_value=r"C:\Docker\Docker Desktop.exe"), \
+        with mock.patch.object(conteneurs.config, "MACOS", False), \
+                mock.patch.object(conteneurs, "chemin_desktop", return_value=r"C:\Docker\Docker Desktop.exe"), \
                 mock.patch.object(conteneurs.os, "startfile", create=True) as startfile:
             conteneurs.lancer_desktop({})
         startfile.assert_called_once_with(r"C:\Docker\Docker Desktop.exe")

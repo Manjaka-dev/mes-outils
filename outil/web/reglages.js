@@ -20,6 +20,9 @@
     "Dossiers de projets": "Project folders",
     "Les onglets GitHub, Projets et État Git y cherchent vos projets (le dossier et ses sous-dossiers directs).":
       "The GitHub, Projects and Git status tabs look for your projects there (the folder and its direct subfolders).",
+    "L’onglet Projets cherche dans ces dossiers et leurs sous-dossiers directs.":
+      "The Projects tab searches these folders and their immediate subfolders.",
+    "Impossible d’ouvrir le sélecteur de dossiers.": "Could not open the folder picker.",
     "＋ Ajouter un dossier": "＋ Add a folder",
     "Aucun dossier pour l'instant.": "No folder yet.",
     "Retirer": "Remove",
@@ -165,12 +168,14 @@
           el("label", { class: "champ" }, "Prénom (pour la salutation)", prenom),
           el("label", { class: "champ" }, "Langue", langues),
           el("label", { class: "champ" }, "Thème", themes)),
-        !S.macos && carte("🗂️", "Onglets affichés", el("p", { class: "aide" }, "Décochez les onglets dont vous ne vous servez pas : ils disparaissent du menu (rien n'est effacé)."), cases),
-        !S.macos && carte("📁", "Dossiers de projets", el("p", { class: "aide" }, "Les onglets GitHub, Projets et État Git y cherchent vos projets (le dossier et ses sous-dossiers directs)."),
+        carte("🗂️", "Onglets affichés", el("p", { class: "aide" }, "Décochez les onglets dont vous ne vous servez pas : ils disparaissent du menu (rien n'est effacé)."), cases),
+        carte("📁", "Dossiers de projets", el("p", { class: "aide" }, S.macos
+          ? "L’onglet Projets cherche dans ces dossiers et leurs sous-dossiers directs."
+          : "Les onglets GitHub, Projets et État Git y cherchent vos projets (le dossier et ses sous-dossiers directs)."),
           listeDossiers, ajoutDossier),
         !S.macos && carte("💻", "Windows", interrupteur("demarrage", "Lancer la bulle au démarrage de Windows"),
           interrupteur("bureau", "Raccourci « Mes outils » sur le Bureau")),
-        !S.macos && carte("✉️", "Boîte mail", el("p", { class: "aide" }, "La boîte mail se connecte dans l'onglet Mails."),
+        carte("✉️", "Boîte mail", el("p", { class: "aide" }, "La boîte mail se connecte dans l'onglet Mails."),
           el("button", { class: "btn", onclick: () => montrerVue("mails") }, "Ouvrir l'onglet Mails")),
         carte("🧰", "À propos", el("p", { class: "aide" }, t("Version {v}", { v: i.version })),
           el("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },

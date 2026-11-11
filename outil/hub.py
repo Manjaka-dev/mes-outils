@@ -35,11 +35,22 @@ RACINE = config.RACINE
 PAGE = os.path.join(ICI, "hub.html")
 JOURNAL = config.JOURNAL
 
-# Périmètre de la première étape du portage macOS.
+# Fonctions disponibles sur macOS.
 TUILES_MAC = ("dossier", "fichier", "programme", "lien")
-API_MAC_LECTURE = {"/api/outils", "/api/onglets", "/api/onglet"}
+ONGLETS_MAC = ("agenda", "boite", "conteneurs", "extraits", "github", "mails", "motsdepasse",
+               "notes", "ports", "presse_papiers", "projets", "reglages", "serveurs", "ssh", "temps")
+API_MAC_LECTURE = {"/api/outils", "/api/onglets", "/api/onglet", "/api/notes", "/api/agenda",
+                   "/api/mail/etat", "/api/mail/non_lus"}
 API_MAC_ECRITURE = {"/api/lancer", "/api/enregistrer", "/api/quitter",
-                    "/api/reglages/lire", "/api/reglages/enregistrer"}
+                    "/api/notes/enregistrer", "/api/notes/supprimer", "/api/agenda/enregistrer", "/api/agenda/supprimer",
+                    "/api/reglages/lire", "/api/reglages/enregistrer", "/api/reglages/dossiers", "/api/reglages/choisir_dossier"}
+MODULES_MAC = ("/api/extraits/", "/api/temps/", "/api/projets/", "/api/coffre/", "/api/mail/",
+               "/api/github/", "/api/conteneurs/", "/api/ports/", "/api/presse_papiers/", "/api/ssh/")
+
+
+def api_mac_ecriture(chemin):
+    return (chemin in API_MAC_ECRITURE
+            or (chemin.startswith(MODULES_MAC) and chemin != "/api/github/creer"))
 
 NAVIGATEURS_APPLI = [
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
@@ -99,7 +110,7 @@ def routes_module(nom):
 def onglets_web():
     """Les fichiers des onglets (outil/web/*.js), chargés par la page."""
     if config.MACOS:
-        return ["reglages.js"]
+        return [nom + ".js" for nom in ONGLETS_MAC]
     dossier = os.path.join(ICI, "web")
     # i18n.js et icones.js sont chargés à part, en premier (hub.html).
     return sorted(n for n in os.listdir(dossier) if n.endswith(".js") and n not in ("i18n.js", "icones.js"))
@@ -379,6 +390,16 @@ class Gestionnaire(BaseHTTPRequestHandler):
         except (ConnectionAbortedError, BrokenPipeError):
             pass
 
+    def erreur_inattendue(self, erreur, message_windows):
+        if config.MACOS:
+            try:
+                journal(f"Erreur HTTP inattendue : {type(erreur).__name__}")
+            except Exception:  # une erreur du journal ne remplace pas la réponse
+                pass
+            return self.repondre(500, {"erreur": "Erreur inattendue de Mes outils."})
+        journal(traceback.format_exc())
+        return self.repondre(500, {"erreur": message_windows})
+
     def do_GET(self):
         chemin = urllib.parse.urlparse(self.path).path
         if not self.requete_sure(ecriture=chemin.startswith("/api/")):
@@ -418,8 +439,7 @@ class Gestionnaire(BaseHTTPRequestHandler):
                         return self.repondre(200, f.read(), TYPES_FICHIERS[os.path.splitext(nom)[1]])
             self.repondre(404, {"erreur": "Introuvable."})
         except Exception as e:  # noqa: BLE001
-            journal(traceback.format_exc())
-            self.repondre(500, {"erreur": str(e)})
+            self.erreur_inattendue(e, str(e))
 
     def do_POST(self):
         chemin = urllib.parse.urlparse(self.path).path
@@ -432,7 +452,7 @@ class Gestionnaire(BaseHTTPRequestHandler):
         corps = self.rfile.read(longueur) if longueur > 0 else b""
         if not self.requete_sure(ecriture=True):
             return self.repondre(403, {"erreur": "Accès refusé."})
-        if config.MACOS and chemin not in API_MAC_ECRITURE:
+        if config.MACOS and not api_mac_ecriture(chemin):
             return self.repondre(404, {"erreur": "Cette fonction n’est pas encore disponible sur macOS."})
         try:
             donnees_requete = json.loads(corps.decode("utf-8") or "{}")
@@ -489,8 +509,7 @@ class Gestionnaire(BaseHTTPRequestHandler):
             # sont des messages pour l'utilisateur.
             if type(e).__name__.startswith("Erreur"):
                 return self.repondre(400, {"erreur": str(e)})
-            journal(traceback.format_exc())
-            self.repondre(500, {"erreur": f"Erreur inattendue : {e}"})
+            self.erreur_inattendue(e, f"Erreur inattendue : {e}")
 
     def coffre(self, action, d):
         """Le coffre à mots de passe. Le mot de passe maître passe par ici le
@@ -537,6 +556,9 @@ class Gestionnaire(BaseHTTPRequestHandler):
         if action == "creer":
             return self.repondre(200, ssh_cles.creer(d.get("nom"), d.get("hote"), d.get("port"),
                                                      d.get("utilisateur"), d.get("mot_de_passe", "")))
+        if action == "existant" and config.MACOS:
+            return self.repondre(200, ssh_cles.ajouter_existant(
+                d.get("nom"), d.get("hote"), d.get("port"), d.get("utilisateur"), d.get("cle")))
         if action == "tester":
             return self.repondre(200, ssh_cles.tester(d["alias"]))
         if action == "terminal":

@@ -16,7 +16,6 @@ from unittest import mock
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from aide import ConfigTemporaire, ServeurTest  # noqa: E402
 
-import coffre  # noqa: E402
 import config  # noqa: E402
 import projets  # noqa: E402
 
@@ -95,6 +94,7 @@ class TestDetection(Base):
         self.assertEqual(par_nom["infra"]["types"], ["Docker"])
         self.assertEqual(par_nom["boutique"]["types"][:2], ["Laravel", "PHP"])
 
+    @mock.patch.object(config, "MACOS", False)
     def test_commandes_proposees(self):
         node = self.projet("app", {"package.json": json.dumps({"scripts": {
             "dev": "vite", "build": "vite build", "predev": "x", "evil & calc": "x", "storybook": "storybook dev"}}),
@@ -122,6 +122,13 @@ class TestDetection(Base):
 
         odoo = self.projet("odoo", {"odoo-bin": "", "odoo.conf": ""})
         self.assertEqual(projets.commandes_proposees(odoo)[0]["commande"], "python odoo-bin -c odoo.conf")
+
+    @mock.patch.object(config, "MACOS", True)
+    def test_commandes_proposees_macos(self):
+        dj = self.projet("dj", {"manage.py": "", ".venv/bin/python": "", "compose.yml": ""})
+        self.assertEqual([c["commande"] for c in projets.commandes_proposees(dj)], [".venv/bin/python manage.py runserver"])
+        java = self.projet("java", {"pom.xml": "spring-boot", "mvnw": ""})
+        self.assertEqual(projets.commandes_proposees(java)[0]["commande"], "./mvnw spring-boot:run")
 
     def test_ajout_manuel_et_masque(self):
         ailleurs = tempfile.mkdtemp(prefix="mo-ailleurs-")
@@ -152,9 +159,10 @@ class TestCommandes(Base):
     def test_enregistrement_valide(self):
         dossier = self.projet("x", {"package.json": "{}"})
         pid = projets.identifiant(dossier)
-        r = projets.enregistrer_commandes({"projet": pid, "commandes": [{"nom": "Dev", "commande": "npm run dev", "port": "3000"}]})
+        port = port_libre()
+        r = projets.enregistrer_commandes({"projet": pid, "commandes": [{"nom": "Dev", "commande": "npm run dev", "port": str(port)}]})
         c = r["commandes"][0]
-        self.assertEqual((c["port"], c["url"], c["etat"]["etat"]), (3000, "http://localhost:3000", "arrete"))
+        self.assertEqual((c["port"], c["url"], c["etat"]["etat"]), (port, f"http://localhost:{port}", "arrete"))
         for mauvais in ({"nom": "", "commande": "a"}, {"nom": "a", "commande": "a\nb"}, {"nom": "a", "commande": "a", "port": 70000},
                         {"nom": "a", "commande": "a", "url": "javascript:alert(1)"}):
             with self.assertRaises(projets.ErreurProjets, msg=str(mauvais)):
@@ -179,11 +187,28 @@ class TestCommandes(Base):
         self.assertTrue(j["fichier"].startswith(os.path.join(config.DONNEES, "journaux")))
         self.assertTrue(os.path.basename(j["fichier"]).startswith("mini-"))
 
-        # Après un redémarrage de « Mes outils » : le PID mémorisé suffit.
+        # Sous Windows, simule la perte du handle après redémarrage.
+        # Sous macOS le parent du test doit encore récolter le processus arrêté.
         gardes = dict(projets._popens)
-        projets._popens.clear()
+        if not config.MACOS:
+            projets._popens.clear()
         self.assertEqual(projets.serveurs()[0]["etat"], "marche")
-        projets.action_commande(pid, cid, "arreter")
+        if config.MACOS:
+            killpg = os.killpg
+            refus_transitoire = True
+
+            def signaler(groupe, signal):
+                nonlocal refus_transitoire
+                if signal == 0 and refus_transitoire:
+                    refus_transitoire = False
+                    raise PermissionError
+                return killpg(groupe, signal)
+
+            with mock.patch.object(os, "killpg", side_effect=signaler):
+                projets.action_commande(pid, cid, "arreter")
+            self.assertFalse(refus_transitoire)
+        else:
+            projets.action_commande(pid, cid, "arreter")
         for p in gardes.values():
             p.wait(timeout=10)
         self.assertTrue(attendre(lambda: not projets.port_repond(self.port), 10), "tout l'arbre est arrêté")
@@ -204,8 +229,8 @@ class TestCommandes(Base):
 
     def test_refus_de_tuer_un_processus_etranger(self):
         pid, cid = self.preparer()
-        etranger = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"],
-                                    creationflags=projets.CREATE_NO_WINDOW)
+        options = {"start_new_session": True} if config.MACOS else {"creationflags": projets.CREATE_NO_WINDOW}
+        etranger = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"], **options)
         try:
             with self.assertRaises(projets.ErreurProjets):
                 projets._tuer_arbre(etranger.pid)
@@ -229,8 +254,9 @@ class TestGit(Base):
     def git(self, dossier, *args):
         env = dict(os.environ, GIT_AUTHOR_NAME="Test", GIT_AUTHOR_EMAIL="test@example.invalid",
                    GIT_COMMITTER_NAME="Test", GIT_COMMITTER_EMAIL="test@example.invalid")
+        options = {} if config.MACOS else {"creationflags": projets.CREATE_NO_WINDOW}
         subprocess.run(["git", *args], cwd=dossier, env=env, check=True, capture_output=True,
-                       creationflags=projets.CREATE_NO_WINDOW)
+                       **options)
 
     def test_avance_retard_modifies(self):
         nu = os.path.join(self.racine, "..", os.path.basename(self.racine) + "-nu.git")
@@ -285,6 +311,8 @@ class TestGit(Base):
 class TestEnv(Base):
     def setUp(self):
         super().setUp()
+        import coffre
+
         self.fichier_coffre = os.path.join(self.cfg.dossier, "coffre.json")
         self.coffre = coffre.Coffre(self.fichier_coffre)
         self.patch = mock.patch.object(projets, "_le_coffre", lambda: self.coffre)

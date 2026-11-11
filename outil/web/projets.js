@@ -4,6 +4,11 @@
    (sauvegardés dans le coffre chiffré). Voir projets.py. */
 (() => {
   I18N.ajouter({
+    "Impossible d’ouvrir le dossier du projet.": "Could not open the project folder.",
+    "VS Code est introuvable.": "VS Code could not be found.",
+    "Impossible d’identifier le processus lancé.": "Could not identify the process that was started.",
+    "Impossible d’arrêter le serveur de développement.": "Could not stop the development server.",
+    "Le groupe du serveur ne s’est pas arrêté.": "The server’s process group did not stop.",
     "Aucune commande de dev": "No dev command",
     "Local": "Local",
     "Pas de branche distante : rien à comparer": "No remote branch: nothing to compare",
@@ -603,5 +608,5 @@
     fenetreEnv(p);
   }
 
-  VUES.projets = { afficher, titre: "Projets", icone: "📦", groupe: "dev", ordre: 10 };
+  VUES.projets = { afficher, journal, titre: "Projets", icone: "📦", groupe: "dev", ordre: 10 };
 })();

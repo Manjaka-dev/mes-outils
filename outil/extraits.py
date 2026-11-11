@@ -9,6 +9,7 @@ Pour la bulle : lister() (épinglés puis les plus utilisés en tête) et
 copier(identifiant) (met le contenu dans le presse-papiers et compte
 l'utilisation).
 """
+import subprocess
 import threading
 import time
 import unicodedata
@@ -177,8 +178,15 @@ def copier(identifiant):
         e = next((x for x in _tous() if x.get("id") == identifiant), None)
     if e is None:
         raise ValueError("Extrait introuvable.")
-    import presse_papiers  # ici : ce module touche à user32
-    presse_papiers.ecrire_texte(e["contenu"])
+    if config.MACOS:
+        try:
+            subprocess.run(["/usr/bin/pbcopy"], input=e["contenu"].encode("utf-8"),
+                           capture_output=True, timeout=5, check=True)
+        except (OSError, subprocess.SubprocessError):
+            raise ValueError("Impossible de copier cet extrait dans le presse-papiers.") from None
+    else:
+        import presse_papiers  # ici : ce module touche à user32
+        presse_papiers.ecrire_texte(e["contenu"])
     return utiliser(identifiant)
 
 

@@ -72,6 +72,7 @@ class TestExtraits(unittest.TestCase):
             self.assertEqual(extraits.lister()[0]["id"], a["id"], "les épinglés passent avant tout")
             self.assertEqual(extraits.lister()[1]["utilisations"], 3)
 
+    @mock.patch.object(config, "MACOS", False)
     def test_copier(self):
         with ConfigTemporaire():
             a, _, _ = _exemples()
@@ -82,6 +83,18 @@ class TestExtraits(unittest.TestCase):
             with self.assertRaises(ValueError):
                 extraits.copier("inconnu")
 
+    @mock.patch.object(config, "MACOS", True)
+    def test_copier_macos(self):
+        with ConfigTemporaire(), mock.patch.object(extraits.subprocess, "run") as copier:
+            e = extraits.enregistrer({"titre": "Été", "contenu": "Texte accentué"})
+            self.assertEqual(extraits.copier(e["id"])["utilisations"], 1)
+            copier.assert_called_once_with(["/usr/bin/pbcopy"], input="Texte accentué".encode("utf-8"),
+                                          capture_output=True, timeout=5, check=True)
+            copier.side_effect = OSError
+            with self.assertRaisesRegex(ValueError, "Impossible de copier"):
+                extraits.copier(e["id"])
+            self.assertEqual(extraits.lister()[0]["utilisations"], 1)
+
 
 class TestRoutes(ServeurTest):
     def test_routes(self):
@@ -91,7 +104,7 @@ class TestRoutes(ServeurTest):
             self.assertEqual(statut, 200)
             statut, r = self.post("/api/extraits/enregistrer", {"extrait": {"titre": "", "contenu": "x"}})
             self.assertEqual((statut, r["erreur"]), (400, "Donnez un titre à l'extrait."))
-            with mock.patch.object(presse_papiers, "ecrire_texte") as ecrire:
+            with mock.patch.object(config, "MACOS", False), mock.patch.object(presse_papiers, "ecrire_texte") as ecrire:
                 statut, r = self.post("/api/extraits/copier", {"id": e["id"]})
             self.assertEqual((statut, r["utilisations"]), (200, 1))
             ecrire.assert_called_once_with("git status")

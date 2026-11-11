@@ -4,6 +4,11 @@
    d'arrêter les processus système et « Mes outils » lui-même. */
 (() => {
   I18N.ajouter({
+    "Impossible de lire les ports en écoute.": "Could not read listening ports.",
+    "Actualisez la liste des ports avant l’arrêt.": "Refresh the port list before stopping the process.",
+    "Le processus ou le port a changé : actualisez la liste.": "The process or port has changed. Refresh the list.",
+    "Impossible d’arrêter ce processus.": "Could not stop this process.",
+    "Le processus n’a pas répondu au signal d’arrêt.": "The process did not respond to the stop signal.",
     "Ports": "Ports",
     "Ports en écoute": "Listening ports",
     "Port ou programme…": "Port or program…",
@@ -217,7 +222,9 @@
     const bouton = el("button", { class: "btn principal", onclick: async () => {
       bouton.disabled = true;
       try {
-        const r = await api("/api/ports/arreter", { pid: l.pid, nom: l.nom, arbre: arbre.checked });
+        const r = await api("/api/ports/arreter", {
+          pid: l.pid, nom: l.nom, arbre: arbre.checked, port: l.port, proto: l.proto, cree: l.cree,
+        });
         fermer();
         toast("⛔ " + t("{nom} arrêté", { nom: r.nom }), "succes");
         await charger(true);
@@ -229,7 +236,7 @@
       el("p", {}, `${l.nom} · PID ${l.pid} · ${t("Port")} ${l.port}`),
       l.commande ? el("div", { class: "pt-detail" }, l.commande) : null,
       el("p", {}, "Les données non enregistrées de ce programme seront perdues."),
-      el("label", { class: "pt-choix" }, arbre, "Arrêter aussi les programmes qu'il a lancés"),
+      !S.macos && el("label", { class: "pt-choix" }, arbre, "Arrêter aussi les programmes qu'il a lancés"),
       el("div", { class: "actions" }, el("button", { class: "btn", onclick: fermer }, "Annuler"), bouton)].filter(Boolean), true);
   }
 

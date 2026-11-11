@@ -4,6 +4,20 @@
    pour la première connexion ; il n'est ni gardé ni réaffiché. */
 (() => {
   I18N.ajouter({
+    "Ajouter une clé existante": "Add an existing key",
+    "Chemin de la clé privée": "Path to the private key",
+    "Associer une clé existante": "Link an existing key",
+    "Retirer l’alias SSH": "Remove the SSH alias",
+    "L’alias sera retiré de la configuration SSH de ce Mac.": "The alias will be removed from this Mac’s SSH configuration.",
+    "Alias retiré": "Alias removed",
+    "Enregistrez d’abord l’empreinte vérifiée du serveur dans Terminal.": "First save the verified server fingerprint in Terminal.",
+    "Vérifiez d’abord l’empreinte du serveur dans Terminal pour l’ajouter aux hôtes connus.":
+      "Verify the server fingerprint in Terminal before adding it to your known hosts.",
+    "Clé privée introuvable.": "Private key not found.",
+    "Chemin de clé privée invalide.": "Invalid private key path.",
+    "La clé privée doit être accessible uniquement à son propriétaire (chmod 600).":
+      "The private key must be accessible only to its owner (chmod 600).",
+    "Impossible d’ouvrir la connexion dans Terminal.": "Could not open the connection in Terminal.",
     "SSH": "SSH",
     "Serveurs SSH": "SSH servers",
     "＋ Nouveau serveur": "＋ New server",
@@ -113,7 +127,8 @@
     const barre = el("div", { class: "barre-vue" },
       el("h2", {}, "🔑 " + t("Serveurs SSH") + " ", el("span", { class: "compte" }, String(X.serveurs.length))),
       el("div", { class: "espace" }),
-      el("button", { class: "btn principal", onclick: nouveau }, "＋ Nouveau serveur"));
+      S.macos && el("button", { class: "btn", onclick: () => nouveau(true) }, "Ajouter une clé existante"),
+      el("button", { class: "btn principal", onclick: () => nouveau() }, "＋ Nouveau serveur"));
     const liste = X.serveurs.length
       ? el("div", { class: "liste-ssh" }, X.serveurs.map(carte))
       : el("div", { class: "vide" }, "Aucun serveur pour l'instant. « ＋ Nouveau serveur » : saisissez l'adresse, l'utilisateur et le mot de passe, la clé est créée et installée pour vous.");
@@ -134,7 +149,8 @@
     const boutons = el("div", { class: "actions-srv" },
       el("button", { class: "icone-btn", title: "Tester la connexion", onclick: e => tester(s, etat, e.currentTarget) }, "🧪"),
       el("button", { class: "icone-btn", title: "Ouvrir un terminal sur ce serveur", onclick: () => terminal(s) }, "💻"),
-      el("button", { class: "icone-btn", title: "Retirer la clé du serveur et de ce PC", onclick: () => retirer(s) }, "🗑️"));
+      el("button", { class: "icone-btn", title: S.macos && !s.geree ? "Retirer l’alias SSH" : "Retirer la clé du serveur et de ce PC",
+        onclick: () => retirer(s) }, "🗑️"));
     return el("div", { class: "srv", style: `animation-delay:${i * 40}ms` },
       el("div", { class: "av", style: `background:${COULEURS_SSH[i % COULEURS_SSH.length]}` }, "🖥️"),
       el("div", { class: "infos" },
@@ -170,25 +186,29 @@
   }
 
   async function retirer(s) {
+    const aliasSeul = S.macos && !s.geree;
     const oui = await confirmer("🗑️", t("Retirer « {nom} » ?", { nom: s.nom }),
-      "La clé est retirée du serveur, puis supprimée de ce PC. Pour y revenir sans mot de passe, il faudra recréer une clé.",
+      aliasSeul ? "L’alias sera retiré de la configuration SSH de ce Mac."
+        : "La clé est retirée du serveur, puis supprimée de ce PC. Pour y revenir sans mot de passe, il faudra recréer une clé.",
       "Retirer");
     if (!oui) return;
     try {
       const r = await api("/api/ssh/retirer", { alias: s.alias });
       if (r.avertissement) toast("⚠️ " + r.avertissement, "erreur", 9000);
-      else toast("🗑️ Clé retirée du serveur et de ce PC", "succes");
+      else toast(aliasSeul ? "Alias retiré" : "🗑️ Clé retirée du serveur et de ce PC", "succes");
       afficher();
     } catch (e) { toast(e.message, "erreur"); }
   }
 
-  function nouveau() {
+  function nouveau(existant = false) {
     const champ = (attrs) => el("input", { autocomplete: "off", spellcheck: "false", ...attrs });
     const nom = champ({ placeholder: "ex. Serveur web" });
     const hote = champ({ placeholder: "ex. 203.0.113.10" });
     const port = champ({ value: "22", inputmode: "numeric" });
     const utilisateur = champ({ value: "root" });
     const mdp = champ({ type: "password", autocomplete: "new-password" });
+    const cle = champ({ placeholder: "~/.ssh/id_ed25519" });
+    const libelle = existant ? "Associer une clé existante" : "🔑 Créer et installer la clé";
     const oeil = el("button", { class: "icone-btn", type: "button", title: "Afficher", onclick: () => { mdp.type = mdp.type === "password" ? "text" : "password"; } }, "👁️");
     const message = el("div");
     const bouton = el("button", { class: "btn principal", onclick: async () => {
@@ -196,7 +216,14 @@
       bouton.replaceChildren(el("span", { class: "attente" }, "⏳"), " " + t("Installation…"));
       message.replaceChildren();
       try {
-        const r = await api("/api/ssh/creer", { nom: nom.value, hote: hote.value, port: port.value, utilisateur: utilisateur.value, mot_de_passe: mdp.value });
+        const serveur = { nom: nom.value, hote: hote.value, port: port.value, utilisateur: utilisateur.value };
+        if (existant) {
+          await api("/api/ssh/existant", { ...serveur, cle: cle.value });
+          fermer();
+          afficher();
+          return;
+        }
+        const r = await api("/api/ssh/creer", { ...serveur, mot_de_passe: mdp.value });
         mdp.value = "";
         fenetre([
           el("div", { class: "gros" }, "✅"),
@@ -210,19 +237,21 @@
       } catch (e) {
         message.replaceChildren(el("div", { class: "alerte" }, "❌ " + e.message));
         bouton.disabled = false;
-        bouton.textContent = t("🔑 Créer et installer la clé");
+        bouton.textContent = t(libelle);
       }
-    } }, "🔑 Créer et installer la clé");
+    } }, libelle);
     mdp.addEventListener("keydown", e => { if (e.key === "Enter") bouton.click(); });
     fenetre([
-      el("h3", {}, "🔑 Nouveau serveur SSH"),
-      el("div", { class: "note-ssh" }, "Une clé est créée pour ce serveur et déposée avec le mot de passe. Le mot de passe ne sert qu'à cette première connexion : il n'est pas enregistré."),
+      el("h3", {}, existant ? "Ajouter une clé existante" : "🔑 Nouveau serveur SSH"),
+      S.macos ? el("div", { class: "note-ssh" }, "Enregistrez d’abord l’empreinte vérifiée du serveur dans Terminal.")
+        : el("div", { class: "note-ssh" }, "Une clé est créée pour ce serveur et déposée avec le mot de passe. Le mot de passe ne sert qu'à cette première connexion : il n'est pas enregistré."),
       el("label", { class: "champ" }, "Nom du serveur", nom),
       el("div", { class: "ligne-champs" },
         el("label", { class: "champ" }, "Adresse IP ou nom", hote),
         el("label", { class: "champ" }, "Port SSH", port)),
       el("label", { class: "champ" }, "Utilisateur", utilisateur),
-      el("label", { class: "champ" }, "Mot de passe du serveur", el("div", { class: "avec-oeil" }, mdp, oeil)),
+      existant ? el("label", { class: "champ" }, "Chemin de la clé privée", cle)
+        : el("label", { class: "champ" }, "Mot de passe du serveur", el("div", { class: "avec-oeil" }, mdp, oeil)),
       message,
       el("div", { class: "actions" },
         el("button", { class: "btn", onclick: fermer }, "Annuler"),

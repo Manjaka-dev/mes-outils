@@ -31,8 +31,11 @@ import urllib.request
 import webbrowser
 from concurrent.futures import ThreadPoolExecutor
 
-import coffre_windows
 import config
+if config.MACOS:
+    import coffre_macos as coffre_windows
+else:
+    import coffre_windows
 
 # Identifiant public de l'application GitHub « Mes outils » (OAuth App avec
 # « Device Flow » activé). Ce n'est pas un secret. outils.json peut en donner
@@ -193,6 +196,8 @@ def connexion_suite():
             raise ErreurGitHub("GitHub a donné un accès qui ne fonctionne pas : réessayez.")
         profil = _profil_de(utilisateur)
         if not coffre_windows.ecrire(CIBLE_COFFRE, profil["login"], r["access_token"]):
+            if config.MACOS:
+                raise ErreurGitHub("Impossible de ranger l’accès GitHub dans le Trousseau macOS.")
             raise ErreurGitHub("Impossible de ranger l'accès GitHub dans le coffre de Windows.")
         with _verrou:
             _attente["code"] = None
@@ -333,10 +338,11 @@ def _message_git(sortie):
 
 
 def _git(args, dossier, acces=False, delai=120, verifier=True):
+    options = {} if config.MACOS else {"creationflags": CREATE_NO_WINDOW}
     try:
         p = subprocess.run(["git", *args], cwd=dossier, env=_env_git(acces), stdin=subprocess.DEVNULL,
                            capture_output=True, text=True, encoding="utf-8", errors="replace",
-                           timeout=delai, creationflags=CREATE_NO_WINDOW)
+                           timeout=delai, **options)
     except FileNotFoundError:
         raise ErreurGitHub("Git n'est pas installé sur ce PC (https://git-scm.com).") from None
     except subprocess.TimeoutExpired:
@@ -727,10 +733,17 @@ def ouvrir_page(url):
 def ouvrir_dossier(chemin):
     if not os.path.isdir(chemin or ""):
         raise ErreurGitHub("Dossier introuvable.")
-    os.startfile(chemin)
+    if config.MACOS:
+        from projets import _ouvrir_mac
+        _ouvrir_mac(chemin)
+    else:
+        os.startfile(chemin)
 
 
 def _vscode():
+    if config.MACOS:
+        from projets import _vscode_mac
+        return _vscode_mac()
     candidats = [os.path.expandvars(r"%LOCALAPPDATA%\Programs\Microsoft VS Code\Code.exe"),
                  r"C:\Program Files\Microsoft VS Code\Code.exe",
                  r"C:\Program Files (x86)\Microsoft VS Code\Code.exe"]
@@ -746,5 +759,9 @@ def ouvrir_vscode(chemin):
     code = _vscode()
     if not code:
         raise ErreurGitHub("VS Code est introuvable sur ce PC.")
+    if config.MACOS:
+        from projets import _ouvrir_mac
+        _ouvrir_mac(chemin, code)
+        return
     subprocess.Popen([code, chemin], creationflags=DETACHED, close_fds=True,
                      stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

@@ -20,9 +20,9 @@ import http.client
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "outil"))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # aide.py
-import coffre_windows  # noqa: E402
 from aide import ConfigTemporaire, ServeurTest  # noqa: E402
 import github  # noqa: E402
+coffre_windows = github.coffre_windows
 
 PROFIL_API = {"login": "testeur", "name": "Testeur", "avatar_url": "https://exemple/a.png", "id": 42}
 
@@ -254,6 +254,7 @@ class TestEnvoi(unittest.TestCase):
         self.assertEqual(env["GIT_CONFIG_VALUE_1"], "", "le gestionnaire d'identifiants doit être écarté")
 
 
+@unittest.skipUnless(sys.platform == "win32", "Test du Gestionnaire d’identification Windows.")
 class TestCoffreWindows(unittest.TestCase):
     def test_aller_retour(self):
         cible = f"MesOutils:test:{uuid.uuid4()}"

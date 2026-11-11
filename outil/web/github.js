@@ -5,6 +5,8 @@
    Windows : il ne passe jamais par la page. */
 (() => {
   I18N.ajouter({
+    "L’accès est rangé dans le Trousseau macOS.": "Access is stored in macOS Keychain.",
+    "Impossible de ranger l’accès GitHub dans le Trousseau macOS.": "Could not store GitHub access in macOS Keychain.",
     // Barre et sous-onglets
     "Dépôts": "Repositories", "Pull requests": "Pull requests", "Issues": "Issues", "Actions": "Actions",
     "Rechercher un dépôt…": "Search a repository…", "Filtrer…": "Filter…",
@@ -281,7 +283,7 @@
       el("div", { class: "profil-gh" }, G.etat.avatar ? el("img", { src: G.etat.avatar, alt: "" }) : null, brut(G.etat.login)),
       el("div", { class: "espace" }),
       el("div", { class: "outils-gh", style: "display:flex;gap:8px;flex-wrap:wrap" }, recherche, filtre),
-      el("button", { class: "btn principal", onclick: nouveauDepot }, "＋ " + t("Nouveau dépôt")),
+      !S.macos && el("button", { class: "btn principal", onclick: nouveauDepot }, "＋ " + t("Nouveau dépôt")),
       el("button", { class: "icone-btn", title: "Dossiers de projets (où chercher et cloner)", onclick: reglerDossiers }, "📁"),
       el("button", { class: "icone-btn", title: "Relire depuis GitHub", onclick: () => afficher(true, true) }, "🔄"),
       el("button", { class: "icone-btn", title: "Déconnecter GitHub de ce PC", onclick: deconnecter }, "🔌"));
@@ -482,7 +484,8 @@
         el("li", {}, "Cliquez sur « Connecter GitHub » : un code de 8 caractères s'affiche et est copié."),
         el("li", {}, "La page github.com/login/device s'ouvre : collez le code, puis cliquez sur ", el("b", {}, "Authorize"), "."),
         el("li", {}, "Revenez ici : vos dépôts s'affichent tout seuls.")),
-      el("p", { style: "color:var(--doux);font-size:13px" }, "🔒 " + t("L'accès est rangé dans le coffre de Windows (Gestionnaire d'identification), jamais dans un fichier.")),
+      el("p", { style: "color:var(--doux);font-size:13px" }, S.macos ? "L’accès est rangé dans le Trousseau macOS."
+        : "🔒 " + t("L'accès est rangé dans le coffre de Windows (Gestionnaire d'identification), jamais dans un fichier.")),
       el("div", { class: "actions" }, bouton)));
   }
 

@@ -24,6 +24,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -214,9 +215,11 @@ def detecter_types(dossier, noms=None):
 def _python(dossier, noms):
     """Le Python du projet : son environnement virtuel s'il en a un."""
     for venv in (".venv", "venv", "env"):
-        if venv in noms and os.path.isfile(os.path.join(dossier, venv, "Scripts", "python.exe")):
+        if config.MACOS and venv in noms and os.path.isfile(os.path.join(dossier, venv, "bin", "python")):
+            return f"{venv}/bin/python"
+        if not config.MACOS and venv in noms and os.path.isfile(os.path.join(dossier, venv, "Scripts", "python.exe")):
             return f"{venv}\\Scripts\\python.exe"
-    return "python"
+    return "python3" if config.MACOS else "python"
 
 
 def _gestionnaire(noms):
@@ -287,7 +290,7 @@ def commandes_proposees(dossier, noms=None):
         commande = f"{py} odoo-bin" + (f" -c {confs[0]}" if confs and " " not in confs[0] else "")
         proposees.append(_cmd("Odoo", commande, 8069))
     compose = next((n for n in COMPOSE if n in noms), None)
-    if compose:
+    if compose and not config.MACOS:
         m = re.search(r"-\s*[\"']?(?:\d+\.\d+\.\d+\.\d+:)?(\d{2,5}):\d+", _lire_texte(os.path.join(dossier, compose)))
         proposees.append(_cmd("Docker compose", "docker compose up", int(m.group(1)) if m else None))
     if "artisan" in noms:
@@ -298,15 +301,19 @@ def commandes_proposees(dossier, noms=None):
         proposees.append(_cmd("Cargo", "cargo run", None))
     if "pom.xml" in noms:
         mvn = "mvnw.cmd" if "mvnw.cmd" in noms else "mvn"
+        if config.MACOS:
+            mvn = "./mvnw" if "mvnw" in noms else "mvn"
         spring = "spring-boot" in _lire_texte(os.path.join(dossier, "pom.xml"))
         proposees.append(_cmd("Maven", f"{mvn} spring-boot:run" if spring else f"{mvn} package", 8080 if spring else None))
     elif noms & {"build.gradle", "build.gradle.kts"}:
         gradle = "gradlew.bat" if "gradlew.bat" in noms else "gradle"
+        if config.MACOS:
+            gradle = "./gradlew" if "gradlew" in noms else "gradle"
         proposees.append(_cmd("Gradle", f"{gradle} bootRun", 8080))
     if any(n.endswith(".csproj") for n in noms):
         proposees.append(_cmd(".NET", "dotnet watch run", None))
     if "Gemfile" in noms and os.path.isfile(os.path.join(dossier, "bin", "rails")):
-        proposees.append(_cmd("Rails", "ruby bin\\rails server", 3000))
+        proposees.append(_cmd("Rails", "ruby bin/rails server" if config.MACOS else "ruby bin\\rails server", 3000))
     # Identifiants uniques
     vus = set()
     for c in proposees:
@@ -382,8 +389,8 @@ def lister(_d=None):
     d = _oublier_morts()
     projets = [_decrire(c, m, d) for c, m in _candidats()]
     projets.sort(key=lambda p: p["nom"].lower())
-    return {"projets": projets, "dossiers": config.dossiers_projets(), "vscode": _vscode_present(),
-            "terminal": "Windows Terminal" if shutil.which("wt") else "PowerShell"}
+    terminal = "Terminal" if config.MACOS else ("Windows Terminal" if shutil.which("wt") else "PowerShell")
+    return {"projets": projets, "dossiers": config.dossiers_projets(), "vscode": _vscode_present(), "terminal": terminal}
 
 
 def _projet(pid):
@@ -439,7 +446,27 @@ def masquer(d):
 # ---------------------------------------------------------------------------
 # Ouvrir
 # ---------------------------------------------------------------------------
+def _vscode_mac():
+    for dossier in ("/Applications", os.path.expanduser("~/Applications")):
+        chemin = os.path.join(dossier, "Visual Studio Code.app")
+        if os.path.isdir(chemin):
+            return chemin
+    return None
+
+
+def _ouvrir_mac(chemin, application=None):
+    commande = ["/usr/bin/open"]
+    if application:
+        commande.extend(["-a", application])
+    try:
+        subprocess.run([*commande, os.path.abspath(chemin)], capture_output=True, timeout=10, check=True)
+    except (OSError, subprocess.SubprocessError):
+        raise ErreurProjets("Impossible d’ouvrir le dossier du projet.") from None
+
+
 def _vscode_present():
+    if config.MACOS:
+        return bool(_vscode_mac())
     try:
         import github
         return bool(github._vscode())
@@ -448,19 +475,33 @@ def _vscode_present():
 
 
 def ouvrir_dossier(d):
-    os.startfile(_projet(d.get("projet")))
+    chemin = _projet(d.get("projet"))
+    if config.MACOS:
+        _ouvrir_mac(chemin)
+    else:
+        os.startfile(chemin)
     return {"ok": True}
 
 
 def ouvrir_vscode(d):
-    import github
-    github.ouvrir_vscode(_projet(d.get("projet")))
+    chemin = _projet(d.get("projet"))
+    if config.MACOS:
+        vscode = _vscode_mac()
+        if not vscode:
+            raise ErreurProjets("VS Code est introuvable.")
+        _ouvrir_mac(chemin, vscode)
+    else:
+        import github
+        github.ouvrir_vscode(chemin)
     return {"ok": True}
 
 
 def ouvrir_terminal(d):
     """Windows Terminal dans le dossier s'il est installé, sinon PowerShell."""
     chemin = _projet(d.get("projet"))
+    if config.MACOS:
+        _ouvrir_mac(chemin, "Terminal")
+        return {"ok": True}
     wt = shutil.which("wt")
     if wt and ";" not in chemin:  # « ; » sépare les commandes de wt
         subprocess.Popen([wt, "-d", chemin], creationflags=DETACHED, close_fds=True,
@@ -565,16 +606,56 @@ def _commandes_lancees(d, pid):
 
 
 # ---------------------------------------------------------------------------
-# Processus (Windows)
+# Identité des processus
 # ---------------------------------------------------------------------------
-_k32 = ctypes.WinDLL("kernel32", use_last_error=True)
-_k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
-_k32.OpenProcess.restype = wintypes.HANDLE
-_k32.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
-_k32.GetProcessTimes.argtypes = [wintypes.HANDLE] + [ctypes.POINTER(wintypes.FILETIME)] * 4
-_k32.CloseHandle.argtypes = [wintypes.HANDLE]
+if not config.MACOS:
+    _k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    _k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+    _k32.OpenProcess.restype = wintypes.HANDLE
+    _k32.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+    _k32.GetProcessTimes.argtypes = [wintypes.HANDLE] + [ctypes.POINTER(wintypes.FILETIME)] * 4
+    _k32.CloseHandle.argtypes = [wintypes.HANDLE]
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 STILL_ACTIVE = 259
+
+
+if config.MACOS:
+    class _InfoProcessusMac(ctypes.Structure):
+        """Disposition de struct proc_bsdinfo dans sys/proc_info.h."""
+        _fields_ = [
+            ("flags", ctypes.c_uint32), ("statut", ctypes.c_uint32),
+            ("xstatut", ctypes.c_uint32), ("pid", ctypes.c_uint32), ("ppid", ctypes.c_uint32),
+            ("identifiants", ctypes.c_uint32 * 7),  # UID, GID et champ réservé
+            ("commande", ctypes.c_char * 16), ("nom", ctypes.c_char * 32),
+            ("fichiers", ctypes.c_uint32), ("groupe", ctypes.c_uint32),
+            ("terminal", ctypes.c_uint32 * 3), ("priorite", ctypes.c_int32),
+            ("secondes", ctypes.c_uint64), ("microsecondes", ctypes.c_uint64),
+        ]
+
+    _proc_pidinfo = ctypes.CDLL("/usr/lib/libproc.dylib").proc_pidinfo
+    _proc_pidinfo.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64, ctypes.c_void_p, ctypes.c_int]
+    _proc_pidinfo.restype = ctypes.c_int
+    _proc_pidpath = ctypes.CDLL("/usr/lib/libproc.dylib").proc_pidpath
+    _proc_pidpath.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_uint32]
+    _proc_pidpath.restype = ctypes.c_int
+    PROC_PIDTBSDINFO = 3
+    SZOMB = 5
+
+
+def processus_mac(pid):
+    info = _InfoProcessusMac()
+    taille = ctypes.sizeof(info)
+    if pid <= 1 or pid > 2**31 - 1:
+        return None
+    lus = _proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, ctypes.byref(info), taille)
+    return info if lus == taille and info.pid == pid and info.statut != SZOMB else None
+
+
+def chemin_processus_mac(pid):
+    tampon = ctypes.create_string_buffer(4096)
+    if _proc_pidpath(pid, tampon, len(tampon)) <= 0:
+        return ""
+    return os.fsdecode(tampon.value)
 
 
 def heure_creation(pid):
@@ -586,6 +667,11 @@ def heure_creation(pid):
         return None
     if pid <= 4:
         return None
+    if config.MACOS:
+        info = processus_mac(pid)
+        if info is None or info.groupe != pid:
+            return None
+        return info.secondes * 1_000_000 + info.microsecondes
     h = _k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
     if not h:
         return None
@@ -626,7 +712,8 @@ def _lance_vivant(d, pid, cid):
     info = d["lances"].get(_cle(pid, cid))
     if not isinstance(info, dict):
         return None
-    if heure_creation(info.get("pid")) != info.get("cree"):
+    cree = info.get("cree")
+    if cree is None or heure_creation(info.get("pid")) != cree:
         return None
     return info
 
@@ -690,29 +777,69 @@ def demarrer(pid, cid):
             raise ErreurProjets(f"Le port {c['port']} est déjà utilisé par un autre programme.")
         journal = chemin_journal(pid, cid, os.path.basename(chemin.rstrip("\\/")))
         os.makedirs(os.path.dirname(journal), exist_ok=True)
-        # La commande a été saisie (ou acceptée) par l'utilisateur dans SA
-        # configuration : cmd /c l'exécute telle quelle, dans le dossier du projet.
-        ligne = f'cmd.exe /d /s /c "{c["commande"]}"'
+        # Seule la commande enregistrée dans le projet est passée au shell.
+        if config.MACOS:
+            ligne = ["/bin/sh", "-c", c["commande"]]
+            options = {"start_new_session": True}
+        else:
+            ligne = f'cmd.exe /d /s /c "{c["commande"]}"'
+            options = {"creationflags": CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP}
         with open(journal, "wb") as sortie:
-            entete = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] > {c['commande']}\r\n"
+            libelle = "Commande de développement démarrée." if config.MACOS else f"> {c['commande']}"
+            entete = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {libelle}\r\n"
             sortie.write(entete.encode("utf-8"))
             sortie.flush()
             try:
                 p = subprocess.Popen(ligne, cwd=chemin, env=_environnement(), stdin=subprocess.DEVNULL,
                                      stdout=sortie, stderr=subprocess.STDOUT,
-                                     creationflags=CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP)
+                                     **options)
             except OSError as e:
                 raise ErreurProjets(f"Impossible de lancer la commande : {e}") from None
         cree = heure_creation(p.pid)
-        if cree is None:  # déjà terminé
-            _fins[(pid, cid)] = p.wait()
+        if cree is None:
+            try:
+                _fins[(pid, cid)] = p.wait(timeout=0.5) if config.MACOS else p.wait()
+            except subprocess.TimeoutExpired:
+                p.terminate()
+                raise ErreurProjets("Impossible d’identifier le processus lancé.") from None
             return {"etat": "arrete", "code_sortie": _fins[(pid, cid)]}
-        _popens[(pid, cid)] = p
-        _fins.pop((pid, cid), None)
         d["lances"][_cle(pid, cid)] = {"pid": p.pid, "cree": cree, "debut": time.strftime("%Y-%m-%dT%H:%M:%S"),
                                        "journal": journal}
-        _ecrire(d)
+        try:
+            _ecrire(d)
+        except OSError:
+            if config.MACOS:
+                _arreter_groupe_mac(p.pid, cree, p)
+            raise
+        _popens[(pid, cid)] = p
+        _fins.pop((pid, cid), None)
         return {"etat": "demarrage" if c.get("port") else "marche", "pid": p.pid}
+
+
+def _arreter_groupe_mac(pid, cree, processus):
+    """Signale le groupe créé au lancement et attend son arrêt."""
+    try:
+        for signal_arret, delai in ((signal.SIGTERM, 3), (signal.SIGKILL, 2)):
+            if heure_creation(pid) != cree:
+                break
+            os.killpg(pid, signal_arret)
+            fin = time.monotonic() + delai
+            while time.monotonic() < fin:
+                if processus is not None:
+                    processus.poll()
+                try:
+                    os.killpg(pid, 0)
+                except PermissionError:
+                    # Darwin peut renvoyer EPERM pendant la disparition du groupe.
+                    # Ce contrôle ne confirme pas encore l'arrêt : réessayer.
+                    pass
+                time.sleep(0.1)
+        os.killpg(pid, 0)
+    except ProcessLookupError:
+        return
+    except OSError:
+        raise ErreurProjets("Impossible d’arrêter le serveur de développement.") from None
+    raise ErreurProjets("Le groupe du serveur ne s’est pas arrêté.")
 
 
 def _tuer_arbre(pid_processus, cree=None):
@@ -720,10 +847,14 @@ def _tuer_arbre(pid_processus, cree=None):
     dans la liste, même heure de création)."""
     with _verrou:
         d = _donnees()
-        info = next((i for i in d["lances"].values() if isinstance(i, dict) and i.get("pid") == pid_processus), None)
-        if not info or (cree is not None and info.get("cree") != cree) \
+        cle, info = next(((k, i) for k, i in d["lances"].items()
+                          if isinstance(i, dict) and i.get("pid") == pid_processus), (None, None))
+        if not info or info.get("cree") is None or (cree is not None and info.get("cree") != cree) \
                 or heure_creation(pid_processus) != info.get("cree"):
             raise ErreurProjets("Ce processus n'a pas été lancé par Mes outils : il n'est pas arrêté.")
+        if config.MACOS:
+            _arreter_groupe_mac(pid_processus, info["cree"], _popens.get(tuple(cle.split("/", 1))))
+            return
         subprocess.run(["taskkill", "/T", "/F", "/PID", str(int(pid_processus))], capture_output=True,
                        timeout=30, creationflags=CREATE_NO_WINDOW, stdin=subprocess.DEVNULL)
 
@@ -784,7 +915,7 @@ def lire_journal(pid, cid, lignes=LIGNES_JOURNAL):
             taille = f.tell()
             f.seek(max(0, taille - 256 * 1024))
             brut = f.read()
-        oem = f"cp{ctypes.windll.kernel32.GetOEMCP()}"
+        oem = "utf-8" if config.MACOS else f"cp{ctypes.windll.kernel32.GetOEMCP()}"
         morceaux = brut.replace(b"\r\n", b"\n").split(b"\n")
         if taille > 256 * 1024:
             morceaux = morceaux[1:]
@@ -795,6 +926,13 @@ def lire_journal(pid, cid, lignes=LIGNES_JOURNAL):
         while texte and not texte[-1].strip():
             texte.pop()
     return {"lignes": texte[-lignes:], "fichier": fichier, **_etat_commande(d, pid, c)}
+
+
+def ouvrir_journal_mac(pid, cid):
+    fichier = lire_journal(pid, cid)["fichier"]
+    if not os.path.isfile(fichier):
+        raise ErreurProjets("Journal vide.")
+    _ouvrir_mac(fichier, "TextEdit")
 
 
 # ---------------------------------------------------------------------------
@@ -852,9 +990,10 @@ def _env_git():
 
 
 def _git(args, dossier, delai):
+    options = {} if config.MACOS else {"creationflags": CREATE_NO_WINDOW}
     return subprocess.run(["git", "-c", "core.quotepath=false", *args], cwd=dossier, env=_env_git(),
                           stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding="utf-8",
-                          errors="replace", timeout=delai, creationflags=CREATE_NO_WINDOW)
+                          errors="replace", timeout=delai, **options)
 
 
 def analyser_status(sortie):
